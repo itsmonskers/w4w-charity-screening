@@ -20,9 +20,12 @@ standard.
   except `#fff` and `#d64545`. No Tailwind arbitrary hex.
 - Never invent facts. Keep every `[... TBD]` placeholder visible and
   `PRICE_PER_SEAT = null` until real values are supplied.
-- No Marvel logos, posters, stills or character art. Film title is text only.
-- No new colors, fonts, divider styles or animation libraries. If a task seems
-  to need one, stop and ask.
+- This microsite uses the **event theme** in DESIGN.md Section 0 (dark green,
+  gold, Cinzel + Hanken Grotesk). Use only the base tokens and the `--ev-*`
+  tokens defined there. No other new colors, fonts, divider styles or
+  animation libraries. If a task seems to need one, stop and ask.
+- Never use Marvel assets: no posters, characters, logos or poster-style
+  lettering. All atmosphere (light shafts, particles) is original code.
 - All motion must be covered by the single reduced-motion rule at the end of
   `app/globals.css`.
 - Keep CSS readable: one rule per block, no duplicate selectors. Edit existing

@@ -12,6 +12,16 @@
   --muted-dark: #a9b5bf;
   --line: #d9e0e4;
   --line-dark: rgba(79, 147, 184, .45);
+  /* Event theme (DESIGN.md Section 0) */
+  --ev-bg: #050a07;
+  --ev-panel: #0b130e;
+  --ev-input: #08100b;
+  --ev-green: #3ee083;
+  --ev-green-deep: #10301e;
+  --ev-gold: #d9a441;
+  --ev-text: #e8efe9;
+  --ev-muted: #9fb3a6;
+  --ev-line: rgba(62, 224, 131, .28);
   --error-on-dark: color-mix(in srgb, #d64545 70%, #fff);
 }
 
@@ -26,20 +36,26 @@ html {
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--ev-bg);
+  color: var(--ev-text);
   font-family: var(--font-body), Arial, sans-serif;
 }
 
 h1,
 h2,
 h3 {
-  font-family: var(--font-display), "Arial Narrow", sans-serif;
+  font-family: var(--font-display), Georgia, serif;
   margin: 0;
 }
 
 button {
   font: inherit;
+}
+
+/* Stacking context so the atmosphere (z-index -1) sits behind every section */
+main {
+  position: relative;
+  isolation: isolate;
 }
 
 .container {
@@ -53,11 +69,12 @@ button {
 }
 
 .eyebrow-caps {
+  font-family: var(--font-display), Georgia, serif;
   font-weight: 700;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: .22em;
-  color: var(--blue);
+  color: var(--ev-gold);
 }
 
 /* Buttons */
@@ -75,14 +92,14 @@ button {
   transition: transform .22s ease, box-shadow .22s ease, background-color .22s ease;
 }
 
+/* Primary button, event theme (deviation 18) */
 .btn-primary {
-  background: color-mix(in srgb, var(--blue) 78%, var(--ink));
-  color: #fff;
-  border: 0;
-}
-
-.btn-primary:hover {
-  background: var(--blue);
+  background: color-mix(in srgb, var(--ev-green) 22%, var(--ev-panel));
+  color: var(--ev-text);
+  border: 1px solid var(--ev-green);
+  font-family: var(--font-display), Georgia, serif;
+  text-transform: uppercase;
+  letter-spacing: .14em;
 }
 
 .btn-ghost {
@@ -97,7 +114,12 @@ button {
   box-shadow: 0 8px 20px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
-button:disabled {
+.btn-primary:hover {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--ev-green) 45%, transparent);
+}
+
+/* Seats are excluded: their reserved/taken states set their own dimming */
+button:disabled:not(.seat) {
   opacity: .45;
   cursor: not-allowed;
   transform: none !important;
@@ -108,46 +130,69 @@ button:disabled {
   width: 100%;
 }
 
-/* Header */
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  height: 72px;
-  background: #fff;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 max(24px, calc((100% - 1280px) / 2));
-}
-
-.wordmark {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--ink);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.wordmark svg {
-  color: var(--blue);
-}
-
-.wordmark span {
-  font-size: 10px;
-  letter-spacing: .16em;
-  color: var(--muted);
-  margin-left: 3px;
-}
-
 .preview-notice {
   text-align: center;
-  background: color-mix(in srgb, var(--blue) 12%, #fff);
-  color: var(--ink);
+  background: var(--ev-panel);
+  border-bottom: 1px solid var(--ev-line);
+  color: var(--ev-muted);
   font-size: 12px;
   padding: 9px;
+}
+
+/* Cinematic atmosphere (deviations 16 and 17): fixed behind all content, never interactive */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.light-shafts {
+  position: absolute;
+  inset: 0;
+}
+
+/* Faint haze from the top of the page */
+.light-shafts::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 90% 60% at 50% 0, color-mix(in srgb, var(--ev-green) 6%, transparent), transparent 70%);
+}
+
+/* Dark vignette at the edges, over the beams */
+.light-shafts::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 85% at 50% 35%, transparent 55%, var(--ev-bg));
+}
+
+.shaft {
+  position: absolute;
+  top: -10%;
+  left: var(--x);
+  width: var(--w);
+  height: 115%;
+  margin-left: calc(var(--w) / -2);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--ev-green) 10%, transparent), color-mix(in srgb, var(--ev-green) 4%, transparent) 45%, transparent 85%);
+  filter: blur(22px);
+  transform: rotate(var(--angle));
+  transform-origin: 50% 0;
+  will-change: opacity, transform;
+  animation: shaft-shimmer 18s ease-in-out var(--delay) infinite alternate;
+}
+
+.shaft-gold {
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--ev-gold) 8%, transparent), color-mix(in srgb, var(--ev-gold) 3%, transparent) 40%, transparent 75%);
+}
+
+.particles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 /* Title block */
@@ -155,9 +200,31 @@ button:disabled {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: var(--char);
-  color: #fff;
-  padding: 28px 0 20px;
+  color: var(--ev-text);
+  padding: 22px 0 20px;
+}
+
+/* W4W logo (Section 0, deviation 19): top of the title block, no box behind it.
+   Fixed height so swapping the wordmark for the logo file doesn't shift the page. */
+.title-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  margin-bottom: 12px;
+  color: var(--blue-light);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.title-logo img {
+  height: 100%;
+  width: auto;
+}
+
+.title-logo svg {
+  width: 28px;
+  height: 28px;
 }
 
 /* Wave texture (deviation 13): StripeWave lines, static, behind the content */
@@ -173,12 +240,17 @@ button:disabled {
   pointer-events: none;
 }
 
+/* Tint the StripeWave lines (W4W twist); the component itself stays white */
+.title-block .wave-texture path {
+  stroke: var(--ev-green);
+}
+
 .title-block::before {
   content: "";
   position: absolute;
   inset: -30% 25% 18% 25%;
   z-index: -1;
-  background: conic-gradient(from 180deg at 50% 0%, transparent 38%, color-mix(in srgb, var(--blue) 12%, transparent) 50%, transparent 62%);
+  background: conic-gradient(from 180deg at 50% 0%, transparent 38%, color-mix(in srgb, var(--ev-green) 12%, transparent) 50%, transparent 62%);
   filter: blur(24px);
   transform-origin: 50% 0;
   animation: projector-drift 16s ease-in-out infinite alternate;
@@ -196,17 +268,18 @@ button:disabled {
   margin: 10px 0;
   font-size: clamp(30px, 3.6vw, 48px);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.1;
+  letter-spacing: .12em;
   text-transform: uppercase;
 }
 
 .title-block h1 span {
-  color: var(--blue-light);
+  color: var(--ev-green);
 }
 
 .facts-line {
   margin: 0;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 15px;
   line-height: 1.5;
 }
@@ -223,7 +296,7 @@ button:disabled {
 .status-row > * + *::before {
   content: "·";
   margin-right: 12px;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
 }
 
 .status-pill {
@@ -231,35 +304,38 @@ button:disabled {
   align-items: baseline;
   gap: 6px;
   padding: 5px 14px;
-  border: 1px solid var(--line-dark);
+  border: 1px solid var(--ev-line);
   border-radius: 999px;
   font-weight: 600;
 }
 
 .status-pill b {
-  font-family: var(--font-display), "Arial Narrow", sans-serif;
   font-size: 17px;
-  font-weight: 600;
-  color: var(--blue-light);
+  font-weight: 700;
+  color: var(--ev-green);
 }
 
 .live {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
+}
+
+.live.eyebrow-caps {
+  color: var(--ev-green);
 }
 
 .live i {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--blue-light);
+  background: var(--ev-green);
   animation: live-pulse 2s ease-in-out infinite;
 }
 
 .countdown {
-  color: var(--blue-light);
+  color: var(--ev-green);
 }
 
 .steps-line {
@@ -267,18 +343,19 @@ button:disabled {
   flex-wrap: wrap;
   row-gap: 4px;
   margin: 14px 0 0;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 13px;
 }
 
-.steps-line span + span::before {
+/* Separator ends the previous step, so a wrapped line never starts with "·" */
+.steps-line span:not(:last-child)::after {
   content: "·";
   margin: 0 10px;
 }
 
 .steps-line b {
   margin-right: 4px;
-  color: var(--blue-light);
+  color: var(--ev-green);
 }
 
 .title-cta {
@@ -293,10 +370,8 @@ button:disabled {
 
 /* Booking zone */
 .booking-zone {
-  background: var(--char);
-  color: #fff;
+  color: var(--ev-text);
   padding: 12px 0 48px;
-  scroll-margin-top: 72px;
 }
 
 .booking-grid {
@@ -312,7 +387,7 @@ button:disabled {
 /* Corner brackets (deviation 11): 14px L-shapes, 1.5px, inset from the rounded corners */
 .seat-stage,
 .booking-panel {
-  --bracket: linear-gradient(color-mix(in srgb, var(--blue-light) 60%, transparent) 0 0);
+  --bracket: linear-gradient(color-mix(in srgb, var(--ev-gold) 60%, transparent) 0 0);
   background-image: var(--bracket), var(--bracket), var(--bracket), var(--bracket), var(--bracket), var(--bracket), var(--bracket), var(--bracket);
   background-size: 14px 1.5px, 1.5px 14px, 14px 1.5px, 1.5px 14px, 14px 1.5px, 1.5px 14px, 14px 1.5px, 1.5px 14px;
   background-position: left 6px top 6px, left 6px top 6px, right 6px top 6px, right 6px top 6px, left 6px bottom 6px, left 6px bottom 6px, right 6px bottom 6px, right 6px bottom 6px;
@@ -322,22 +397,22 @@ button:disabled {
 .seat-stage {
   --seat: clamp(26px, 2.6vw, 34px);
   --seat-gap: 4px;
-  background-color: var(--char-2);
-  border: 1px solid var(--line-dark);
+  background-color: var(--ev-panel);
+  border: 1px solid var(--ev-line);
   border-radius: 14px;
   padding: 20px 18px;
 }
 
 .seat-helper {
   margin: 0 0 12px;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 14px;
   line-height: 1.3;
 }
 
 .seat-scroll-hint {
   display: none;
-  color: var(--blue-light);
+  color: var(--ev-green);
   font-size: 12px;
   margin: 0 0 8px;
 }
@@ -353,7 +428,8 @@ button:disabled {
   min-width: 770px;
 }
 
-/* Screen arc (deviations 6 and 11): solid arc on top, glow copy underneath tracks occupancy */
+/* Screen arc (deviations 6 and 11): solid arc on top, glow copy underneath tracks occupancy.
+   Spill is bright under the arc, then falls toward the seats at <=4.5% so seat numbers keep their contrast. */
 .screen {
   position: relative;
   margin: 4px 6% 20px;
@@ -363,11 +439,11 @@ button:disabled {
   content: "";
   position: absolute;
   z-index: -1;
-  top: 10px;
-  left: 0;
-  right: 0;
-  height: 90px;
-  background: radial-gradient(ellipse 50% 100% at 50% 0, color-mix(in srgb, var(--blue-light) 10%, transparent), transparent);
+  top: 8px;
+  left: -4%;
+  right: -4%;
+  height: 300px;
+  background: radial-gradient(ellipse 58% 100% at 50% 0, color-mix(in srgb, var(--ev-green) 24%, transparent), color-mix(in srgb, var(--ev-green) 4.5%, transparent) 12%, color-mix(in srgb, var(--ev-green) 4%, transparent) 25%, color-mix(in srgb, var(--ev-green) 2.5%, transparent) 55%, transparent);
   pointer-events: none;
 }
 
@@ -386,15 +462,15 @@ button:disabled {
 
 .screen-arc path {
   fill: none;
-  stroke: var(--blue-light);
+  stroke: var(--ev-green);
   stroke-width: 3px;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
 
 .screen-arc .screen-arc-glow {
-  opacity: calc(.4 + var(--occupancy, 0) * .6);
-  filter: drop-shadow(0 0 calc(6px + var(--occupancy, 0) * 6px) color-mix(in srgb, var(--blue-light) 55%, transparent));
+  opacity: calc(.7 + var(--occupancy, 0) * .3);
+  filter: drop-shadow(0 0 calc(8px + var(--occupancy, 0) * 6px) color-mix(in srgb, var(--ev-green) 80%, transparent)) drop-shadow(0 6px calc(22px + var(--occupancy, 0) * 12px) color-mix(in srgb, var(--ev-green) 55%, transparent));
   transition: opacity .6s ease, filter .6s ease;
 }
 
@@ -416,7 +492,7 @@ button:disabled {
 
 .row-label {
   width: 16px;
-  color: var(--blue-light);
+  color: var(--ev-gold);
   font-size: 11px;
   font-weight: 700;
   text-align: center;
@@ -424,7 +500,7 @@ button:disabled {
 
 .seat-row:has(.seat:hover) .row-label,
 .seat-row:has(.seat:focus-visible) .row-label {
-  color: var(--blue-light);
+  color: var(--ev-green);
 }
 
 .seat-grid {
@@ -438,9 +514,9 @@ button:disabled {
   width: var(--seat);
   height: var(--seat);
   border-radius: 6px;
-  border: 1px solid var(--line-dark);
+  border: 1px solid var(--ev-line);
   background: transparent;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 11px;
   font-weight: 600;
   display: inline-flex;
@@ -449,53 +525,44 @@ button:disabled {
   padding: 0;
 }
 
-/* Must stay before .seat:hover (same specificity; hover colour wins by order) */
-.seat-row .seat {
-  color: var(--blue-light);
+/* Seat states, event theme (DESIGN.md Section 0). Legend swatches use the same classes. */
+.seat-available {
+  background: var(--ev-green-deep);
+  border-color: color-mix(in srgb, var(--ev-green) 70%, transparent);
+  color: var(--ev-text);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ev-green) 14%, transparent);
 }
 
-.seat-row .seat-selected {
-  color: var(--paper);
-}
-
-.seat-row .seat-reserved,
-.seat-row .seat-taken {
-  color: var(--muted-dark);
-}
-
-.seat:hover,
-.seat:focus-visible {
-  border-color: var(--blue-light);
-  color: #fff;
-  outline: 2px solid color-mix(in srgb, var(--blue-light) 35%, transparent);
-  outline-offset: 2px;
-}
-
+/* Yours: solid gold fill + glow. Reserved (someone else's): hollow dashed dimmed gold, no glow. */
 .seat-selected {
-  background: var(--blue-light);
-  color: var(--char);
-  border-color: var(--blue-light);
+  background: var(--ev-gold);
+  color: var(--ev-bg);
+  border-color: var(--ev-gold);
+  font-weight: 700;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ev-gold) 55%, transparent);
 }
 
 .seat-reserved {
-  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blue) 35%, transparent) 0 3px, var(--char-2) 3px 7px);
-  color: var(--muted-dark);
-}
-
-.seat-taken {
-  background: color-mix(in srgb, var(--muted-dark) 18%, transparent);
-  color: var(--muted-dark);
+  border: 1px dashed color-mix(in srgb, var(--ev-gold) 70%, transparent);
+  color: color-mix(in srgb, var(--ev-gold) 70%, transparent);
   cursor: not-allowed;
 }
 
-.seat-available {
-  box-shadow: 0 0 6px color-mix(in srgb, var(--blue-light) 14%, transparent);
+.seat-taken {
+  background: color-mix(in srgb, var(--ev-muted) 18%, transparent);
+  cursor: not-allowed;
+}
+
+.seat:not(:disabled):hover,
+.seat:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ev-green) 35%, transparent);
+  outline-offset: 2px;
 }
 
 .seat-available:hover,
-.seat-available:focus-visible,
-.seat-selected {
-  box-shadow: 0 0 12px color-mix(in srgb, var(--blue-light) 45%, transparent);
+.seat-available:focus-visible {
+  border-color: var(--ev-green);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ev-green) 45%, transparent);
 }
 
 .seat-pop {
@@ -507,7 +574,7 @@ button:disabled {
   flex-wrap: wrap;
   gap: 18px;
   margin: 20px 0 0;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 12px;
 }
 
@@ -525,7 +592,7 @@ button:disabled {
 
 .info-notice {
   margin: 12px 0 0;
-  color: var(--blue-light);
+  color: var(--ev-green);
   font-size: 13px;
 }
 
@@ -540,8 +607,8 @@ button:disabled {
   gap: 16px;
   margin: 16px -24px 0;
   padding: 14px 24px;
-  background: var(--char);
-  border-top: 1px solid var(--line-dark);
+  background: var(--ev-bg);
+  border-top: 1px solid var(--ev-line);
 }
 
 .selection-bar div {
@@ -551,7 +618,7 @@ button:disabled {
 }
 
 .selection-bar span {
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 13px;
 }
 
@@ -559,12 +626,12 @@ button:disabled {
 .booking-panel {
   display: none;
   flex-direction: column;
-  background-color: var(--char-2);
-  border: 1px solid var(--line-dark);
+  background-color: var(--ev-panel);
+  border: 1px solid var(--ev-line);
   border-radius: 14px;
-  color: #fff;
+  color: var(--ev-text);
   scrollbar-width: thin;
-  scrollbar-color: var(--line-dark) transparent;
+  scrollbar-color: var(--ev-line) transparent;
 }
 
 .booking-panel.is-open {
@@ -579,7 +646,7 @@ button:disabled {
 }
 
 .booking-panel.is-success {
-  background: var(--char);
+  background: var(--ev-bg);
   border-color: transparent;
 }
 
@@ -592,7 +659,7 @@ button:disabled {
   justify-content: space-between;
   padding: 12px 16px;
   background: inherit;
-  border-bottom: 1px solid var(--line-dark);
+  border-bottom: 1px solid var(--ev-line);
 }
 
 .sheet-bar .eyebrow-caps {
@@ -606,10 +673,10 @@ button:disabled {
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 1px solid var(--line-dark);
+  border: 1px solid var(--ev-line);
   border-radius: 999px;
   background: transparent;
-  color: #fff;
+  color: var(--ev-text);
   cursor: pointer;
 }
 
@@ -633,13 +700,12 @@ button:disabled {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 12px;
 }
 
 .panel-title {
   margin: 0;
-  font-family: var(--font-body), Arial, sans-serif;
 }
 
 .chips {
@@ -654,9 +720,10 @@ button:disabled {
   align-items: center;
   gap: 2px;
   padding: 3px 4px 3px 10px;
-  border: 1px solid var(--line-dark);
+  border: 1px solid var(--ev-gold);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--blue-light) 14%, transparent);
+  background: var(--ev-gold);
+  color: var(--ev-bg);
   font-size: 12px;
   font-weight: 700;
 }
@@ -667,14 +734,14 @@ button:disabled {
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--muted-dark);
+  color: var(--ev-bg);
   cursor: pointer;
 }
 
 .chip button:hover,
 .chip button:focus-visible {
-  color: #fff;
-  outline: 2px solid color-mix(in srgb, var(--blue-light) 35%, transparent);
+  background: color-mix(in srgb, var(--ev-bg) 18%, transparent);
+  outline: 2px solid var(--ev-green);
 }
 
 .chip svg {
@@ -684,7 +751,7 @@ button:disabled {
 
 .panel-empty {
   margin: 0;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 13px;
 }
 
@@ -694,15 +761,14 @@ button:disabled {
   justify-content: space-between;
   gap: 12px;
   padding-top: 10px;
-  border-top: 1px solid var(--line-dark);
-  color: var(--muted-dark);
+  border-top: 1px solid var(--ev-line);
+  color: var(--ev-muted);
   font-size: 13px;
 }
 
 .amount-row strong {
   margin-left: 6px;
-  color: #fff;
-  font-family: var(--font-display), "Arial Narrow", sans-serif;
+  color: var(--ev-text);
   font-size: 20px;
   font-weight: 600;
 }
@@ -715,7 +781,7 @@ button:disabled {
 }
 
 .field-label {
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -725,22 +791,22 @@ button:disabled {
 .input {
   width: 100%;
   padding: 11px 12px;
-  border: 1px solid var(--line-dark);
+  border: 1px solid color-mix(in srgb, var(--ev-green) 50%, var(--ev-input));
   border-radius: 7px;
-  background: var(--char);
-  color: #fff;
+  background: var(--ev-input);
+  color: var(--ev-text);
   font: inherit;
   font-size: 14px;
 }
 
 .input::placeholder {
-  color: var(--muted-dark);
+  color: var(--ev-muted);
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--blue-light);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue-light) 25%, transparent);
+  border-color: var(--ev-green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-green) 25%, transparent);
 }
 
 .input[aria-invalid="true"] {
@@ -752,7 +818,7 @@ textarea.input {
 }
 
 .field-hint {
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 12px;
 }
 
@@ -768,13 +834,13 @@ textarea.input {
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border: 1px dashed var(--line-dark);
+  border: 1px dashed var(--ev-line);
   border-radius: 12px;
 }
 
 .pay-box p {
   margin: 0;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -787,12 +853,12 @@ textarea.input {
   width: min(100%, 200px);
   aspect-ratio: 1;
   margin: 0 auto;
-  background: var(--char);
-  border: 1px dashed var(--line-dark);
+  background: var(--ev-input);
+  border: 1px dashed var(--ev-line);
   border-radius: 7px;
   display: grid;
   place-items: center;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 13px;
   font-weight: 700;
   text-align: center;
@@ -805,7 +871,7 @@ textarea.input {
   align-items: center;
   gap: 6px;
   padding: 18px;
-  border: 1px dashed var(--blue);
+  border: 1px dashed var(--ev-green);
   border-radius: 12px;
   text-align: center;
   font-size: 13px;
@@ -815,8 +881,8 @@ textarea.input {
 }
 
 .upload:focus-within {
-  border-color: var(--blue-light);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue-light) 25%, transparent);
+  border-color: var(--ev-green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-green) 25%, transparent);
 }
 
 .upload:has([aria-invalid="true"]) {
@@ -824,20 +890,20 @@ textarea.input {
 }
 
 .upload svg {
-  color: var(--blue-light);
+  color: var(--ev-green);
 }
 
 .upload small {
   font-size: 12px;
   font-weight: 400;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
 }
 
 .consent {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 12px;
   line-height: 1.5;
   cursor: pointer;
@@ -848,15 +914,15 @@ textarea.input {
   width: 16px;
   height: 16px;
   margin: 2px 0 0;
-  accent-color: var(--blue-light);
+  accent-color: var(--ev-green);
 }
 
 /* E-ticket success card */
 .ticket {
   position: relative;
   overflow: hidden;
-  background: var(--char-2);
-  border: 1px solid var(--line-dark);
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
   border-radius: 14px;
   animation: ticket-in .4s ease-out;
 }
@@ -884,8 +950,8 @@ textarea.input {
   display: inline-flex;
   padding: 4px 10px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--blue-light) 14%, transparent);
-  color: var(--blue-light);
+  background: color-mix(in srgb, var(--ev-green) 14%, transparent);
+  color: var(--ev-green);
   font-size: 11px;
   font-weight: 700;
 }
@@ -894,6 +960,7 @@ textarea.input {
   font-size: 32px;
   font-weight: 700;
   line-height: 1;
+  letter-spacing: .12em;
   text-transform: uppercase;
   outline: none;
 }
@@ -902,19 +969,19 @@ textarea.input {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 14px;
   line-height: 1.4;
 }
 
 .ticket-lines strong {
-  color: #fff;
+  color: var(--ev-text);
 }
 
 /* Perforation: dashed line with notches centred on it, filled with the panel background */
 .ticket-perforation {
   position: relative;
-  border-top: 1px dashed var(--line-dark);
+  border-top: 1px dashed var(--ev-line);
 }
 
 .ticket-perforation::before,
@@ -924,9 +991,9 @@ textarea.input {
   top: -12.5px;
   width: 24px;
   height: 24px;
-  border: 1px solid var(--line-dark);
+  border: 1px solid var(--ev-line);
   border-radius: 50%;
-  background: var(--char);
+  background: var(--ev-bg);
 }
 
 .ticket-perforation::before {
@@ -938,7 +1005,7 @@ textarea.input {
 }
 
 .ticket-label {
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -955,10 +1022,10 @@ textarea.input {
 }
 
 .ticket-reference > span:first-child {
-  font-family: var(--font-display), "Arial Narrow", sans-serif;
   font-size: 36px;
+  font-weight: 700;
   line-height: 1;
-  color: var(--blue-light);
+  color: var(--ev-green);
 }
 
 .copy-button {
@@ -966,10 +1033,10 @@ textarea.input {
   align-items: center;
   gap: 6px;
   padding: 7px 12px;
-  border: 1px solid var(--line-dark);
+  border: 1px solid var(--ev-line);
   border-radius: 999px;
   background: transparent;
-  color: #fff;
+  color: var(--ev-text);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -982,30 +1049,29 @@ textarea.input {
 
 .ticket-message {
   margin: 0;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 13px;
   line-height: 1.6;
 }
 
 .ticket-message strong {
-  color: #fff;
+  color: var(--ev-text);
   overflow-wrap: anywhere;
 }
 
 .ticket .btn-ghost {
   align-self: flex-start;
-  color: #fff;
+  color: var(--ev-text);
 }
 
 /* Footer */
 footer {
-  background: var(--char);
-  color: #fff;
+  color: var(--ev-text);
   padding: 0 0 24px;
 }
 
 .footer-inner {
-  border-top: 1px solid var(--line-dark);
+  border-top: 1px solid var(--ev-line);
   padding-top: 24px;
 }
 
@@ -1014,7 +1080,8 @@ footer {
 }
 
 .mission {
-  font-family: var(--font-display);
+  font-family: var(--font-display), Georgia, serif;
+  color: var(--blue-light);
   font-size: clamp(20px, 2.2vw, 28px);
   line-height: 1.15;
   max-width: 600px;
@@ -1026,7 +1093,7 @@ footer {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  color: var(--muted-dark);
+  color: var(--ev-muted);
   font-size: 12px;
 }
 
@@ -1049,6 +1116,17 @@ footer {
   }
   to {
     transform: rotate(3deg) scale(1.08);
+  }
+}
+
+@keyframes shaft-shimmer {
+  from {
+    opacity: .55;
+    transform: rotate(var(--angle)) translateX(-1.5vw);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(calc(var(--angle) + 2deg)) translateX(1.5vw);
   }
 }
 
@@ -1139,8 +1217,8 @@ footer {
   .booking-panel {
     display: flex;
     position: sticky;
-    top: calc(72px + 16px);
-    max-height: calc(100vh - 72px - 32px);
+    top: 16px;
+    max-height: calc(100vh - 32px);
     overflow-y: auto;
   }
 
@@ -1164,20 +1242,79 @@ footer {
     width: calc(100% - 32px);
   }
 
-  .site-header {
-    padding: 0 16px;
+  .title-block {
+    padding: 14px 0 14px;
   }
 
-  .site-header .btn-primary {
-    padding: 11px 16px;
+  .title-logo {
+    height: 36px;
+    margin-bottom: 8px;
+    font-size: 16px;
   }
 
-  .wordmark span {
-    display: none;
+  .title-logo svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .title-block h1 {
+    margin: 6px 0 8px;
+  }
+
+  .facts-line {
+    font-size: 14px;
+  }
+
+  /* Wrap only between facts and between whole steps */
+  .facts-line span,
+  .steps-line span {
+    white-space: nowrap;
+  }
+
+  .status-row,
+  .steps-line {
+    margin-top: 10px;
+  }
+
+  .title-cta {
+    margin-top: 14px;
   }
 
   .seat-scroll-hint {
     display: block;
+  }
+
+  /* Seat map: arc spans the full map; left row letters stay pinned while seats scroll */
+  .screen {
+    margin-inline: 0;
+  }
+
+  /* Keep the light spill above row A so it doesn't show around the pinned letter,
+     and softer, since the swipe wrapper clips its sides */
+  .screen::after {
+    height: 44px;
+    background: radial-gradient(ellipse 50% 100% at 50% 0, color-mix(in srgb, var(--ev-green) 12%, transparent), transparent);
+  }
+
+  /* Tight glow only: the wide one would be cut off square by the swipe wrapper */
+  .screen-arc .screen-arc-glow {
+    filter: drop-shadow(0 0 calc(6px + var(--occupancy, 0) * 4px) color-mix(in srgb, var(--ev-green) 80%, transparent));
+  }
+
+  .seat-row .row-label:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ev-panel);
+    box-shadow: 9px 0 0 var(--ev-panel);
+  }
+
+  .seat-row .row-label:last-child {
+    display: none;
   }
 
   .selection-bar {
@@ -1201,5 +1338,9 @@ footer {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+
+  .particles {
+    display: none;
   }
 }

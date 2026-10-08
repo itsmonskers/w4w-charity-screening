@@ -22,3 +22,4 @@ export async function reserveSeats(input: BookingInput): Promise<BookingResult> 
   listeners.forEach(listener => listener(seats.map(s => ({ ...s }))))
   return { ok: true, referenceCode: `W4W-DD-${Math.random().toString(36).slice(2, 6).toUpperCase()}` }
 }
+export const IS_MOCK = true

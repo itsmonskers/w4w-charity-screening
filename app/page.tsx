@@ -1,14 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { ArrowRight, Waves } from 'lucide-react'
+import { Fragment, useEffect, useState } from 'react'
+import { ArrowRight } from 'lucide-react'
+import { CinemaAtmosphere } from '@/components/cinema-atmosphere'
 import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE } from '@/components/booking-panel'
 import { SeatMap } from '@/components/seat-map'
 import { StripeWave } from '@/components/stripe-wave'
-import { getSeats, subscribe } from '@/lib/booking-store'
+import { W4WLogo } from '@/components/w4w-logo'
+import { IS_MOCK, getSeats, subscribe } from '@/lib/booking-store'
 import { EVENT, PRICE_PER_SEAT, eventTotal, formatPrice, type Seat } from '@/lib/event-config'
 
-const factsLine = `${EVENT_DATE_SHORT} · ${EVENT.time} · ${EVENT_PLACE} · ${formatPrice(PRICE_PER_SEAT)} per seat`
+const facts = [EVENT_DATE_SHORT, ...EVENT.time.split(' · '), EVENT_PLACE, `${formatPrice(PRICE_PER_SEAT)} per seat`]
 const steps = ['Pick seats', 'Pay via QR & upload proof', 'Get e-tickets after we verify']
 
 function daysToEvent() {
@@ -52,14 +54,15 @@ export default function Page() {
   const scrollToMap = () => document.getElementById('seats')?.scrollIntoView()
 
   return <main>
-    <header className="site-header"><a className="wordmark" href="#top"><Waves /> Waves for Water Philippines</a><button className="btn-primary" onClick={scrollToMap}>Reserve seats</button></header>
-    <div className="preview-notice">Preview mode: bookings are not saved</div>
+    <CinemaAtmosphere />
+    {IS_MOCK && <div className="preview-notice">Preview mode: bookings are not saved</div>}
     <section id="top" className="title-block">
       <StripeWave bg="transparent" className="wave-texture" />
       <div className="container container-wide title-inner">
+        <W4WLogo />
         <p className="eyebrow-caps">Now booking · {EVENT.film} charity screening</p>
         <h1>Claim a seat. <span>Bring clean water.</span></h1>
-        <p className="facts-line">{factsLine}</p>
+        <p className="facts-line">{facts.map((fact, i) => <Fragment key={fact}>{i > 0 && ' '}<span>{fact}{i < facts.length - 1 && ' ·'}</span></Fragment>)}</p>
         <div className="status-row">
           <span className="status-pill"><b>{animatedSeatsLeft}</b> seats available</span>
           {live ? <span className="live eyebrow-caps"><i aria-hidden="true" />Live</span> : <span className="live">Connecting…</span>}

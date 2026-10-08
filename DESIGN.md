@@ -32,22 +32,95 @@ microsite.
 - **Layout goal:** booking with as little scrolling as possible. On desktop
   the seat map and the booking panel are visible side by side; on mobile
   the flow is map → sticky bar → booking sheet.
-- **Reference:** the JCI Marikina Sapatos booking page (layout and feel only).
-  Copy its one-screen booking layout and cinema glow; do NOT copy its
-  colors (green/gold), fonts (serif), logo treatment or textures. Everything
-  stays in W4W tokens and fonts.
+- **Reference:** the JCI Marikina Sapatos booking page. Approved by Patrick
+  Manuel (Country Director): match its look and feel closely, "with our
+  twist". Do NOT copy JCI's logo, wording ("Doomsday is coming…"), diamond
+  pattern or exact layout details pixel for pixel; it must read as a W4W
+  page, not a JCI clone.
+- **No Marvel assets, ever:** no posters or poster crops, no Doctor Doom or
+  any character, no recreated stained-glass windows from the poster, no
+  Marvel/Avengers logos, no "12.18.26 IS DOOMSDAY" style lettering. The film
+  title is plain text. All atmosphere is original, built in code.
+
+### Event theme (overrides base colors and fonts for this microsite only)
+
+This microsite uses a dark-green cinematic theme to match the film. The base
+W4W system (Sections 1–14) stays the standard for every other W4W project.
+Define these extra tokens on `:root` next to the base tokens:
+
+| Token | Value | Use |
+|---|---|---|
+| `--ev-bg` | `#050a07` | Page and header background |
+| `--ev-panel` | `#0b130e` | Seat map and booking panels |
+| `--ev-input` | `#08100b` | Input fields |
+| `--ev-green` | `#3ee083` | Neon accent: glows, available seats, screen arc, LIVE, seat counts |
+| `--ev-green-deep` | `#10301e` | Available seat fill |
+| `--ev-gold` | `#d9a441` | Eyebrows, panel titles, corner brackets, row letters, reserved seats |
+| `--ev-text` | `#e8efe9` | Headings and strong text |
+| `--ev-muted` | `#9fb3a6` | Body text, labels, placeholders |
+| `--ev-line` | `rgba(62,224,131,.28)` | Borders and dividers |
+
+Token mapping: wherever deviations 1–15 below name a base token, use the
+event token instead: `--char` → `--ev-bg`, `--char-2` → `--ev-panel`,
+`--blue` / `--blue-light` used for glows, the screen arc, the LIVE dot and
+accents → `--ev-green`, `--muted-dark` → `--ev-muted`, `--line-dark` →
+`--ev-line`, white headings → `--ev-text`. Corner brackets, eyebrows and
+row letters → `--ev-gold`.
+
+**W4W twist (keep these in W4W colors and marks):**
+- The W4W logo at the top of the title block (no boxed badge, unlike JCI),
+  and the mission quote in the footer: `--blue-light` / the official logo.
+- The wave texture (deviation 13) replaces JCI's diamond pattern, tinted
+  `--ev-green` at ≤5%.
+- Particles are rising "water-light" droplets (deviation 17).
+
+**Fonts:**
+- Display: **Cinzel** 600/700 (Google Fonts, `latin` + `latin-ext`),
+  fallback `Georgia, serif`, as `--font-display`. Use for the h1, panel
+  titles ("Your seats", "How to pay"), eyebrows, the SCREEN label and
+  primary button text, uppercase with `letter-spacing: .12–.3em`.
+- Body: Hanken Grotesk stays for body text, labels, inputs and seat
+  numbers.
+- Oswald is not used on this page. Prices and the ₱ sign are set in Hanken
+  (Cinzel may lack the ₱ glyph).
+
+**Seat states in the event theme:**
+- Available: `--ev-green-deep` fill, 1px `--ev-green` border at 70%,
+  `--ev-text` number, green glow (deviation 11).
+- Selected ("Your selection"): solid `--ev-gold` fill, `--ev-bg` number,
+  solid `--ev-gold` border, glow
+  `0 0 12px color-mix(in srgb, var(--ev-gold) 55%, transparent)`. Seat
+  chips in the booking panel use the same gold.
+- Reserved (pending payment): transparent fill, 1px dashed
+  `color-mix(in srgb, var(--ev-gold) 70%, transparent)` border, number in
+  the same dimmed gold, no glow. Selected and reserved share the gold hue,
+  so they must differ by shape and weight: solid filled + glow (yours)
+  vs. hollow dashed outline (someone else's). Never make them look alike.
+- Taken: `color-mix(in srgb, var(--ev-muted) 18%, transparent)` fill, "×",
+  no glow.
+Legend swatches match exactly. Reserved is no longer hatched; the dashed
+gold border is its non-color cue.
+
 - **Section rhythm:**
-  1. Header (white bar): wordmark "Waves for Water Philippines" ([LOGO TBD]
-     until the real logo is supplied), `.btn-primary` "Reserve seats".
-  2. Preview notice strip (remove at launch).
+  1. **No header bar** (deviation 19). The page starts with the preview strip,
+     then the title block.
+  2. Preview notice strip: shown ONLY while `lib/booking-store.ts` is the
+     mock (it exports `IS_MOCK = true`); the real backend exports `false`
+     and the strip disappears automatically. Style it quietly:
+     `--ev-panel`, `--ev-muted` text, 1px `--ev-line` border.
   3. **Title block (dark `--char`), compact, no hero section:** total height
      about 240–280px on desktop. Background: the faint wave texture
      (deviation 13) + the projector beam (deviation 4). Content, top to
      bottom:
+     - **W4W logo**, top-left, above the eyebrow: the official reversed
+       (light-on-dark) W4W logo, ~44px tall desktop / 36px mobile, no box
+       or card behind it, `alt="Waves for Water Philippines"`. Until the
+       file is supplied ([LOGO TBD]), show the wave icon + "Waves for Water
+       Philippines" wordmark in `--blue-light`.
      - `.eyebrow-caps` "Now booking · Avengers: Doomsday charity screening"
        (the film must be named in the title block, text only)
-     - `h1` "Claim a seat. Bring clean water." in Oswald 700 uppercase at
-       `clamp(30px, 3.6vw, 48px)` (second sentence `--blue-light`)
+     - `h1` "Claim a seat. Bring clean water." in Cinzel 700 uppercase at
+       `clamp(30px, 3.6vw, 48px)` (second sentence `--ev-green`)
      - ONE line of facts in `--muted-dark`: "Sat, Dec 19, 2026 · Doors 3:30 PM
        · Movie 4:00 PM · Cinema 7, [VENUE TBD] · ₱[PRICE TBD] per seat"
        (confirmed from the cinema's block screening sheet: date, Cinema 7,
@@ -150,10 +223,13 @@ microsite.
       white sine lines at ≤5% opacity, large scale, non-interactive,
       `aria-hidden`. It replaces any other pattern; no grids, dots or
       ornaments.
-  14. **Error text on dark panels:** `color-mix(in srgb, #d64545 70%, #fff)`
+  14. **Error text on dark panels:** token `--error-on-dark` =
+      `color-mix(in srgb, #d64545 70%, #fff)`
       (about 5:1 on `--char-2`), always with a short message, never color
-      alone. Plain `#d64545` stays for errors on light surfaces.
-  15. **Wider booking zone:** the header, title block, booking zone and
+      alone. Defined once in `:root` next to the event tokens. Plain
+      `#d64545` stays for
+      invalid-field borders and for errors on light surfaces.
+  15. **Wider booking zone:** the preview strip, title block, booking zone and
       footer all use `min(1280px, 100% - 48px)` instead of the 1120px
       container, so every edge lines up and the
       seat map gets more width. On desktop, seats are never smaller than
@@ -161,6 +237,30 @@ microsite.
       that size, the map panel scrolls sideways inside itself (same swipe
       wrapper as mobile) rather than shrinking seats. Don't shrink seats to
       fit the viewport height; a short page scroll is acceptable.
+  16. **Cinematic light shafts (background).** Original, code-only: 3–5
+      soft diagonal/vertical beams of `--ev-green` (and one faint
+      `--ev-gold` warm beam) falling from the top of the page, built from
+      blurred linear/conic gradients at ≤10% opacity, plus a dark vignette
+      at the edges and a faint haze. Slow shimmer (≥14s). Behind all
+      content, `pointer-events: none`, `aria-hidden`. Off under reduced
+      motion (static beams stay).
+  17. **Particles.** One `<canvas>` behind the content, fixed position.
+      Slowly rising "water-light" motes: ~45 on desktop, ~20 on mobile,
+      1–3px, mostly `--ev-green`, ~20% `--blue-light`, opacity 0.15–0.5,
+      gentle sideways drift, fading in and out. Device pixel ratio capped at
+      2. Pause when the tab is hidden; render nothing under reduced motion.
+      No libraries.
+  18. **Primary button (event theme):** keeps the W4W pill shape (twist);
+      fill `color-mix(in srgb, var(--ev-green) 22%, var(--ev-panel))`,
+      1px `--ev-green` border, `--ev-text` Cinzel label, green glow on
+      hover. Disabled: 45% opacity.
+  19. **No header.** This page has no header bar; the logo sits in the
+      title block instead. The base rule "one header per project" is waived
+      for this microsite.
+  20. **Input borders (event theme):**
+      `color-mix(in srgb, var(--ev-green) 50%, var(--ev-input))` so input
+      boundaries meet the 3:1 non-text contrast minimum. Focus: solid
+      `--ev-green` border + 25% green ring.
 - **Booking panel (desktop) / sheet (mobile), one column, top to bottom:**
   1. **Your seats:** chips (removable), count, amount due (₱[PRICE TBD]
      while price is null). Empty: "No seats selected · Tap a glowing seat

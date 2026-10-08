@@ -13,12 +13,25 @@ export function SeatMap({ selected, onChange, submitting = false, occupancy = 0 
   useEffect(() => { latest.current = { selected, onChange, submitting } })
   // While our own booking is in flight, its seats turning reserved is not someone else taking them.
   useEffect(() => { getSeats().then(setSeats); return subscribe(next => { const { selected, onChange, submitting } = latest.current; const unavailable = submitting ? [] : selected.filter(id => next.find(s => s.id === id)?.status !== 'available'); if (unavailable.length) { onChange(selected.filter(id => !unavailable.includes(id))); setNotice(`${unavailable.join(', ')} is no longer available.`) }; setSeats(next) }) }, [])
+  const wrapRef = useRef<HTMLDivElement>(null)
+  // Mobile: start with the middle block centred (beside the pinned row letters) so the screen and its label are in view
+  useEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap || !window.matchMedia('(max-width: 700px)').matches) return
+    const [start, nums] = Object.values(seatLayout)[0][1]
+    const cols = wrap.querySelector('.seat-grid')?.children
+    const label = wrap.querySelector('.row-label')
+    if (!cols || !label) return
+    const box = wrap.getBoundingClientRect()
+    const middle = (cols[start - 1].getBoundingClientRect().left + cols[start + nums.length - 2].getBoundingClientRect().right) / 2
+    wrap.scrollLeft += middle - (label.getBoundingClientRect().right + box.right) / 2
+  }, [])
   const byId = useMemo(() => new Map(seats.map(s => [s.id, s])), [seats])
   const toggle = (id: string) => { const next = selected.includes(id) ? selected.filter(s => s !== id) : selected.length < MAX_SEATS ? [...selected, id] : selected; onChange(next); setPopped(id); window.setTimeout(() => setPopped(current => current === id ? '' : current), 220); setNotice(next.length >= MAX_SEATS && !selected.includes(id) ? `You can select up to ${MAX_SEATS} seats.` : '') }
   return <div className="seat-stage">
     <p className="seat-helper">Select up to 10 seats. Seats are reserved once you submit your payment proof.</p>
     <div className="seat-scroll-hint">← Swipe to see all seats →</div>
-    <div className="seat-map-wrap"><div className="seat-map">
+    <div className="seat-map-wrap" ref={wrapRef}><div className="seat-map">
       <div className="screen" style={{ '--occupancy': occupancy } as React.CSSProperties}>
         <div className="screen-arc" aria-hidden="true">
           <svg className="screen-arc-glow" viewBox="0 0 1000 24" preserveAspectRatio="none" focusable="false"><path d="M4 21 Q500 -3 996 21" /></svg>
