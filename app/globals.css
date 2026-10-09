@@ -1110,6 +1110,411 @@ footer {
   border: 0;
 }
 
+/* Admin (/admin): payment verification. Event theme, no atmosphere or extra motion. */
+.admin {
+  padding: 24px 0 48px;
+}
+
+.admin h1 {
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.admin .eyebrow-caps {
+  margin: 0 0 6px;
+}
+
+.admin-status {
+  margin: 20vh 16px 0;
+  color: var(--ev-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.admin-login {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(400px, calc(100% - 32px));
+  margin: 10vh auto 0;
+  padding: 24px;
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 14px;
+}
+
+.admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ev-line);
+}
+
+.admin-account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  color: var(--ev-muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.admin-btn-small {
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.admin-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+}
+
+.admin-stat span {
+  color: var(--ev-muted);
+  font-size: 12px;
+}
+
+.admin-stat strong {
+  color: var(--ev-green);
+  font-size: 22px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-search {
+  position: relative;
+  flex: 1 1 240px;
+}
+
+.admin-search svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: var(--ev-muted);
+  pointer-events: none;
+}
+
+.admin-search .input {
+  padding-left: 36px;
+}
+
+.admin-updated {
+  margin: 8px 0 0;
+  color: var(--ev-muted);
+  font-size: 12px;
+}
+
+.admin-notice {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 10px;
+  color: var(--ev-green);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-notice.is-error {
+  border-color: #d64545;
+  color: var(--error-on-dark);
+}
+
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--ev-line);
+  border-radius: 999px;
+  color: var(--ev-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-tab[aria-selected="true"] {
+  background: color-mix(in srgb, var(--ev-green) 14%, transparent);
+  border-color: var(--ev-green);
+  color: var(--ev-text);
+}
+
+.admin-tab b {
+  color: var(--ev-green);
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-empty {
+  margin: 0;
+  padding: 24px 0;
+  color: var(--ev-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.admin-booking {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 14px;
+}
+
+.admin-booking-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.admin-ref {
+  color: var(--ev-green);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.admin-name {
+  margin: 2px 0 0;
+  color: var(--ev-text);
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.admin-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  color: var(--ev-muted);
+  font-size: 12px;
+}
+
+.admin-amount strong {
+  color: var(--ev-text);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.admin-booking-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.admin-details {
+  flex: 1 1 280px;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.admin-details dt {
+  padding-top: 2px;
+  color: var(--ev-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+}
+
+.admin-details dd {
+  margin: 0;
+  color: var(--ev-text);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.admin-details dd span {
+  display: block;
+}
+
+.admin-details a {
+  color: var(--ev-green);
+}
+
+.admin-shot {
+  display: block;
+  flex: 0 0 auto;
+  width: 140px;
+  overflow: hidden;
+  background: var(--ev-input);
+  border: 1px solid var(--ev-line);
+  border-radius: 10px;
+}
+
+.admin-shot img {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  object-position: top;
+}
+
+.admin-shot.is-loading {
+  display: grid;
+  place-items: center;
+  height: 180px;
+  padding: 8px;
+  color: var(--ev-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.admin-shot-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 220px;
+  margin: 0;
+  color: var(--ev-muted);
+  font-size: 12px;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ev-line);
+}
+
+.admin-actions button {
+  min-width: 140px;
+}
+
+.admin-dialog {
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  padding: 0;
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 14px;
+  color: var(--ev-text);
+}
+
+.admin-dialog::backdrop {
+  background: color-mix(in srgb, var(--ev-bg) 85%, transparent);
+}
+
+.admin-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+}
+
+.admin-dialog h2 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.admin-dialog-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.admin-dialog-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-block: 1px solid var(--ev-line);
+  color: var(--ev-muted);
+  font-size: 13px;
+}
+
+.admin-dialog-amount strong {
+  color: var(--ev-text);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.admin-dialog-seats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--ev-text);
+  font-size: 14px;
+}
+
+.admin-dialog-seats span:last-child {
+  color: var(--ev-muted);
+}
+
+.admin-warning {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--ev-gold);
+  border-radius: 10px;
+  color: var(--ev-gold);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.admin-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 /* Animations */
 @keyframes projector-drift {
   from {
@@ -1321,6 +1726,11 @@ footer {
     align-items: stretch;
     margin-inline: -16px;
     padding: 14px 16px;
+  }
+
+  /* Admin: full-width review buttons, easy to hit on a phone */
+  .admin-actions button {
+    flex: 1;
   }
 }
 
