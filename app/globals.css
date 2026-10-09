@@ -205,39 +205,35 @@ button:disabled:not(.seat) {
 }
 
 /* W4W logo (Section 0, deviation 19): top of the title block, no box behind it.
-   Fixed height so swapping the wordmark for the logo file doesn't shift the page. */
+   Fixed height; the stacked logo's "PHILIPPINES" line is unreadable any smaller. */
 .title-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 44px;
+  height: 88px;
   margin-bottom: 12px;
-  color: var(--blue-light);
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .title-logo img {
+  display: block;
   height: 100%;
   width: auto;
 }
 
-.title-logo svg {
-  width: 28px;
-  height: 28px;
-}
-
-/* Wave texture (deviation 13): StripeWave lines, static, behind the content */
+/* Wave texture (deviation 13): StripeWave lines, static, behind the content.
+   The wrapper locks the StripeWave viewBox ratio (1200×120) at ≥1400px wide, centred
+   and cropped, so the waves keep their proportions at every width. */
 .title-block .wave-texture {
   position: absolute;
   z-index: -1;
   top: 50%;
-  left: 0;
-  width: 100%;
-  height: 200%;
-  transform: translateY(-50%);
+  left: 50%;
+  width: max(100%, 1400px);
+  aspect-ratio: 10 / 1;
+  transform: translate(-50%, -50%);
   opacity: .05;
   pointer-events: none;
+}
+
+.title-block .wave-texture .stripe-wave {
+  height: 100%;
 }
 
 /* Tint the StripeWave lines (W4W twist); the component itself stays white */
@@ -265,16 +261,13 @@ button:disabled:not(.seat) {
 }
 
 .title-block h1 {
-  margin: 10px 0;
-  font-size: clamp(30px, 3.6vw, 48px);
+  margin: 8px 0 10px;
+  color: var(--ev-text);
+  font-size: clamp(24px, 3vw, 40px);
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: .12em;
   text-transform: uppercase;
-}
-
-.title-block h1 span {
-  color: var(--ev-green);
 }
 
 .facts-line {
@@ -284,22 +277,43 @@ button:disabled:not(.seat) {
   line-height: 1.5;
 }
 
+/* Cause line (Section 0): the only place the page says what the money is for */
+.cause-line {
+  margin: 10px 0 0;
+  color: var(--ev-gold);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
 .status-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  gap: 8px 24px;
   margin-top: 14px;
   font-size: 13px;
 }
 
-.status-row > * + *::before {
+/* Separator hangs in the gap after each item (outside the pill border),
+   so a wrapped line never starts with "·" */
+.status-row > :not(:last-child)::after {
   content: "·";
-  margin-right: 12px;
+  position: absolute;
+  top: 50%;
+  right: -14px;
+  transform: translateY(-50%);
   color: var(--ev-muted);
+  font-family: var(--font-body), Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .status-pill {
+  position: relative;
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
@@ -316,6 +330,7 @@ button:disabled:not(.seat) {
 }
 
 .live {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1072,29 +1087,15 @@ footer {
 
 .footer-inner {
   border-top: 1px solid var(--ev-line);
-  padding-top: 24px;
+  padding-top: 16px;
 }
 
-.footer-inner .eyebrow-caps {
+/* Footer: one slim line (Section 0) */
+.footer-inner p {
   margin: 0;
-}
-
-.mission {
-  font-family: var(--font-display), Georgia, serif;
-  color: var(--blue-light);
-  font-size: clamp(20px, 2.2vw, 28px);
-  line-height: 1.15;
-  max-width: 600px;
-  text-transform: uppercase;
-  margin: 10px 0 18px;
-}
-
-.footer-base {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
   color: var(--ev-muted);
   font-size: 12px;
+  line-height: 1.5;
 }
 
 .sr-only {
@@ -1247,14 +1248,12 @@ footer {
   }
 
   .title-logo {
-    height: 36px;
+    height: 64px;
     margin-bottom: 8px;
-    font-size: 16px;
   }
 
-  .title-logo svg {
-    width: 24px;
-    height: 24px;
+  .title-block .wave-texture {
+    opacity: .03;
   }
 
   .title-block h1 {
@@ -1322,11 +1321,6 @@ footer {
     align-items: stretch;
     margin-inline: -16px;
     padding: 14px 16px;
-  }
-
-  .footer-base {
-    flex-direction: column;
-    gap: 10px;
   }
 }
 

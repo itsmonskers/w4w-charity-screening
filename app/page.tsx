@@ -57,12 +57,13 @@ export default function Page() {
     <CinemaAtmosphere />
     {IS_MOCK && <div className="preview-notice">Preview mode: bookings are not saved</div>}
     <section id="top" className="title-block">
-      <StripeWave bg="transparent" className="wave-texture" />
+      <div className="wave-texture" aria-hidden="true"><StripeWave bg="transparent" /></div>
       <div className="container container-wide title-inner">
         <W4WLogo />
-        <p className="eyebrow-caps">Now booking · {EVENT.film} charity screening</p>
-        <h1>Claim a seat. <span>Bring clean water.</span></h1>
+        <p className="eyebrow-caps">Now booking</p>
+        <h1>{EVENT.film} Charity Screening</h1>
         <p className="facts-line">{facts.map((fact, i) => <Fragment key={fact}>{i > 0 && ' '}<span>{fact}{i < facts.length - 1 && ' ·'}</span></Fragment>)}</p>
+        <p className="cause-line">Every seat helps bring clean water to communities in need.</p>
         <div className="status-row">
           <span className="status-pill"><b>{animatedSeatsLeft}</b> seats available</span>
           {live ? <span className="live eyebrow-caps"><i aria-hidden="true" />Live</span> : <span className="live">Connecting…</span>}
@@ -84,6 +85,6 @@ export default function Page() {
         <BookingPanel selected={selected} onSelectedChange={setSelected} onSubmittingChange={setSubmitting} onBookedChange={setBooked} onReserveMore={() => { setSheetOpen(false); scrollToMap() }} sheetOpen={sheetOpen} onSheetOpenChange={setSheetOpen} />
       </div>
     </section>
-    <footer><div className="container container-wide footer-inner"><p className="eyebrow-caps">Waves for Water Philippines</p><p className="mission">"To get clean water to every single person who needs it."</p><div className="footer-base"><span>Access to clean water is a fundamental human right.</span><span>[CONTACT TBD]</span></div></div></footer>
+    <footer><div className="container container-wide footer-inner"><p>© 2026 Waves for Water Philippines · Questions? [CONTACT TBD]</p></div></footer>
   </main>
 }

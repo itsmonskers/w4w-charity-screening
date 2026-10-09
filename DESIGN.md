@@ -68,8 +68,9 @@ accents → `--ev-green`, `--muted-dark` → `--ev-muted`, `--line-dark` →
 row letters → `--ev-gold`.
 
 **W4W twist (keep these in W4W colors and marks):**
-- The W4W logo at the top of the title block (no boxed badge, unlike JCI),
-  and the mission quote in the footer: `--blue-light` / the official logo.
+- The official W4W Philippines logo (stacked "W4W" + "PHILIPPINES", white
+  and W4W blue) at the top of the title block, with no boxed badge behind
+  it (unlike JCI).
 - The wave texture (deviation 13) replaces JCI's diamond pattern, tinted
   `--ev-green` at ≤5%.
 - Particles are rising "water-light" droplets (deviation 17).
@@ -112,23 +113,25 @@ gold border is its non-color cue.
      about 240–280px on desktop. Background: the faint wave texture
      (deviation 13) + the projector beam (deviation 4). Content, top to
      bottom:
-     - **W4W logo**, top-left, above the eyebrow: the official reversed
-       (light-on-dark) W4W logo, ~44px tall desktop / 36px mobile, no box
-       or card behind it, `alt="Waves for Water Philippines"`. Until the
-       file is supplied ([LOGO TBD]), show the wave icon + "Waves for Water
-       Philippines" wordmark in `--blue-light`.
-     - `.eyebrow-caps` "Now booking · Avengers: Doomsday charity screening"
-       (the film must be named in the title block, text only)
-     - `h1` "Claim a seat. Bring clean water." in Cinzel 700 uppercase at
-       `clamp(30px, 3.6vw, 48px)` (second sentence `--ev-green`)
-     - ONE line of facts in `--muted-dark`: "Sat, Dec 19, 2026 · Doors 3:30 PM
+     - **W4W logo**, top-left: `/w4w-logo.png` (trimmed transparent PNG,
+       542×480), shown at 88px tall on desktop and 64px on mobile (the
+       stacked logo's "PHILIPPINES" line is unreadable smaller than that).
+       `alt="Waves for Water Philippines"`, no box or card behind it.
+     - `.eyebrow-caps` "Now booking" in `--ev-gold`.
+     - `h1` "Avengers: Doomsday Charity Screening" in Cinzel 700 uppercase at
+       `clamp(24px, 3vw, 40px)`, `--ev-text` (like JCI's title line). The
+       old "Claim a seat. Bring clean water." headline is removed.
+     - ONE line of facts in `--ev-muted`: "Sat, Dec 19, 2026 · Doors 3:30 PM
        · Movie 4:00 PM · Cinema 7, [VENUE TBD] · ₱[PRICE TBD] per seat"
-       (confirmed from the cinema's block screening sheet: date, Cinema 7,
-       315 seats, doors 3:30 PM, movie 4:00 PM)
+       (each fact stays unbroken; wrapping happens only between facts).
+     - **Cause line** (our version of JCI's gold tagline slot): "Every seat
+       helps bring clean water to communities in need." in Cinzel, small
+       caps style, `--ev-gold`, `letter-spacing: .2em`, ~12px. This is now
+       the only place the page says what the money is for; keep it.
      - Status row: a pill badge "[n] seats available" (number in
-       `--blue-light`, Oswald) · LIVE indicator · "[n] days to go"
+       `--ev-green`) · LIVE indicator · "[n] days to go"
      - Compact steps line: "01 Pick seats · 02 Pay via QR & upload proof ·
-       03 Get e-tickets after we verify"
+       03 Get e-tickets after we verify" (separators never start a line).
      No CTA buttons in the title block on desktop (the map is right there).
      On mobile, one `.btn-primary` "Pick your seats" that scrolls to the map.
   4. **Booking zone (dark `--char`), the "cinema zone":**
@@ -140,9 +143,10 @@ gold border is its non-color cue.
        "Continue" opens the booking panel as a full-height bottom sheet
        with a close button (focus trapped, Esc closes, returns focus).
      - No separate "How it works" or "Finish your booking" sections.
-  5. Footer (dark): slim. Org name, mission quote, core belief,
-     [CONTACT TBD]. Separated from the booking zone by spacing and a
-     `--line-dark` rule, not a StripeWave (deviation 10).
+  5. **Footer: one slim line**, no mission quote or core belief:
+     "© 2026 Waves for Water Philippines · Questions? [CONTACT TBD]" in
+     `--ev-muted`, 12px, above a 1px `--ev-line` rule. It stays because
+     people with payment or ticket problems need a way to reach W4W.
 - **Deviations from the base system:**
   1. Eyebrows on light sections use
      `color-mix(in srgb, var(--blue) 78%, var(--ink))` to pass WCAG AA.
@@ -218,11 +222,15 @@ gold border is its non-color cue.
       `.eyebrow-caps`-style in `--muted-dark` (11px). Focus: `--blue-light`
       border + `color-mix(in srgb, var(--blue-light) 25%, transparent)` ring.
       Errors stay `#d64545`.
-  13. **Wave texture.** The title block background (and optionally the
-      whole dark block) carries the StripeWave motif as a static texture:
-      white sine lines at ≤5% opacity, large scale, non-interactive,
-      `aria-hidden`. It replaces any other pattern; no grids, dots or
-      ornaments.
+  13. **Wave texture.** The title block background carries the StripeWave
+      motif as a static texture: lines at ≤5% opacity, large scale,
+      non-interactive, `aria-hidden`. It replaces any other pattern; no
+      grids, dots or ornaments. **It must keep its proportions:** never
+      stretch it to the container (no `preserveAspectRatio="none"` for the
+      texture). Render it at a fixed minimum width of ~1400px, centered
+      and cropped (`xMidYMid slice` or an oversized, overflow-hidden
+      wrapper), so phones show a crop of the same gentle waves as desktop.
+      On ≤700px, lower it to ≤3% opacity.
   14. **Error text on dark panels:** token `--error-on-dark` =
       `color-mix(in srgb, #d64545 70%, #fff)`
       (about 5:1 on `--char-2`), always with a short message, never color
