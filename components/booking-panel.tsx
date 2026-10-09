@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState, type Dispatch, type FormEvent, type ReactNode, type RefObject, type SetStateAction } from 'react'
 import { Check, Copy, Download, Upload, X } from 'lucide-react'
-import { reserveSeats } from '@/lib/booking-store'
-import { EVENT, MAX_SEATS, eventTotal, type BookingInput } from '@/lib/event-config'
+import { reserveSeats, type ReserveError, type ReserveInput, type Settings } from '@/lib/booking-store'
+import { EVENT, formatPrice } from '@/lib/event-config'
 
 export const EVENT_DATE_SHORT = 'Sat, Dec 19, 2026'
 export const EVENT_PLACE = `Cinema 7, ${EVENT.venue}`
+export const seatsTotal = (price: number | null, count: number) => formatPrice(price === null ? null : price * count)
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/webp']
@@ -15,7 +16,18 @@ const emptyForm = { fullName: '', contact: '', email: '', company: '', notes: ''
 
 type Form = typeof emptyForm
 type Errors = Partial<Record<(typeof FIELD_ORDER)[number], string>>
-type Booking = { reference: string; seats: string[]; email: string }
+type Booking = { reference: string; seats: string[]; email: string; amount: number | null }
+
+const ERROR_MESSAGES: Record<ReserveError, string> = {
+  bookings_closed: 'Bookings are closed, so we couldn’t reserve your seats.',
+  invalid_seat_count: 'That number of seats can’t be booked. Please change your selection and try again.',
+  invalid_seats: 'Some of the selected seats don’t exist. Please refresh the page and choose again.',
+  missing_details: 'Please check your name, contact and email. Each is required, and notes must be under 1,000 characters.',
+  invalid_email: 'That email address doesn’t look right. Please check it and try again.',
+  missing_screenshot: 'We couldn’t find your payment screenshot. Please upload it again and retry.',
+  upload_failed: 'Couldn’t upload your screenshot, please try again.',
+  unknown: 'Something went wrong and your seats were not reserved. Please try again.',
+}
 
 function validate(selected: string[], form: Form, file: File | null, consent: boolean) {
   const errors: Errors = {}
@@ -56,6 +68,7 @@ function Field({ id, label, hint, error, children }: { id: string; label: string
 }
 
 type Props = {
+  settings: Settings | null
   selected: string[]
   onSelectedChange: Dispatch<SetStateAction<string[]>>
   onSubmittingChange: (submitting: boolean) => void
@@ -65,7 +78,7 @@ type Props = {
   onSheetOpenChange: Dispatch<SetStateAction<boolean>>
 }
 
-export function BookingPanel({ selected, onSelectedChange, onSubmittingChange, onBookedChange, onReserveMore, sheetOpen, onSheetOpenChange }: Props) {
+export function BookingPanel({ settings, selected, onSelectedChange, onSubmittingChange, onBookedChange, onReserveMore, sheetOpen, onSheetOpenChange }: Props) {
   const [form, setForm] = useState(emptyForm)
   const [file, setFile] = useState<File | null>(null)
   const [consent, setConsent] = useState(false)
@@ -125,17 +138,18 @@ export function BookingPanel({ selected, onSelectedChange, onSubmittingChange, o
     }
     setLoading(true)
     onSubmittingChange(true)
-    const input: BookingInput = { ...form, seats: selected, proofName: file.name }
+    const input: ReserveInput = { ...form, seats: selected, proof: file }
     const response = await reserveSeats(input)
     setLoading(false)
     onSubmittingChange(false)
     if (!response.ok) {
+      if ('error' in response) return setSubmitError(ERROR_MESSAGES[response.error])
       onSelectedChange(current => current.filter(id => !response.conflicts.includes(id)))
       setSubmitError(`These seats were taken: ${response.conflicts.join(', ')}. Please choose again.`)
       return
     }
     setShowErrors(false)
-    setBooking({ reference: response.referenceCode, seats: input.seats, email: form.email })
+    setBooking({ reference: response.referenceCode, seats: response.seats, email: form.email, amount: response.amount })
     onBookedChange(true)
     onSelectedChange([])
   }
@@ -164,11 +178,11 @@ export function BookingPanel({ selected, onSelectedChange, onSubmittingChange, o
     <div className="panel-body">
       {booking ? <Ticket booking={booking} headingRef={ticketHeadingRef} onReserveMore={reserveMore} /> : <form className="booking-form" noValidate onSubmit={submit}>
         <section className="panel-section" aria-labelledby="bk-seats-title">
-          <div className="panel-heading"><h2 id="bk-seats-title" className="eyebrow-caps panel-title">Your seats</h2><span>{selected.length} of {MAX_SEATS}</span></div>
+          <div className="panel-heading"><h2 id="bk-seats-title" className="eyebrow-caps panel-title">Your seats</h2><span>{selected.length} of {settings?.maxSeats ?? '…'}</span></div>
           <div id="bk-seats" className="chips" tabIndex={-1} aria-describedby={describedBy(shown.seats && 'bk-seats-error')}>
             {selected.length ? selected.map(id => <span className="chip" key={id}>{id}<button type="button" aria-label={`Remove seat ${id}`} onClick={() => onSelectedChange(current => current.filter(seat => seat !== id))}><X /></button></span>) : <p className="panel-empty">No seats selected · Tap a glowing seat to start</p>}
           </div>
-          <div className="amount-row"><span>{selected.length} seat{selected.length === 1 ? '' : 's'}</span><span>Amount due <strong>{eventTotal(selected.length)}</strong></span></div>
+          <div className="amount-row"><span>{selected.length} seat{selected.length === 1 ? '' : 's'}</span><span>Amount due <strong>{seatsTotal(settings?.pricePerSeat ?? null, selected.length)}</strong></span></div>
           {shown.seats && <p className="field-error" id="bk-seats-error">{shown.seats}</p>}
         </section>
 
@@ -199,7 +213,7 @@ export function BookingPanel({ selected, onSelectedChange, onSubmittingChange, o
             <Upload />
             <span>{file ? file.name : 'Upload payment screenshot'}</span>
             <small>JPG, PNG, HEIC or WEBP · 10 MB max</small>
-            <input id="bk-proof" className="sr-only" type="file" accept="image/jpeg,image/png,image/heic,image/webp" aria-labelledby="bk-proof-label" {...invalid('proof')} aria-describedby={describedBy(shown.proof && 'bk-proof-error')} onChange={e => setFile(e.target.files?.[0] ?? null)} />
+            <input id="bk-proof" className="sr-only" type="file" accept="image/jpeg,image/png,image/heic,image/webp,.heic" aria-labelledby="bk-proof-label" {...invalid('proof')} aria-describedby={describedBy(shown.proof && 'bk-proof-error')} onChange={e => setFile(e.target.files?.[0] ?? null)} />
           </label>
           {shown.proof && <p className="field-error" id="bk-proof-error">{shown.proof}</p>}
         </div>
@@ -213,7 +227,8 @@ export function BookingPanel({ selected, onSelectedChange, onSubmittingChange, o
           {shown.consent && <p className="field-error" id="bk-consent-error">{shown.consent}</p>}
         </div>
 
-        <button type="submit" className="btn-primary full" disabled={loading}>{loading ? 'Reserving…' : 'Reserve seats'} <Check /></button>
+        {settings?.bookingsOpen === false && <p className="info-notice" role="status">Bookings are closed</p>}
+        <button type="submit" className="btn-primary full" disabled={loading || !settings?.bookingsOpen}>{loading ? 'Reserving…' : 'Reserve seats'} <Check /></button>
         {showErrors && errorCount > 0 && <p className="field-error" role="alert">Please check the {errorCount === 1 ? 'highlighted field' : `${errorCount} highlighted fields`} above.</p>}
         {submitError && <p className="field-error" role="alert">{submitError}</p>}
       </form>}
@@ -243,7 +258,7 @@ function Ticket({ booking, headingRef, onReserveMore }: { booking: Booking; head
       </div>
       <div className="ticket-lines">
         {seatsByRow(booking.seats).map(line => <span key={line}>{line}</span>)}
-        <strong>{count} ticket{count === 1 ? '' : 's'} · Total {eventTotal(count)}</strong>
+        <strong>{count} ticket{count === 1 ? '' : 's'} · Total {formatPrice(booking.amount)}</strong>
       </div>
     </div>
     <div className="ticket-perforation" aria-hidden="true" />

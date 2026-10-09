@@ -6,9 +6,16 @@ standard.
 
 ## Project
 - Next.js App Router + Tailwind v4, TypeScript. Hosted on Netlify (not Vercel).
-- Front end only for now. All seat/booking data goes through
-  `lib/booking-store.ts` (in-memory mock). A real backend will replace that one
-  file later, so no other file may contain data logic.
+- Data: all seat/booking data goes through `lib/booking-store.ts`. With the
+  Supabase env vars set it uses Supabase; without them it falls back to the
+  in-memory mock (`IS_MOCK = true`). No other UI file may contain data logic.
+- Database: Supabase project `w4w-doomsday-screening`. The schema lives in
+  `supabase/schema.sql` (tables seats, event_settings, bookings, tickets,
+  admins; functions reserve_seats, approve_booking, reject_booking,
+  is_admin). Never change the database from code; schema changes are made
+  by Simon in the SQL Editor.
+- Never use or ask for the Supabase service_role / secret key in this app.
+  Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
 ## Protected files — do not change unless the task explicitly says so
 - `lib/seat-layout.ts` (exact Cinema 7 layout, verified against the PDF)

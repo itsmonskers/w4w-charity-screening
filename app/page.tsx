@@ -3,14 +3,13 @@
 import { Fragment, useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { CinemaAtmosphere } from '@/components/cinema-atmosphere'
-import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE } from '@/components/booking-panel'
+import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE, seatsTotal } from '@/components/booking-panel'
 import { SeatMap } from '@/components/seat-map'
 import { StripeWave } from '@/components/stripe-wave'
 import { W4WLogo } from '@/components/w4w-logo'
-import { IS_MOCK, getSeats, subscribe } from '@/lib/booking-store'
-import { EVENT, PRICE_PER_SEAT, eventTotal, formatPrice, type Seat } from '@/lib/event-config'
+import { IS_MOCK, getSeats, getSettings, subscribe, type Settings } from '@/lib/booking-store'
+import { EVENT, formatPrice, type Seat } from '@/lib/event-config'
 
-const facts = [EVENT_DATE_SHORT, ...EVENT.time.split(' · '), EVENT_PLACE, `${formatPrice(PRICE_PER_SEAT)} per seat`]
 const steps = ['Pick seats', 'Pay via QR & upload proof', 'Get e-tickets after we verify']
 
 function daysToEvent() {
@@ -28,9 +27,13 @@ export default function Page() {
   const [submitting, setSubmitting] = useState(false)
   const [booked, setBooked] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [settings, setSettings] = useState<Settings | null>(null)
+  const price = settings?.pricePerSeat ?? null
+  const facts = [EVENT_DATE_SHORT, ...EVENT.time.split(' · '), EVENT_PLACE, `${formatPrice(price)} per seat`]
 
   useEffect(() => {
-    getSeats().then(seats => { setAvailableSeats(seats); setLive(true) })
+    getSeats().then(seats => { setAvailableSeats(seats); setLive(true) }, () => {})
+    getSettings().then(setSettings, () => {})
     return subscribe(setAvailableSeats)
   }, [])
 
@@ -76,13 +79,13 @@ export default function Page() {
     <section id="seats" className="booking-zone" aria-label="Seat map and booking">
       <div className="container container-wide booking-grid">
         <div className="map-column">
-          <SeatMap selected={selected} onChange={setSelected} submitting={submitting} occupancy={reservedCount / 315} />
+          <SeatMap selected={selected} onChange={setSelected} submitting={submitting} occupancy={reservedCount / 315} maxSeats={settings?.maxSeats ?? 0} />
           <div className="selection-bar">
-            <div><strong>{selected.length} seat{selected.length === 1 ? '' : 's'}</strong><span>{selected.length ? selected.join(' · ') : 'No seats selected'} · {eventTotal(selected.length)}</span></div>
+            <div><strong>{selected.length} seat{selected.length === 1 ? '' : 's'}</strong><span>{selected.length ? selected.join(' · ') : 'No seats selected'} · {seatsTotal(price, selected.length)}</span></div>
             <button className="btn-primary" disabled={!selected.length && !booked} aria-haspopup="dialog" onClick={() => setSheetOpen(true)}>{booked && !selected.length ? 'View ticket' : 'Continue'} <ArrowRight /></button>
           </div>
         </div>
-        <BookingPanel selected={selected} onSelectedChange={setSelected} onSubmittingChange={setSubmitting} onBookedChange={setBooked} onReserveMore={() => { setSheetOpen(false); scrollToMap() }} sheetOpen={sheetOpen} onSheetOpenChange={setSheetOpen} />
+        <BookingPanel settings={settings} selected={selected} onSelectedChange={setSelected} onSubmittingChange={setSubmitting} onBookedChange={setBooked} onReserveMore={() => { setSheetOpen(false); scrollToMap() }} sheetOpen={sheetOpen} onSheetOpenChange={setSheetOpen} />
       </div>
     </section>
     <footer><div className="container container-wide footer-inner"><p>© 2026 Waves for Water Philippines · Questions? [CONTACT TBD]</p></div></footer>
