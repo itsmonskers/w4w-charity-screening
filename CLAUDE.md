@@ -8,7 +8,9 @@ standard.
 - Next.js App Router + Tailwind v4, TypeScript. Hosted on Netlify (not Vercel).
 - Data: all seat/booking data goes through `lib/booking-store.ts`. With the
   Supabase env vars set it uses Supabase; without them it falls back to the
-  in-memory mock (`IS_MOCK = true`). No other UI file may contain data logic.
+  in-memory mock (`IS_MOCK = true`). Admin data (login, bookings review,
+  approve/reject, screenshots, CSV) goes through `lib/admin-store.ts`.
+  No other UI file may contain data logic.
 - Database: Supabase project `w4w-doomsday-screening`. The schema lives in
   `supabase/schema.sql` (tables seats, event_settings, bookings, tickets,
   admins; functions reserve_seats, approve_booking, reject_booking,
