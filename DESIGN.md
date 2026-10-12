@@ -110,13 +110,16 @@ gold border is its non-color cue.
      and the strip disappears automatically. Style it quietly:
      `--ev-panel`, `--ev-muted` text, 1px `--ev-line` border.
   3. **Title block (dark `--char`), compact, no hero section:** total height
-     about 240–280px on desktop. Background: the faint wave texture
+     about 340–380px on desktop (same as JCI, whose map starts ~390px
+     down); on mobile the "Pick your seats" button carries people to the
+     map. Background: the faint wave texture
      (deviation 13) + the projector beam (deviation 4). Content, top to
      bottom:
      - **W4W logo**, top-left: `/w4w-logo.png` (trimmed transparent PNG,
        542×480), shown at 88px tall on desktop and 64px on mobile (the
        stacked logo's "PHILIPPINES" line is unreadable smaller than that).
        `alt="Waves for Water Philippines"`, no box or card behind it.
+       20px gap between the logo and the eyebrow (16px on mobile).
      - `.eyebrow-caps` "Now booking" in `--ev-gold`.
      - `h1` "Avengers: Doomsday Charity Screening" in Cinzel 700 uppercase at
        `clamp(24px, 3vw, 40px)`, `--ev-text` (like JCI's title line). The
@@ -131,7 +134,8 @@ gold border is its non-color cue.
      - Status row: a pill badge "[n] seats available" (number in
        `--ev-green`) · LIVE indicator · "[n] days to go"
      - Compact steps line: "01 Pick seats · 02 Pay via QR & upload proof ·
-       03 Get e-tickets after we verify" (separators never start a line).
+       03 Get your confirmation after we verify" (separators never start a
+       line).
      No CTA buttons in the title block on desktop (the map is right there).
      On mobile, one `.btn-primary` "Pick your seats" that scrolls to the map.
   4. **Booking zone (dark `--char`), the "cinema zone":**
@@ -171,8 +175,9 @@ gold border is its non-color cue.
        opacity.
   7. - **Seats-left tick:** the number counts to its new value over 400ms
        when it changes.
-  8. - **E-ticket success card:** replaces the booking panel content on
-       success. A ticket stub, top to bottom:
+  8. - **Reservation card (success view):** replaces the booking panel
+       content on success. Styled as a ticket stub, but it is a
+       reservation receipt, not a ticket. Top to bottom:
        - **Top stub:** `.eyebrow-caps` "Reservation received" + a pill
          "Pending verification" (`color-mix(in srgb, var(--blue-light) 14%,
          transparent)` fill, `--blue-light` text). Headline "You're in." in
@@ -180,15 +185,17 @@ gold border is its non-color cue.
        - **Event:** "Avengers: Doomsday · Charity screening", "Sat, Dec 19,
          2026", "Doors 3:30 PM · Movie 4:00 PM", "Cinema 7, [VENUE TBD]".
        - **Seats:** grouped by row and sorted ascending, e.g. "Row L ·
-         Seats 7, 8, 9" (one line per row), then "3 tickets · Total
+         Seats 7, 8, 9" (one line per row), then "3 seats · Total
          ₱[PRICE TBD]".
        - **Perforation:** a dashed `--line-dark` line across the card with
          two semicircle notches centered ON that line at the left and right
          edges, filled with the panel background. Notches must never
          overlap text: keep ≥24px padding inside the card.
-       - **Bottom stub:** small label "Reference code", the code in Oswald
-         `--blue-light` (~36px) with a copy button that shows "Copied" for
-         2s; then the verification message with the email in white; then
+       - **Bottom stub:** small label "Reference code", the code in Hanken
+         `--ev-green` (~36px) with "· Pending verification" beside or under
+         it, and a copy button that shows "Copied" for 2s; then the
+         Pending verification message (see "Booking status wording") with
+         the email in white; then
          `.btn-ghost` "Reserve more seats" (white).
        Card: `--char-2`, 1px `--line-dark` border, 14px radius. Enters with
        a 16px slide-up and fade over 400ms. Tokens only.
@@ -269,12 +276,27 @@ gold border is its non-color cue.
       `color-mix(in srgb, var(--ev-green) 50%, var(--ev-input))` so input
       boundaries meet the 3:1 non-text contrast minimum. Focus: solid
       `--ev-green` border + 25% green ring.
+- **Booking status wording (one code, three statuses).** Every booking has
+  ONE reference code (e.g. `W4W-DD-7K2Q`), created at submission and never
+  changed. Wherever a guest sees the code, the status is shown right next to
+  it, with exactly these words:
+  - **Pending verification** (after submitting): "We'll email you at
+    [guest's email] once your payment is verified. Keep your reference
+    code." Showing the email lets guests spot a typo before they leave.
+  - **Confirmed** (after approval, confirmation email): "Your payment is
+    verified and your seats are confirmed." Day-of instructions depend on
+    the check-in process ([CHECK-IN PROCESS TBD]); don't promise QR
+    e-tickets until it's decided.
+  - **Not approved** (after rejection, email): the reason from the
+    verifier plus "Questions? [CONTACT TBD]".
+  Format: `W4W-DD-7K2Q · Pending verification`. Admin tabs may keep the
+  internal names Pending / Approved / Rejected.
 - **Booking panel (desktop) / sheet (mobile), one column, top to bottom:**
   1. **Your seats:** chips (removable), count, amount due (₱[PRICE TBD]
      while price is null). Empty: "No seats selected · Tap a glowing seat
      to start".
-  2. Full name*, Mobile number or Messenger name*, Email* (hint: "your
-     e-tickets are sent here"), Company / organization (optional).
+  2. Full name*, Mobile number or Messenger name*, Email* (hint: "Your
+     confirmation is sent here"), Company / organization (optional).
   3. **How to pay** box (`--line-dark` dashed border, 12px radius): short
      line "Send your payment, then attach the screenshot below.", QR
      ([PAYMENT QR TBD]; later a real bank/e-wallet QR card showing the

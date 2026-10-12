@@ -6,8 +6,8 @@ import * as mock from './booking-store.mock'
 import { supabase } from './supabase'
 
 export type Settings = { pricePerSeat: number | null; maxSeats: number; bookingsOpen: boolean }
-export type ReserveInput = Omit<BookingInput, 'proofName'> & { proof: File }
-export type ReserveError = 'bookings_closed' | 'invalid_seat_count' | 'invalid_seats' | 'missing_details' | 'invalid_email' | 'missing_screenshot' | 'upload_failed' | 'unknown'
+export type ReserveInput = Omit<BookingInput, 'proofName'> & { proof: File; paymentRef: string; payerName?: string }
+export type ReserveError = 'bookings_closed' | 'invalid_seat_count' | 'invalid_seats' | 'missing_details' | 'invalid_email' | 'missing_screenshot' | 'invalid_payment_ref' | 'payment_ref_used' | 'upload_failed' | 'unknown'
 export type ReserveResult =
   | { ok: true; referenceCode: string; seats: string[]; amount: number | null }
   | { ok: false; conflicts: string[] }
@@ -16,7 +16,7 @@ export type ReserveResult =
 export const IS_MOCK = !supabase
 
 const BUCKET = 'payment-screenshots'
-const RPC_ERRORS: ReserveError[] = ['bookings_closed', 'invalid_seat_count', 'invalid_seats', 'missing_details', 'invalid_email', 'missing_screenshot']
+const RPC_ERRORS: ReserveError[] = ['bookings_closed', 'invalid_seat_count', 'invalid_seats', 'missing_details', 'invalid_email', 'missing_screenshot', 'invalid_payment_ref', 'payment_ref_used']
 // Set the type from the extension: HEIC files often have an empty file.type on Windows.
 const CONTENT_TYPES: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif' }
 const EXTENSIONS: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif' }
@@ -88,6 +88,8 @@ export async function reserveSeats(input: ReserveInput): Promise<ReserveResult> 
       p_organization: input.company ?? '',
       p_notes: input.notes ?? '',
       p_screenshot_path: path,
+      p_payment_ref: input.paymentRef,
+      p_payer_name: input.payerName ?? '',
     })
     if (error) {
       if (error.message === 'seats_unavailable') return { ok: false, conflicts: (error.details ?? '').split(',').filter(Boolean) }

@@ -13,14 +13,20 @@ for (const row of 'ABCDEFGHIJKLMNOPQ') {
   }
 }
 const listeners = new Set<(seats: Seat[]) => void>()
+// Same rule as the database: spaces removed, uppercase, unique per booking
+const usedPaymentRefs = new Set<string>()
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 export async function getSeats() { await delay(180); return seats.map(s => ({ ...s })) }
 export async function getSettings(): Promise<Settings> { return { pricePerSeat: PRICE_PER_SEAT, maxSeats: MAX_SEATS, bookingsOpen: true } }
 export function subscribe(callback: (seats: Seat[]) => void) { listeners.add(callback); return () => { listeners.delete(callback) } }
 export async function reserveSeats(input: ReserveInput): Promise<ReserveResult> {
   await delay(1000)
+  const paymentRef = input.paymentRef.replace(/\s/g, '').toUpperCase()
+  if (!/^[A-Z0-9-]{6,40}$/.test(paymentRef)) return { ok: false, error: 'invalid_payment_ref' }
+  if (usedPaymentRefs.has(paymentRef)) return { ok: false, error: 'payment_ref_used' }
   const conflicts = input.seats.filter(id => seats.find(s => s.id === id)?.status !== 'available')
   if (conflicts.length) return { ok: false, conflicts }
+  usedPaymentRefs.add(paymentRef)
   input.seats.forEach(id => { const seat = seats.find(s => s.id === id); if (seat) seat.status = 'reserved' })
   listeners.forEach(listener => listener(seats.map(s => ({ ...s }))))
   return { ok: true, referenceCode: `W4W-DD-${Math.random().toString(36).slice(2, 6).toUpperCase()}`, seats: input.seats, amount: PRICE_PER_SEAT === null ? null : PRICE_PER_SEAT * input.seats.length }

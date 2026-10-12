@@ -11,8 +11,8 @@ export const seatsTotal = (price: number | null, count: number) => formatPrice(p
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/webp']
-const FIELD_ORDER = ['seats', 'fullName', 'contact', 'email', 'proof', 'consent'] as const
-const emptyForm = { fullName: '', contact: '', email: '', company: '', notes: '' }
+const FIELD_ORDER = ['seats', 'fullName', 'contact', 'email', 'proof', 'paymentRef', 'consent'] as const
+const emptyForm = { fullName: '', contact: '', email: '', company: '', paymentRef: '', payerName: '', notes: '' }
 
 type Form = typeof emptyForm
 type Errors = Partial<Record<(typeof FIELD_ORDER)[number], string>>
@@ -25,6 +25,8 @@ const ERROR_MESSAGES: Record<ReserveError, string> = {
   missing_details: 'Please check your name, contact and email. Each is required, and notes must be under 1,000 characters.',
   invalid_email: 'That email address doesn’t look right. Please check it and try again.',
   missing_screenshot: 'We couldn’t find your payment screenshot. Please upload it again and retry.',
+  invalid_payment_ref: 'Please enter the reference number from your payment receipt.',
+  payment_ref_used: 'This payment reference was already used for another booking. If this is a mistake, contact us.',
   upload_failed: 'Couldn’t upload your screenshot, please try again.',
   unknown: 'Something went wrong and your seats were not reserved. Please try again.',
 }
@@ -39,6 +41,10 @@ function validate(selected: string[], form: Form, file: File | null, consent: bo
   if (!file) errors.proof = 'Upload a screenshot of your payment.'
   else if (!FILE_TYPES.includes(file.type) && !/\.(jpe?g|png|heic|webp)$/i.test(file.name)) errors.proof = 'Use a JPG, PNG, HEIC or WEBP image.'
   else if (file.size > MAX_FILE_BYTES) errors.proof = 'This file is over 10 MB. Please upload a smaller screenshot.'
+  // Same rule as the database: spaces are ignored, then 6–40 letters, numbers or dashes
+  const paymentRef = form.paymentRef.replace(/\s/g, '')
+  if (!paymentRef) errors.paymentRef = 'Enter the reference number from your payment receipt.'
+  else if (!/^[A-Za-z0-9-]{6,40}$/.test(paymentRef)) errors.paymentRef = 'Use 6–40 letters, numbers or dashes, as shown on your receipt.'
   if (!consent) errors.consent = 'Tick the box to agree before reserving.'
   return errors
 }
@@ -157,6 +163,7 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
   const reserveMore = () => {
     setBooking(null)
     setFile(null)
+    setForm(current => ({ ...current, paymentRef: '', payerName: '' }))
     setConsent(false)
     onBookedChange(false)
     onSelectedChange([])
@@ -192,7 +199,7 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
         <Field id="bk-contact" label="Mobile number or Messenger name*" error={shown.contact}>
           <input id="bk-contact" className="input" autoComplete="tel" value={form.contact} onChange={e => update('contact', e.target.value)} {...invalid('contact')} aria-describedby={describedBy(shown.contact && 'bk-contact-error')} />
         </Field>
-        <Field id="bk-email" label="Email*" hint="Your e-tickets are sent here" error={shown.email}>
+        <Field id="bk-email" label="Email*" hint="Your confirmation is sent here" error={shown.email}>
           <input id="bk-email" className="input" type="email" autoComplete="email" value={form.email} onChange={e => update('email', e.target.value)} {...invalid('email')} aria-describedby={describedBy('bk-email-hint', shown.email && 'bk-email-error')} />
         </Field>
         <Field id="bk-company" label="Company / organization (optional)">
@@ -217,6 +224,12 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
           </label>
           {shown.proof && <p className="field-error" id="bk-proof-error">{shown.proof}</p>}
         </div>
+        <Field id="bk-paymentRef" label="Payment reference no.*" hint="Found on your GCash, Maya or bank receipt (e.g. GCash Ref No.)" error={shown.paymentRef}>
+          <input id="bk-paymentRef" className="input" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={60} value={form.paymentRef} onChange={e => update('paymentRef', e.target.value)} {...invalid('paymentRef')} aria-describedby={describedBy('bk-paymentRef-hint', shown.paymentRef && 'bk-paymentRef-error')} />
+        </Field>
+        <Field id="bk-payerName" label="Name on the paying account (optional)" hint="If someone else paid for you">
+          <input id="bk-payerName" className="input" autoComplete="off" maxLength={120} value={form.payerName} onChange={e => update('payerName', e.target.value)} aria-describedby="bk-payerName-hint" />
+        </Field>
 
         <Field id="bk-notes" label="Notes (optional)">
           <textarea id="bk-notes" className="input" rows={3} value={form.notes} onChange={e => update('notes', e.target.value)} />
@@ -258,7 +271,7 @@ function Ticket({ booking, headingRef, onReserveMore }: { booking: Booking; head
       </div>
       <div className="ticket-lines">
         {seatsByRow(booking.seats).map(line => <span key={line}>{line}</span>)}
-        <strong>{count} ticket{count === 1 ? '' : 's'} · Total {formatPrice(booking.amount)}</strong>
+        <strong>{count} seat{count === 1 ? '' : 's'} · Total {formatPrice(booking.amount)}</strong>
       </div>
     </div>
     <div className="ticket-perforation" aria-hidden="true" />
@@ -266,10 +279,11 @@ function Ticket({ booking, headingRef, onReserveMore }: { booking: Booking; head
       <small className="ticket-label">Reference code</small>
       <div className="ticket-reference">
         <span>{booking.reference}</span>
+        <span className="ticket-reference-status">· Pending verification</span>
         <button type="button" className="copy-button" onClick={copyReference}>{copy === 'copied' ? <><Check /> Copied</> : copy === 'failed' ? 'Copy failed' : <><Copy /> Copy</>}</button>
         <span className="sr-only" aria-live="polite">{copy === 'copied' ? 'Reference code copied' : ''}</span>
       </div>
-      <p className="ticket-message">We received your payment screenshot. Once we verify it, your e-tickets (one per seat, each with a QR code) will be emailed to <strong>{booking.email}</strong>. Keep your reference code.</p>
+      <p className="ticket-message">We&apos;ll email you at <strong>{booking.email}</strong> once your payment is verified. Keep your reference code.</p>
       <button type="button" className="btn-ghost" onClick={onReserveMore}>Reserve more seats</button>
     </div>
   </div>

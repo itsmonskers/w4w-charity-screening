@@ -1043,6 +1043,14 @@ textarea.input {
   color: var(--ev-green);
 }
 
+/* Status beside the code (Section 0, "Booking status wording"); pushes Copy to the end */
+.ticket-reference-status {
+  margin-right: auto;
+  color: var(--ev-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .copy-button {
   display: inline-flex;
   align-items: center;
@@ -1337,6 +1345,41 @@ footer {
   color: var(--ev-text);
   font-size: 20px;
   font-weight: 600;
+}
+
+/* Payment reference: what the verifier searches for in the account history */
+.admin-payment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  background: var(--ev-input);
+  border: 1px solid var(--ev-line);
+  border-radius: 10px;
+}
+
+.admin-payment-label {
+  color: var(--ev-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+}
+
+.admin-payment-ref {
+  color: var(--ev-gold);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  overflow-wrap: anywhere;
+}
+
+.admin-payer {
+  flex-basis: 100%;
+  color: var(--ev-text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .admin-booking-body {

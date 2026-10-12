@@ -10,7 +10,7 @@ import { W4WLogo } from '@/components/w4w-logo'
 import { IS_MOCK, getSeats, getSettings, subscribe, type Settings } from '@/lib/booking-store'
 import { EVENT, formatPrice, type Seat } from '@/lib/event-config'
 
-const steps = ['Pick seats', 'Pay via QR & upload proof', 'Get e-tickets after we verify']
+const steps = ['Pick seats', 'Pay via QR & upload proof', 'Get your confirmation after we verify']
 
 function daysToEvent() {
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }))
@@ -82,7 +82,7 @@ export default function Page() {
           <SeatMap selected={selected} onChange={setSelected} submitting={submitting} occupancy={reservedCount / 315} maxSeats={settings?.maxSeats ?? 0} />
           <div className="selection-bar">
             <div><strong>{selected.length} seat{selected.length === 1 ? '' : 's'}</strong><span>{selected.length ? selected.join(' · ') : 'No seats selected'} · {seatsTotal(price, selected.length)}</span></div>
-            <button className="btn-primary" disabled={!selected.length && !booked} aria-haspopup="dialog" onClick={() => setSheetOpen(true)}>{booked && !selected.length ? 'View ticket' : 'Continue'} <ArrowRight /></button>
+            <button className="btn-primary" disabled={!selected.length && !booked} aria-haspopup="dialog" onClick={() => setSheetOpen(true)}>{booked && !selected.length ? 'View reservation' : 'Continue'} <ArrowRight /></button>
           </div>
         </div>
         <BookingPanel settings={settings} selected={selected} onSelectedChange={setSelected} onSubmittingChange={setSubmitting} onBookedChange={setBooked} onReserveMore={() => { setSheetOpen(false); scrollToMap() }} sheetOpen={sheetOpen} onSheetOpenChange={setSheetOpen} />

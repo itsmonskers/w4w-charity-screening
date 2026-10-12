@@ -11,10 +11,11 @@ standard.
   in-memory mock (`IS_MOCK = true`). Admin data (login, bookings review,
   approve/reject, screenshots, CSV) goes through `lib/admin-store.ts`.
   No other UI file may contain data logic.
-- Database: Supabase project `w4w-doomsday-screening`. The schema lives in
-  `supabase/schema.sql` (tables seats, event_settings, bookings, tickets,
-  admins; functions reserve_seats, approve_booking, reject_booking,
-  is_admin). Never change the database from code; schema changes are made
+- Database: Supabase project `w4w-doomsday-screening`. The schema is
+  `supabase/schema.sql` plus every file in `supabase/migrations/`, applied in
+  number order (tables seats, event_settings, bookings, tickets, admins;
+  functions reserve_seats, approve_booking, reject_booking, is_admin). Read
+  the latest migration for the current version of a function. Never change the database from code; schema changes are made
   by Simon in the SQL Editor.
 - Never use or ask for the Supabase service_role / secret key in this app.
   Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.

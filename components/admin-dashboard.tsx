@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Download, LogOut, RefreshCw, Search } from 'lucide-react'
+import { Check, Copy, Download, LogOut, RefreshCw, Search } from 'lucide-react'
 import { ADMIN_AVAILABLE, approveBooking, checkIsAdmin, getBookings, getScreenshotUrl, getSeatCounts, onAuthChange, rejectBooking, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-store'
 import { formatPrice } from '@/lib/event-config'
 
@@ -46,11 +46,11 @@ function csvCell(value: string) {
 }
 
 function exportApproved(bookings: AdminBooking[]) {
-  const header = ['Reference code', 'Name', 'Contact', 'Email', 'Seats', 'Seat count', 'Amount']
+  const header = ['Reference code', 'Name', 'Contact', 'Email', 'Seats', 'Seat count', 'Amount', 'Payment ref', 'Paid by']
   const rows = bookings
     .filter(b => b.status === 'approved')
     .sort((a, b) => a.fullName.localeCompare(b.fullName))
-    .map(b => [b.referenceCode, b.fullName, b.contact, b.email, seatsByRow(b.seatIds).join('; '), String(b.seatCount), b.amount === null ? '[PRICE TBD]' : String(b.amount)])
+    .map(b => [b.referenceCode, b.fullName, b.contact, b.email, seatsByRow(b.seatIds).join('; '), String(b.seatCount), b.amount === null ? '[PRICE TBD]' : String(b.amount), b.paymentRef ?? '', b.payerName ?? ''])
   // BOM so Excel reads ₱ and · correctly
   const csv = '﻿' + [header, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n')
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
@@ -154,7 +154,9 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   }, [refresh])
 
   const q = query.trim().toLowerCase()
-  const matches = useMemo(() => (bookings ?? []).filter(b => !q || [b.referenceCode, b.fullName, b.email].some(value => value.toLowerCase().includes(q))), [bookings, q])
+  // Payment refs are stored without spaces, so match them ignoring spaces
+  const qRef = q.replace(/\s/g, '')
+  const matches = useMemo(() => (bookings ?? []).filter(b => !q || [b.referenceCode, b.fullName, b.email].some(value => value.toLowerCase().includes(q)) || (!!qRef && !!b.paymentRef?.toLowerCase().includes(qRef))), [bookings, q, qRef])
   const counts = (status: BookingStatus) => matches.filter(b => b.status === status).length
   const visible = matches
     .filter(b => b.status === tab)
@@ -191,7 +193,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       <label className="admin-search">
         <Search size={16} aria-hidden />
         <span className="sr-only">Search bookings</span>
-        <input className="input" type="search" placeholder="Search reference, name or email" value={query} onChange={e => setQuery(e.target.value)} />
+        <input className="input" type="search" placeholder="Search reference, name, email or payment ref" value={query} onChange={e => setQuery(e.target.value)} />
       </label>
       <button className="btn-ghost admin-btn-small" type="button" onClick={refresh} disabled={loading}><RefreshCw size={14} aria-hidden />{loading ? 'Refreshing…' : 'Refresh'}</button>
       <button className="btn-ghost admin-btn-small" type="button" onClick={() => bookings && exportApproved(bookings)} disabled={!approvedCount}><Download size={14} aria-hidden />Export approved (CSV)</button>
@@ -230,6 +232,12 @@ function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (
         <span>{seatLabel(booking.seatCount)}</span>
       </div>
     </header>
+    <div className="admin-payment">
+      <span className="admin-payment-label">Payment ref</span>
+      <span className="admin-payment-ref">{booking.paymentRef ?? '–'}</span>
+      {booking.paymentRef && <CopyButton text={booking.paymentRef} label="payment reference" />}
+      {booking.payerName && <span className="admin-payer">Paid by: {booking.payerName}</span>}
+    </div>
     <div className="admin-booking-body">
       <dl className="admin-details">
         <dt>Contact</dt><dd>{booking.contact}</dd>
@@ -247,6 +255,19 @@ function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (
       <button className="btn-primary" type="button" onClick={() => onReview('approve')}>Approve</button>
     </div>}
   </article>
+}
+
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [copy, setCopy] = useState<'idle' | 'copied' | 'failed'>('idle')
+  useEffect(() => {
+    if (copy === 'idle') return
+    const timer = window.setTimeout(() => setCopy('idle'), 2000)
+    return () => window.clearTimeout(timer)
+  }, [copy])
+  return <>
+    <button type="button" className="copy-button" aria-label={`Copy ${label}`} onClick={() => navigator.clipboard.writeText(text).then(() => setCopy('copied'), () => setCopy('failed'))}>{copy === 'copied' ? <><Check /> Copied</> : copy === 'failed' ? 'Copy failed' : <><Copy /> Copy</>}</button>
+    <span className="sr-only" aria-live="polite">{copy === 'copied' ? `${label} copied` : ''}</span>
+  </>
 }
 
 function Screenshot({ path, reference }: { path: string; reference: string }) {
@@ -312,7 +333,7 @@ function ReviewDialog({ review, onClose, onDone, onNoAccess }: { review: Review;
         <span>{seatLabel(booking.seatCount)}</span>
       </div>
       {approving
-        ? <p className="admin-warning">Only approve after confirming this exact amount arrived in the account.</p>
+        ? <p className="admin-warning">{booking.paymentRef && <>Find reference <strong>{booking.paymentRef}</strong> in the account history and check the amount matches. </>}Only approve after confirming this exact amount arrived in the account.</p>
         : <p className="admin-warning">Rejecting frees these seats immediately, so anyone can book them again.</p>}
       <div className="field">
         <label className="field-label" htmlFor="review-note">{approving ? 'Note (optional)' : 'Reason (required)'}</label>

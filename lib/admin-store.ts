@@ -16,6 +16,9 @@ export type AdminBooking = {
   seatCount: number
   amount: number | null
   screenshotPath: string
+  // null only for bookings made before migration 002
+  paymentRef: string | null
+  payerName: string | null
   status: BookingStatus
   reviewNote: string | null
   reviewedAt: string | null
@@ -44,7 +47,7 @@ const toNumber = (value: unknown) => value === null || value === undefined ? nul
 type BookingRow = {
   id: string; reference_code: string; full_name: string; contact: string; email: string
   organization: string | null; notes: string | null; seat_ids: string[]; seat_count: number
-  amount: number | string | null; screenshot_path: string; status: BookingStatus
+  amount: number | string | null; screenshot_path: string; payment_ref: string | null; payer_name: string | null; status: BookingStatus
   review_note: string | null; reviewed_at: string | null; created_at: string
 }
 
@@ -60,6 +63,8 @@ const toBooking = (row: BookingRow): AdminBooking => ({
   seatCount: row.seat_count,
   amount: toNumber(row.amount),
   screenshotPath: row.screenshot_path,
+  paymentRef: row.payment_ref,
+  payerName: row.payer_name,
   status: row.status,
   reviewNote: row.review_note,
   reviewedAt: row.reviewed_at,
@@ -104,7 +109,7 @@ export async function getSeatCounts(): Promise<SeatCounts> {
 export async function getBookings(): Promise<AdminBooking[]> {
   const { data, error } = await client()
     .from('bookings')
-    .select('id, reference_code, full_name, contact, email, organization, notes, seat_ids, seat_count, amount, screenshot_path, status, review_note, reviewed_at, created_at')
+    .select('id, reference_code, full_name, contact, email, organization, notes, seat_ids, seat_count, amount, screenshot_path, payment_ref, payer_name, status, review_note, reviewed_at, created_at')
     .order('created_at', { ascending: true })
   if (error) throw error
   return (data as BookingRow[]).map(toBooking)
