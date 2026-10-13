@@ -12,16 +12,16 @@
   --muted-dark: #a9b5bf;
   --line: #d9e0e4;
   --line-dark: rgba(79, 147, 184, .45);
-  /* Event theme (DESIGN.md Section 0) */
-  --ev-bg: #050a07;
-  --ev-panel: #0b130e;
-  --ev-input: #08100b;
-  --ev-green: #3ee083;
-  --ev-green-deep: #10301e;
+  /* Event theme (DESIGN.md Section 0): W4W blue on W4W charcoal, gold for seat selection */
+  --ev-bg: var(--char);
+  --ev-panel: var(--char-2);
+  --ev-input: var(--char);
+  --ev-accent: var(--blue-light);
+  --ev-accent-deep: color-mix(in srgb, var(--blue) 25%, var(--char-2));
   --ev-gold: #d9a441;
-  --ev-text: #e8efe9;
-  --ev-muted: #9fb3a6;
-  --ev-line: rgba(62, 224, 131, .28);
+  --ev-text: #fff;
+  --ev-muted: var(--muted-dark);
+  --ev-line: color-mix(in srgb, var(--blue-light) 28%, transparent);
   --error-on-dark: color-mix(in srgb, #d64545 70%, #fff);
 }
 
@@ -94,9 +94,9 @@ main {
 
 /* Primary button, event theme (deviation 18) */
 .btn-primary {
-  background: color-mix(in srgb, var(--ev-green) 22%, var(--ev-panel));
+  background: color-mix(in srgb, var(--ev-accent) 22%, var(--ev-panel));
   color: var(--ev-text);
-  border: 1px solid var(--ev-green);
+  border: 1px solid var(--ev-accent);
   font-family: var(--font-display), Georgia, serif;
   text-transform: uppercase;
   letter-spacing: .14em;
@@ -115,7 +115,7 @@ main {
 }
 
 .btn-primary:hover {
-  box-shadow: 0 0 16px color-mix(in srgb, var(--ev-green) 45%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--ev-accent) 45%, transparent);
 }
 
 /* Seats are excluded: their reserved/taken states set their own dimming */
@@ -158,7 +158,7 @@ button:disabled:not(.seat) {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 90% 60% at 50% 0, color-mix(in srgb, var(--ev-green) 6%, transparent), transparent 70%);
+  background: radial-gradient(ellipse 90% 60% at 50% 0, color-mix(in srgb, var(--ev-accent) 6%, transparent), transparent 70%);
 }
 
 /* Dark vignette at the edges, over the beams */
@@ -176,7 +176,7 @@ button:disabled:not(.seat) {
   width: var(--w);
   height: 115%;
   margin-left: calc(var(--w) / -2);
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--ev-green) 10%, transparent), color-mix(in srgb, var(--ev-green) 4%, transparent) 45%, transparent 85%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--ev-accent) 10%, transparent), color-mix(in srgb, var(--ev-accent) 4%, transparent) 45%, transparent 85%);
   filter: blur(22px);
   transform: rotate(var(--angle));
   transform-origin: 50% 0;
@@ -238,7 +238,7 @@ button:disabled:not(.seat) {
 
 /* Tint the StripeWave lines (W4W twist); the component itself stays white */
 .title-block .wave-texture path {
-  stroke: var(--ev-green);
+  stroke: var(--ev-accent);
 }
 
 .title-block::before {
@@ -246,7 +246,7 @@ button:disabled:not(.seat) {
   position: absolute;
   inset: -30% 25% 18% 25%;
   z-index: -1;
-  background: conic-gradient(from 180deg at 50% 0%, transparent 38%, color-mix(in srgb, var(--ev-green) 12%, transparent) 50%, transparent 62%);
+  background: conic-gradient(from 180deg at 50% 0%, transparent 38%, color-mix(in srgb, var(--ev-accent) 12%, transparent) 50%, transparent 62%);
   filter: blur(24px);
   transform-origin: 50% 0;
   animation: projector-drift 16s ease-in-out infinite alternate;
@@ -289,6 +289,14 @@ button:disabled:not(.seat) {
   text-transform: uppercase;
 }
 
+/* Impact explainer under the cause line: Hanken, since Cinzel may lack ₱ */
+.impact-line {
+  margin: 4px 0 0;
+  color: var(--ev-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .status-row {
   display: flex;
   flex-wrap: wrap;
@@ -326,7 +334,7 @@ button:disabled:not(.seat) {
 .status-pill b {
   font-size: 17px;
   font-weight: 700;
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 .live {
@@ -338,19 +346,19 @@ button:disabled:not(.seat) {
 }
 
 .live.eyebrow-caps {
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 .live i {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--ev-green);
+  background: var(--ev-accent);
   animation: live-pulse 2s ease-in-out infinite;
 }
 
 .countdown {
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 .steps-line {
@@ -370,7 +378,7 @@ button:disabled:not(.seat) {
 
 .steps-line b {
   margin-right: 4px;
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 .title-cta {
@@ -427,7 +435,7 @@ button:disabled:not(.seat) {
 
 .seat-scroll-hint {
   display: none;
-  color: var(--ev-green);
+  color: var(--ev-accent);
   font-size: 12px;
   margin: 0 0 8px;
 }
@@ -458,7 +466,7 @@ button:disabled:not(.seat) {
   left: -4%;
   right: -4%;
   height: 300px;
-  background: radial-gradient(ellipse 58% 100% at 50% 0, color-mix(in srgb, var(--ev-green) 24%, transparent), color-mix(in srgb, var(--ev-green) 4.5%, transparent) 12%, color-mix(in srgb, var(--ev-green) 4%, transparent) 25%, color-mix(in srgb, var(--ev-green) 2.5%, transparent) 55%, transparent);
+  background: radial-gradient(ellipse 58% 100% at 50% 0, color-mix(in srgb, var(--ev-accent) 24%, transparent), color-mix(in srgb, var(--ev-accent) 4.5%, transparent) 12%, color-mix(in srgb, var(--ev-accent) 4%, transparent) 25%, color-mix(in srgb, var(--ev-accent) 2.5%, transparent) 55%, transparent);
   pointer-events: none;
 }
 
@@ -477,7 +485,7 @@ button:disabled:not(.seat) {
 
 .screen-arc path {
   fill: none;
-  stroke: var(--ev-green);
+  stroke: var(--ev-accent);
   stroke-width: 3px;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
@@ -485,7 +493,7 @@ button:disabled:not(.seat) {
 
 .screen-arc .screen-arc-glow {
   opacity: calc(.7 + var(--occupancy, 0) * .3);
-  filter: drop-shadow(0 0 calc(8px + var(--occupancy, 0) * 6px) color-mix(in srgb, var(--ev-green) 80%, transparent)) drop-shadow(0 6px calc(22px + var(--occupancy, 0) * 12px) color-mix(in srgb, var(--ev-green) 55%, transparent));
+  filter: drop-shadow(0 0 calc(8px + var(--occupancy, 0) * 6px) color-mix(in srgb, var(--ev-accent) 80%, transparent)) drop-shadow(0 6px calc(22px + var(--occupancy, 0) * 12px) color-mix(in srgb, var(--ev-accent) 55%, transparent));
   transition: opacity .6s ease, filter .6s ease;
 }
 
@@ -515,7 +523,7 @@ button:disabled:not(.seat) {
 
 .seat-row:has(.seat:hover) .row-label,
 .seat-row:has(.seat:focus-visible) .row-label {
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 .seat-grid {
@@ -542,10 +550,10 @@ button:disabled:not(.seat) {
 
 /* Seat states, event theme (DESIGN.md Section 0). Legend swatches use the same classes. */
 .seat-available {
-  background: var(--ev-green-deep);
-  border-color: color-mix(in srgb, var(--ev-green) 70%, transparent);
+  background: var(--ev-accent-deep);
+  border-color: color-mix(in srgb, var(--ev-accent) 70%, transparent);
   color: var(--ev-text);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--ev-green) 14%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ev-accent) 14%, transparent);
 }
 
 /* Yours: solid gold fill + glow. Reserved (someone else's): hollow dashed dimmed gold, no glow. */
@@ -570,14 +578,14 @@ button:disabled:not(.seat) {
 
 .seat:not(:disabled):hover,
 .seat:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ev-green) 35%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ev-accent) 35%, transparent);
   outline-offset: 2px;
 }
 
 .seat-available:hover,
 .seat-available:focus-visible {
-  border-color: var(--ev-green);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--ev-green) 45%, transparent);
+  border-color: var(--ev-accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ev-accent) 45%, transparent);
 }
 
 .seat-pop {
@@ -607,7 +615,7 @@ button:disabled:not(.seat) {
 
 .info-notice {
   margin: 12px 0 0;
-  color: var(--ev-green);
+  color: var(--ev-accent);
   font-size: 13px;
 }
 
@@ -756,7 +764,7 @@ button:disabled:not(.seat) {
 .chip button:hover,
 .chip button:focus-visible {
   background: color-mix(in srgb, var(--ev-bg) 18%, transparent);
-  outline: 2px solid var(--ev-green);
+  outline: 2px solid var(--ev-accent);
 }
 
 .chip svg {
@@ -806,7 +814,7 @@ button:disabled:not(.seat) {
 .input {
   width: 100%;
   padding: 11px 12px;
-  border: 1px solid color-mix(in srgb, var(--ev-green) 50%, var(--ev-input));
+  border: 1px solid color-mix(in srgb, var(--ev-accent) 50%, var(--ev-input));
   border-radius: 7px;
   background: var(--ev-input);
   color: var(--ev-text);
@@ -820,8 +828,8 @@ button:disabled:not(.seat) {
 
 .input:focus {
   outline: none;
-  border-color: var(--ev-green);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-green) 25%, transparent);
+  border-color: var(--ev-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-accent) 25%, transparent);
 }
 
 .input[aria-invalid="true"] {
@@ -886,7 +894,7 @@ textarea.input {
   align-items: center;
   gap: 6px;
   padding: 18px;
-  border: 1px dashed var(--ev-green);
+  border: 1px dashed var(--ev-accent);
   border-radius: 12px;
   text-align: center;
   font-size: 13px;
@@ -896,8 +904,8 @@ textarea.input {
 }
 
 .upload:focus-within {
-  border-color: var(--ev-green);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-green) 25%, transparent);
+  border-color: var(--ev-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-accent) 25%, transparent);
 }
 
 .upload:has([aria-invalid="true"]) {
@@ -905,7 +913,7 @@ textarea.input {
 }
 
 .upload svg {
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 .upload small {
@@ -924,12 +932,16 @@ textarea.input {
   cursor: pointer;
 }
 
+.consent a {
+  color: var(--ev-accent);
+}
+
 .consent input {
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
   margin: 2px 0 0;
-  accent-color: var(--ev-green);
+  accent-color: var(--ev-accent);
 }
 
 /* E-ticket success card */
@@ -965,8 +977,8 @@ textarea.input {
   display: inline-flex;
   padding: 4px 10px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--ev-green) 14%, transparent);
-  color: var(--ev-green);
+  background: color-mix(in srgb, var(--ev-accent) 14%, transparent);
+  color: var(--ev-accent);
   font-size: 11px;
   font-weight: 700;
 }
@@ -1040,7 +1052,7 @@ textarea.input {
   font-size: 36px;
   font-weight: 700;
   line-height: 1;
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 /* Status beside the code (Section 0, "Booking status wording"); pushes Copy to the end */
@@ -1104,6 +1116,11 @@ footer {
   color: var(--ev-muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.footer-inner a {
+  color: var(--ev-accent);
+  overflow-wrap: anywhere;
 }
 
 .sr-only {
@@ -1201,7 +1218,7 @@ footer {
 }
 
 .admin-stat strong {
-  color: var(--ev-green);
+  color: var(--ev-accent);
   font-size: 22px;
   font-weight: 700;
   overflow-wrap: anywhere;
@@ -1244,7 +1261,7 @@ footer {
   background: var(--ev-panel);
   border: 1px solid var(--ev-line);
   border-radius: 10px;
-  color: var(--ev-green);
+  color: var(--ev-accent);
   font-size: 13px;
   font-weight: 600;
 }
@@ -1276,13 +1293,13 @@ footer {
 }
 
 .admin-tab[aria-selected="true"] {
-  background: color-mix(in srgb, var(--ev-green) 14%, transparent);
-  border-color: var(--ev-green);
+  background: color-mix(in srgb, var(--ev-accent) 14%, transparent);
+  border-color: var(--ev-accent);
   color: var(--ev-text);
 }
 
 .admin-tab b {
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 .admin-list {
@@ -1318,7 +1335,7 @@ footer {
 }
 
 .admin-ref {
-  color: var(--ev-green);
+  color: var(--ev-accent);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -1421,7 +1438,7 @@ footer {
 }
 
 .admin-details a {
-  color: var(--ev-green);
+  color: var(--ev-accent);
 }
 
 .admin-shot {
@@ -1740,12 +1757,12 @@ footer {
      and softer, since the swipe wrapper clips its sides */
   .screen::after {
     height: 44px;
-    background: radial-gradient(ellipse 50% 100% at 50% 0, color-mix(in srgb, var(--ev-green) 12%, transparent), transparent);
+    background: radial-gradient(ellipse 50% 100% at 50% 0, color-mix(in srgb, var(--ev-accent) 12%, transparent), transparent);
   }
 
   /* Tight glow only: the wide one would be cut off square by the swipe wrapper */
   .screen-arc .screen-arc-glow {
-    filter: drop-shadow(0 0 calc(6px + var(--occupancy, 0) * 4px) color-mix(in srgb, var(--ev-green) 80%, transparent));
+    filter: drop-shadow(0 0 calc(6px + var(--occupancy, 0) * 4px) color-mix(in srgb, var(--ev-accent) 80%, transparent));
   }
 
   .seat-row .row-label:first-child {

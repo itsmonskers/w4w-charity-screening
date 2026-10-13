@@ -25,8 +25,9 @@ microsite.
 
 ## 0. Project overrides (fill in per project)
 
-- **Project:** W4W Doomsday Charity Screening — Seat Reservation Microsite
-- **Purpose:** Get visitors to pick seats for the December 19, 2026 charity
+- **Project:** Movies4Water - Avengers: Doomsday Block Screening — Seat
+  Reservation Microsite
+- **Purpose:** Get visitors to pick seats for the December 19, 2026 block
   screening, pay via QR, and submit their payment screenshot to reserve.
 - **Owner / sign-off:** Simon Tuazon / Carlo Delantar, Patrick Manuel
 - **Layout goal:** booking with as little scrolling as possible. On desktop
@@ -44,26 +45,29 @@ microsite.
 
 ### Event theme (overrides base colors and fonts for this microsite only)
 
-This microsite uses a dark-green cinematic theme to match the film. The base
-W4W system (Sections 1–14) stays the standard for every other W4W project.
+This microsite uses a dark cinematic theme in W4W blue on W4W charcoal, with
+gold for seat selection (option C, approved 2026-10-13: changed from the
+earlier dark green so the page doesn't look like the JCI site; Cinzel is
+kept). The event tokens point at base tokens wherever possible. The base W4W
+system (Sections 1–14) stays the standard for every other W4W project.
 Define these extra tokens on `:root` next to the base tokens:
 
 | Token | Value | Use |
 |---|---|---|
-| `--ev-bg` | `#050a07` | Page and header background |
-| `--ev-panel` | `#0b130e` | Seat map and booking panels |
-| `--ev-input` | `#08100b` | Input fields |
-| `--ev-green` | `#3ee083` | Neon accent: glows, available seats, screen arc, LIVE, seat counts |
-| `--ev-green-deep` | `#10301e` | Available seat fill |
-| `--ev-gold` | `#d9a441` | Eyebrows, panel titles, corner brackets, row letters, reserved seats |
-| `--ev-text` | `#e8efe9` | Headings and strong text |
-| `--ev-muted` | `#9fb3a6` | Body text, labels, placeholders |
-| `--ev-line` | `rgba(62,224,131,.28)` | Borders and dividers |
+| `--ev-bg` | `var(--char)` | Page and header background |
+| `--ev-panel` | `var(--char-2)` | Seat map and booking panels |
+| `--ev-input` | `var(--char)` | Input fields |
+| `--ev-accent` | `var(--blue-light)` | Accent: glows, available seats, screen arc, LIVE, seat counts |
+| `--ev-accent-deep` | `color-mix(in srgb, var(--blue) 25%, var(--char-2))` | Available seat fill |
+| `--ev-gold` | `#d9a441` | Eyebrows, panel titles, corner brackets, row letters, selected and reserved seats |
+| `--ev-text` | `#fff` | Headings and strong text |
+| `--ev-muted` | `var(--muted-dark)` | Body text, labels, placeholders |
+| `--ev-line` | `color-mix(in srgb, var(--blue-light) 28%, transparent)` | Borders and dividers |
 
 Token mapping: wherever deviations 1–15 below name a base token, use the
 event token instead: `--char` → `--ev-bg`, `--char-2` → `--ev-panel`,
 `--blue` / `--blue-light` used for glows, the screen arc, the LIVE dot and
-accents → `--ev-green`, `--muted-dark` → `--ev-muted`, `--line-dark` →
+accents → `--ev-accent`, `--muted-dark` → `--ev-muted`, `--line-dark` →
 `--ev-line`, white headings → `--ev-text`. Corner brackets, eyebrows and
 row letters → `--ev-gold`.
 
@@ -72,7 +76,7 @@ row letters → `--ev-gold`.
   and W4W blue) at the top of the title block, with no boxed badge behind
   it (unlike JCI).
 - The wave texture (deviation 13) replaces JCI's diamond pattern, tinted
-  `--ev-green` at ≤5%.
+  `--ev-accent` at ≤5%.
 - Particles are rising "water-light" droplets (deviation 17).
 
 **Fonts:**
@@ -86,8 +90,8 @@ row letters → `--ev-gold`.
   (Cinzel may lack the ₱ glyph).
 
 **Seat states in the event theme:**
-- Available: `--ev-green-deep` fill, 1px `--ev-green` border at 70%,
-  `--ev-text` number, green glow (deviation 11).
+- Available: `--ev-accent-deep` fill, 1px `--ev-accent` border at 70%,
+  `--ev-text` number, blue glow (deviation 11).
 - Selected ("Your selection"): solid `--ev-gold` fill, `--ev-bg` number,
   solid `--ev-gold` border, glow
   `0 0 12px color-mix(in srgb, var(--ev-gold) 55%, transparent)`. Seat
@@ -121,18 +125,28 @@ gold border is its non-color cue.
        `alt="Waves for Water Philippines"`, no box or card behind it.
        20px gap between the logo and the eyebrow (16px on mobile).
      - `.eyebrow-caps` "Now booking" in `--ev-gold`.
-     - `h1` "Avengers: Doomsday Charity Screening" in Cinzel 700 uppercase at
+     - `h1` "Movies4Water - Avengers: Doomsday Block Screening" in Cinzel 700 uppercase at
        `clamp(24px, 3vw, 40px)`, `--ev-text` (like JCI's title line). The
        old "Claim a seat. Bring clean water." headline is removed.
      - ONE line of facts in `--ev-muted`: "Sat, Dec 19, 2026 · Doors 3:30 PM
-       · Movie 4:00 PM · Cinema 7, [VENUE TBD] · ₱[PRICE TBD] per seat"
-       (each fact stays unbroken; wrapping happens only between facts).
-     - **Cause line** (our version of JCI's gold tagline slot): "Every seat
-       helps bring clean water to communities in need." in Cinzel, small
+       · Movie 4:00 PM · Cinema 7, Power Plant Mall, Makati · ₱[price] per
+       seat · Includes food and refreshments" (the price comes from
+       `event_settings`; each fact stays unbroken; wrapping happens only
+       between facts). Never state how the ₱1,000 is split (ticket, food,
+       clean water) until it's confirmed.
+     - **Cause line** (our version of JCI's gold tagline slot): "Your seat
+       helps bring clean water to Filipino communities." in Cinzel, small
        caps style, `--ev-gold`, `letter-spacing: .2em`, ~12px. This is now
        the only place the page says what the money is for; keep it.
+     - **Impact line** right under it, Hanken 13px `--ev-muted`: "One
+       ₱3,500 water filter gives 25 people clean water for 5 to 10 years."
+       Source: senior lead of field operations (filter + bucket ₱3,450,
+       rounded to ₱3,500 per Carlo; delivery and training excluded; one
+       filter serves 5 households / 25 people for 5–10 years). Don't claim
+       "1 seat = 1 Filipino for 5 years" until it's confirmed that at least
+       ₱140 of each seat reaches the water program.
      - Status row: a pill badge "[n] seats available" (number in
-       `--ev-green`) · LIVE indicator · "[n] days to go"
+       `--ev-accent`) · LIVE indicator · "[n] days to go"
      - Compact steps line: "01 Pick seats · 02 Pay via QR & upload proof ·
        03 Get your confirmation after we verify" (separators never start a
        line).
@@ -148,7 +162,10 @@ gold border is its non-color cue.
        with a close button (focus trapped, Esc closes, returns focus).
      - No separate "How it works" or "Finish your booking" sections.
   5. **Footer: one slim line**, no mission quote or core belief:
-     "© 2026 Waves for Water Philippines · Questions? [CONTACT TBD]" in
+     "© 2026 Waves for Water Philippines · Questions?
+     phpartnerships@wavesforwater.org · Donation Terms · Refund Policy ·
+     Privacy Policy" (a `mailto:` link and the three policy PDFs, links in
+     `--ev-accent`) in
      `--ev-muted`, 12px, above a 1px `--ev-line` rule. It stays because
      people with payment or ticket problems need a way to reach W4W.
 - **Deviations from the base system:**
@@ -182,8 +199,9 @@ gold border is its non-color cue.
          "Pending verification" (`color-mix(in srgb, var(--blue-light) 14%,
          transparent)` fill, `--blue-light` text). Headline "You're in." in
          Oswald 700 uppercase, ~32px.
-       - **Event:** "Avengers: Doomsday · Charity screening", "Sat, Dec 19,
-         2026", "Doors 3:30 PM · Movie 4:00 PM", "Cinema 7, [VENUE TBD]".
+       - **Event:** "Movies4Water - Avengers: Doomsday Block Screening",
+         "Sat, Dec 19, 2026", "Doors 3:30 PM · Movie 4:00 PM", "Cinema 7,
+         Power Plant Mall, Makati".
        - **Seats:** grouped by row and sorted ascending, e.g. "Row L ·
          Seats 7, 8, 9" (one line per row), then "3 seats · Total
          ₱[PRICE TBD]".
@@ -192,7 +210,7 @@ gold border is its non-color cue.
          edges, filled with the panel background. Notches must never
          overlap text: keep ≥24px padding inside the card.
        - **Bottom stub:** small label "Reference code", the code in Hanken
-         `--ev-green` (~36px) with "· Pending verification" beside or under
+         `--ev-accent` (~36px) with "· Pending verification" beside or under
          it, and a copy button that shows "Copied" for 2s; then the
          Pending verification message (see "Booking status wording") with
          the email in white; then
@@ -253,7 +271,7 @@ gold border is its non-color cue.
       wrapper as mobile) rather than shrinking seats. Don't shrink seats to
       fit the viewport height; a short page scroll is acceptable.
   16. **Cinematic light shafts (background).** Original, code-only: 3–5
-      soft diagonal/vertical beams of `--ev-green` (and one faint
+      soft diagonal/vertical beams of `--ev-accent` (and one faint
       `--ev-gold` warm beam) falling from the top of the page, built from
       blurred linear/conic gradients at ≤10% opacity, plus a dark vignette
       at the edges and a faint haze. Slow shimmer (≥14s). Behind all
@@ -261,21 +279,21 @@ gold border is its non-color cue.
       motion (static beams stay).
   17. **Particles.** One `<canvas>` behind the content, fixed position.
       Slowly rising "water-light" motes: ~45 on desktop, ~20 on mobile,
-      1–3px, mostly `--ev-green`, ~20% `--blue-light`, opacity 0.15–0.5,
+      1–3px, mostly `--ev-accent`, ~20% `--blue`, opacity 0.15–0.5,
       gentle sideways drift, fading in and out. Device pixel ratio capped at
       2. Pause when the tab is hidden; render nothing under reduced motion.
       No libraries.
   18. **Primary button (event theme):** keeps the W4W pill shape (twist);
-      fill `color-mix(in srgb, var(--ev-green) 22%, var(--ev-panel))`,
-      1px `--ev-green` border, `--ev-text` Cinzel label, green glow on
+      fill `color-mix(in srgb, var(--ev-accent) 22%, var(--ev-panel))`,
+      1px `--ev-accent` border, `--ev-text` Cinzel label, blue glow on
       hover. Disabled: 45% opacity.
   19. **No header.** This page has no header bar; the logo sits in the
       title block instead. The base rule "one header per project" is waived
       for this microsite.
   20. **Input borders (event theme):**
-      `color-mix(in srgb, var(--ev-green) 50%, var(--ev-input))` so input
+      `color-mix(in srgb, var(--ev-accent) 50%, var(--ev-input))` so input
       boundaries meet the 3:1 non-text contrast minimum. Focus: solid
-      `--ev-green` border + 25% green ring.
+      `--ev-accent` border + 25% accent ring.
 - **Booking status wording (one code, three statuses).** Every booking has
   ONE reference code (e.g. `W4W-DD-7K2Q`), created at submission and never
   changed. Wherever a guest sees the code, the status is shown right next to
@@ -304,7 +322,12 @@ gold border is its non-color cue.
      instructions.
   4. Payment screenshot* upload (JPG/PNG/HEIC/WEBP, 10 MB).
   5. Notes (optional, textarea).
-  6. Data Privacy Act consent (inline checkbox), then full-width
+  6. Consent (inline checkbox): "I agree to the Donation Terms, Refund
+     Policy and Privacy Policy of Waves for Water Philippines, and to W4W
+     processing my details for this booking under the Data Privacy Act of
+     2012." Each policy name links to its PDF in `public/policies/`
+     (`donation-terms.pdf`, `refund-policy.pdf`, `privacy-policy.pdf`),
+     opening in a new tab, in `--ev-accent`. Then full-width
      `.btn-primary` "Reserve seats".
   7. On success, the panel content is replaced by the e-ticket card
      (deviation 8) with "Reserve more seats".
@@ -327,6 +350,13 @@ gold border is its non-color cue.
     text only. Don't copy another organization's site styling.
 - **Files not built yet:** real logo, payment QR; backend (database, admin,
   emails) comes later and replaces `lib/booking-store.ts` only.
+- **Link preview (Open Graph):** `app/opengraph-image.tsx` generates a
+  1200×630 image at build time: the W4W Philippines logo centered on
+  `--char`, then "Movies4Water", "Avengers: Doomsday Block Screening" and the
+  date and venue in `--muted-dark`. No Marvel imagery. Exception to "no hex
+  outside `:root`": the image generator can't read CSS variables, so that
+  file mirrors `--char` and `--muted-dark` as literals (keep them in sync).
+  Same for `themeColor` in `app/layout.tsx` (`--char`).
 - **Hosting:** Netlify. No Vercel-specific packages or services.
 
 ---

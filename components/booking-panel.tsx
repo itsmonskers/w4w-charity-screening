@@ -7,6 +7,15 @@ import { EVENT, formatPrice } from '@/lib/event-config'
 
 export const EVENT_DATE_SHORT = 'Sat, Dec 19, 2026'
 export const EVENT_PLACE = `Cinema 7, ${EVENT.venue}`
+export const EVENT_TITLE = `Movies4Water - ${EVENT.film} Block Screening`
+// W4W policy PDFs in public/policies/, linked from the consent checkbox and the footer
+export const POLICIES = [
+  { href: '/policies/donation-terms.pdf', label: 'Donation Terms' },
+  { href: '/policies/refund-policy.pdf', label: 'Refund Policy' },
+  { href: '/policies/privacy-policy.pdf', label: 'Privacy Policy' },
+]
+const [TERMS, REFUND, PRIVACY] = POLICIES
+const PolicyLink = ({ href, label }: (typeof POLICIES)[number]) => <a href={href} target="_blank" rel="noopener noreferrer">{label}</a>
 export const seatsTotal = (price: number | null, count: number) => formatPrice(price === null ? null : price * count)
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
@@ -236,7 +245,7 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
         </Field>
 
         <div className="field">
-          <label className="consent"><input id="bk-consent" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} {...invalid('consent')} aria-describedby={describedBy(shown.consent && 'bk-consent-error')} />I agree to Waves for Water Philippines processing my details for this booking, per the Data Privacy Act of 2012.</label>
+          <label className="consent"><input id="bk-consent" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} {...invalid('consent')} aria-describedby={describedBy(shown.consent && 'bk-consent-error')} /><span>I agree to the <PolicyLink {...TERMS} />, <PolicyLink {...REFUND} /> and <PolicyLink {...PRIVACY} /> of Waves for Water Philippines, and to W4W processing my details for this booking under the Data Privacy Act of 2012.</span></label>
           {shown.consent && <p className="field-error" id="bk-consent-error">{shown.consent}</p>}
         </div>
 
@@ -264,7 +273,7 @@ function Ticket({ booking, headingRef, onReserveMore }: { booking: Booking; head
       <div className="ticket-status"><p className="eyebrow-caps">Reservation received</p><span className="pill">Pending verification</span></div>
       <h2 className="ticket-title" ref={headingRef} tabIndex={-1}>You&apos;re in.</h2>
       <div className="ticket-lines">
-        <strong>{EVENT.film} · Charity screening</strong>
+        <strong>{EVENT_TITLE}</strong>
         <span>{EVENT_DATE_SHORT}</span>
         <span>{EVENT.time}</span>
         <span>{EVENT_PLACE}</span>

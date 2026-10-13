@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { AdminDashboard } from '@/components/admin-dashboard'
 
 export const metadata: Metadata = {
-  title: 'Admin · Doomsday Charity Screening',
+  title: 'Admin · Movies4Water',
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
 }
 

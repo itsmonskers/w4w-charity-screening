@@ -38,8 +38,8 @@ function useParticles(ref: React.RefObject<HTMLCanvasElement | null>) {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)')
     const mobile = window.matchMedia('(max-width: 700px)')
     const tokens = getComputedStyle(document.documentElement)
-    const green = tokens.getPropertyValue('--ev-green').trim()
-    const blue = tokens.getPropertyValue('--blue-light').trim()
+    const accent = tokens.getPropertyValue('--ev-accent').trim()
+    const blue = tokens.getPropertyValue('--blue').trim()
     let motes: Mote[] = []
     let w = 0
     let h = 0
@@ -71,7 +71,7 @@ function useParticles(ref: React.RefObject<HTMLCanvasElement | null>) {
         if (m.age > m.life || m.y < -4) { motes[i] = mote(w, h, false); return }
         const fade = Math.sin(Math.PI * m.age / m.life)
         const x = m.x + Math.sin(m.phase + m.age * .6) * m.sway
-        ctx.fillStyle = m.blue ? blue : green
+        ctx.fillStyle = m.blue ? blue : accent
         ctx.globalAlpha = m.alpha * fade * .25
         ctx.beginPath()
         ctx.arc(x, m.y, m.r * 2.5, 0, Math.PI * 2)

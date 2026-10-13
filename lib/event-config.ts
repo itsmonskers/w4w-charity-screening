@@ -1,6 +1,6 @@
 export const MAX_SEATS = 10
 export const PRICE_PER_SEAT: number | null = null
-export const EVENT = { film: 'Avengers: Doomsday', date: 'Saturday, December 19, 2026', venue: '[VENUE TBD]', time: 'Doors 3:30 PM · Movie 4:00 PM' }
+export const EVENT = { film: 'Avengers: Doomsday', date: 'Saturday, December 19, 2026', venue: 'Power Plant Mall, Makati', time: 'Doors 3:30 PM · Movie 4:00 PM' }
 export const formatPrice = (amount: number | null) => amount === null ? '₱[PRICE TBD]' : `₱${amount.toLocaleString('en-PH')}`
 
 export type BookingInput = { seats: string[]; fullName: string; contact: string; email: string; company?: string; notes?: string; proofName: string }

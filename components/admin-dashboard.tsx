@@ -102,7 +102,7 @@ function Login({ error, onError }: { error: string; onError: (message: string) =
 
   return <form className="admin-login" onSubmit={submit}>
     <div>
-      <p className="eyebrow-caps">Doomsday Charity Screening</p>
+      <p className="eyebrow-caps">Movies4Water</p>
       <h1>Admin sign in</h1>
     </div>
     <div className="field">
@@ -172,7 +172,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   return <div className="container container-wide">
     <header className="admin-header">
       <div>
-        <p className="eyebrow-caps">Doomsday Charity Screening · Admin</p>
+        <p className="eyebrow-caps">Movies4Water · Admin</p>
         <h1>Payment verification</h1>
       </div>
       <div className="admin-account">
