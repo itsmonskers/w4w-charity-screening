@@ -310,7 +310,11 @@ function ReviewDialog({ review, onClose, onDone, onNoAccess }: { review: Review;
     setError('')
     const result = await (approving ? approveBooking : rejectBooking)(booking.id, note)
     setBusy(false)
-    if (result.ok) return onDone({ message: approving ? `Approved ${booking.referenceCode}. Its seats are now taken.` : `Rejected ${booking.referenceCode}. Its seats are available again.` })
+    if (result.ok) {
+      const done = approving ? `Approved ${booking.referenceCode}. Its seats are now taken.` : `Rejected ${booking.referenceCode}. Its seats are available again.`
+      if (result.emailSent) return onDone({ message: `${done} The guest has been emailed.` })
+      return onDone({ message: `${done} Email not sent: please email ${booking.email} manually (see docs/email-templates.md).`, error: true })
+    }
     if (result.error === 'booking_not_pending') return onDone({ message: `Someone else already handled ${booking.referenceCode}. The list has been refreshed.`, error: true })
     if (result.error === 'booking_not_found') return onDone({ message: `${booking.referenceCode} no longer exists. The list has been refreshed.`, error: true })
     if (result.error === 'not_admin') return onNoAccess()

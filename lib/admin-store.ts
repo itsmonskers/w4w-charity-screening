@@ -27,7 +27,8 @@ export type AdminBooking = {
 export type SeatCounts = { available: number; reserved: number; taken: number }
 export type SignInResult = { ok: true } | { ok: false; error: 'invalid_credentials' | 'unknown' }
 export type ReviewError = 'booking_not_pending' | 'booking_not_found' | 'not_admin' | 'unknown'
-export type ReviewResult = { ok: true } | { ok: false; error: ReviewError }
+// emailSent: false when the guest's email failed; the review itself still succeeded.
+export type ReviewResult = { ok: true; emailSent: boolean } | { ok: false; error: ReviewError }
 
 export const ADMIN_AVAILABLE = !!supabase
 
@@ -128,10 +129,28 @@ export async function getScreenshotUrl(path: string, download = false): Promise<
   return data.signedUrl
 }
 
+// Asks the server to email the guest about the decision. Never throws.
+async function sendDecisionEmail(kind: 'approved' | 'rejected', bookingId: string): Promise<boolean> {
+  try {
+    const { data } = await client().auth.getSession()
+    const token = data.session?.access_token
+    if (!token) return false
+    const response = await fetch('/api/booking-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ kind, bookingId }),
+    })
+    const result = await response.json() as { sent?: boolean }
+    return result.sent === true
+  } catch {
+    return false
+  }
+}
+
 async function review(fn: 'approve_booking' | 'reject_booking', bookingId: string, note: string): Promise<ReviewResult> {
   try {
     const { error } = await client().rpc(fn, { p_booking_id: bookingId, p_note: note.trim() || null })
-    if (!error) return { ok: true }
+    if (!error) return { ok: true, emailSent: await sendDecisionEmail(fn === 'approve_booking' ? 'approved' : 'rejected', bookingId) }
     return { ok: false, error: REVIEW_ERRORS.find(known => known === error.message) ?? 'unknown' }
   } catch {
     return { ok: false, error: 'unknown' }

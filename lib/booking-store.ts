@@ -97,6 +97,14 @@ export async function reserveSeats(input: ReserveInput): Promise<ReserveResult> 
       return { ok: false, error: code ?? 'unknown' }
     }
     const result = (data as { reference_code: string; seat_ids: string[]; amount: number | string | null }[])[0]
+    // "Booking received" email (not for the mock, which returned above). Not awaited:
+    // a failed email never fails the booking; the server logs it.
+    void fetch('/api/booking-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'received', referenceCode: result.reference_code, paymentRef: input.paymentRef }),
+      keepalive: true,
+    }).catch(() => {})
     return { ok: true, referenceCode: result.reference_code, seats: result.seat_ids, amount: toNumber(result.amount) }
   } catch {
     return { ok: false, error: 'unknown' }
