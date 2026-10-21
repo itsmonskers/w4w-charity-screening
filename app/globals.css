@@ -88,6 +88,7 @@ main {
   font-weight: 700;
   font-size: 13px;
   padding: 13px 24px;
+  text-decoration: none;
   cursor: pointer;
   transition: transform .22s ease, box-shadow .22s ease, background-color .22s ease;
 }
@@ -872,19 +873,34 @@ textarea.input {
   align-self: center;
 }
 
-.qr-placeholder {
-  width: min(100%, 200px);
-  aspect-ratio: 1;
-  margin: 0 auto;
-  background: var(--ev-input);
-  border: 1px dashed var(--ev-line);
+/* Payment QR (UnionBank via InstaPay): on white, so every scanner gets a quiet zone */
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.qr-card img {
+  display: block;
+  width: min(100%, 202px);
+  height: auto;
+  padding: 8px;
+  background: #fff;
   border-radius: 7px;
-  display: grid;
-  place-items: center;
+}
+
+.qr-card figcaption {
   color: var(--ev-muted);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.5;
   text-align: center;
+}
+
+.qr-card strong,
+.pay-box p strong {
+  color: var(--ev-text);
 }
 
 .upload {

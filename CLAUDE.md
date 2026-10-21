@@ -30,8 +30,8 @@ standard.
   except `#fff` and `#d64545`. No Tailwind arbitrary hex.
 - Never invent facts. Keep every `[... TBD]` placeholder visible and
   `PRICE_PER_SEAT = null` until real values are supplied.
-- This microsite uses the **event theme** in DESIGN.md Section 0 (dark green,
-  gold, Cinzel + Hanken Grotesk). Use only the base tokens and the `--ev-*`
+- This microsite uses the **event theme** in DESIGN.md Section 0 (W4W blue on
+  charcoal with gold, Cinzel + Hanken Grotesk). Use only the base tokens and the `--ev-*`
   tokens defined there. No other new colors, fonts, divider styles or
   animation libraries. If a task seems to need one, stop and ask.
 - Never use Marvel assets: no posters, characters, logos or poster-style

@@ -217,9 +217,14 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
 
         <section className="pay-box" aria-labelledby="bk-pay-title">
           <h2 id="bk-pay-title" className="eyebrow-caps panel-title">How to pay</h2>
-          <p>Send your payment, then attach the screenshot below.</p>
-          <div className="qr-placeholder">[PAYMENT QR TBD]</div>
-          <button type="button" className="btn-ghost" disabled aria-disabled="true"><Download /> Save QR code</button>
+          <p>Scan with GCash, Maya or your bank app, enter the exact amount due, then attach the screenshot below.</p>
+          {/* Static UnionBank QR Ph code (no amount inside): the guest types the amount */}
+          <figure className="qr-card">
+            <img src="/payment-qr.png" width={360} height={360} alt="InstaPay QR code for the Waves for Water Organization, Inc. UnionBank account" />
+            <figcaption>Account name: <strong>Waves for Water Organization, Inc.</strong> · UnionBank via InstaPay</figcaption>
+          </figure>
+          <a className="btn-ghost" href="/payment-qr.png" download="W4W-UnionBank-QR.png"><Download /> Save QR code</a>
+          <p>Before you pay, check that your app shows the account name <strong>WAVES FOR WATER ORGANIZAT…</strong></p>
           <p className="pay-note">Paying from this phone? Save the QR, then in GCash, Maya or your bank app choose Pay via QR and upload it from your gallery.</p>
         </section>
 

@@ -306,7 +306,7 @@ gold border is its non-color cue.
     the check-in process ([CHECK-IN PROCESS TBD]); don't promise QR
     e-tickets until it's decided.
   - **Not approved** (after rejection, email): the reason from the
-    verifier plus "Questions? [CONTACT TBD]".
+    verifier plus "Questions? w4wph.movies4water@gmail.com".
   Format: `W4W-DD-7K2Q · Pending verification`. Admin tabs may keep the
   internal names Pending / Approved / Rejected.
 - **Booking panel (desktop) / sheet (mobile), one column, top to bottom:**
@@ -316,10 +316,15 @@ gold border is its non-color cue.
   2. Full name*, Mobile number or Messenger name*, Email* (hint: "Your
      confirmation is sent here"), Company / organization (optional).
   3. **How to pay** box (`--line-dark` dashed border, 12px radius): short
-     line "Send your payment, then attach the screenshot below.", QR
-     ([PAYMENT QR TBD]; later a real bank/e-wallet QR card showing the
-     account name), `.btn-ghost` "Save QR code", the paying-from-this-phone
-     instructions.
+     line "Scan with GCash, Maya or your bank app, enter the exact amount
+     due, then attach the screenshot below.", the UnionBank InstaPay QR
+     (`/payment-qr.png`, a static QR Ph code with no amount inside; account
+     name "WAVES FOR WATER ORGANIZAT" as encoded) on a white `#fff` card
+     with the caption "Account name: Waves for Water Organization, Inc. ·
+     UnionBank via InstaPay", `.btn-ghost` "Save QR code" (downloads the
+     image), the paying-from-this-phone instructions, and "Before you pay,
+     check that your app shows the account name WAVES FOR WATER
+     ORGANIZAT…".
   4. Payment screenshot* upload (JPG/PNG/HEIC/WEBP, 10 MB).
   5. Notes (optional, textarea).
   6. Consent (inline checkbox): "I agree to the Donation Terms, Refund
@@ -348,8 +353,19 @@ gold border is its non-color cue.
     - Taken: `--muted-dark` 18% fill with "×"
   - No Marvel logos, posters, stills or character art. The film title is
     text only. Don't copy another organization's site styling.
-- **Files not built yet:** real logo, payment QR; backend (database, admin,
-  emails) comes later and replaces `lib/booking-store.ts` only.
+- **Build status:**
+  - **Built:** Supabase backend (`supabase/schema.sql` plus
+    `supabase/migrations/`) behind `lib/booking-store.ts`, live seat updates,
+    booking with payment screenshot and payment reference number, the
+    `/admin` verification page (approve/reject, CSV export) behind
+    `lib/admin-store.ts`, the UnionBank payment QR, the policy PDFs, the
+    link preview, and automatic confirmation emails (Task 9: booking
+    received, confirmed, not approved) sent via Gmail SMTP from
+    w4wph.movies4water@gmail.com through `app/api/booking-email`. If /admin
+    shows "Email not sent", verifiers send the email by hand using
+    `docs/email-templates.md`.
+  - **Not built yet:** check-in at the door is undecided
+    ([CHECK-IN PROCESS TBD]).
 - **Link preview (Open Graph):** `app/opengraph-image.tsx` generates a
   1200×630 image at build time: the W4W Philippines logo centered on
   `--char`, then "Movies4Water", "Avengers: Doomsday Block Screening" and the
