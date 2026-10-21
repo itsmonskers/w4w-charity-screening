@@ -163,8 +163,8 @@ gold border is its non-color cue.
      - No separate "How it works" or "Finish your booking" sections.
   5. **Footer: one slim line**, no mission quote or core belief:
      "© 2026 Waves for Water Philippines · Questions?
-     phpartnerships@wavesforwater.org · Donation Terms · Refund Policy ·
-     Privacy Policy" (a `mailto:` link and the three policy PDFs, links in
+     w4wph.movies4water@gmail.com · Privacy Policy" (a `mailto:` link and
+     the Privacy Policy PDF, links in
      `--ev-accent`) in
      `--ev-muted`, 12px, above a 1px `--ev-line` rule. It stays because
      people with payment or ticket problems need a way to reach W4W.
@@ -327,12 +327,11 @@ gold border is its non-color cue.
      ORGANIZAT…".
   4. Payment screenshot* upload (JPG/PNG/HEIC/WEBP, 10 MB).
   5. Notes (optional, textarea).
-  6. Consent (inline checkbox): "I agree to the Donation Terms, Refund
-     Policy and Privacy Policy of Waves for Water Philippines, and to W4W
-     processing my details for this booking under the Data Privacy Act of
-     2012." Each policy name links to its PDF in `public/policies/`
-     (`donation-terms.pdf`, `refund-policy.pdf`, `privacy-policy.pdf`),
-     opening in a new tab, in `--ev-accent`. Then full-width
+  6. Consent (inline checkbox): "I have read the Privacy Policy of Waves
+     for Water Philippines and agree to W4W processing my details for this
+     booking under the Data Privacy Act of 2012." "Privacy Policy" links to
+     `public/policies/privacy-policy.pdf`, opening in a new tab, in
+     `--ev-accent`. Then full-width
      `.btn-primary` "Reserve seats".
   7. On success, the panel content is replaced by the e-ticket card
      (deviation 8) with "Reserve more seats".
@@ -358,7 +357,7 @@ gold border is its non-color cue.
     `supabase/migrations/`) behind `lib/booking-store.ts`, live seat updates,
     booking with payment screenshot and payment reference number, the
     `/admin` verification page (approve/reject, CSV export) behind
-    `lib/admin-store.ts`, the UnionBank payment QR, the policy PDFs, the
+    `lib/admin-store.ts`, the UnionBank payment QR, the Privacy Policy PDF, the
     link preview, and automatic confirmation emails (Task 9: booking
     received, confirmed, not approved) sent via Gmail SMTP from
     w4wph.movies4water@gmail.com through `app/api/booking-email`. If /admin

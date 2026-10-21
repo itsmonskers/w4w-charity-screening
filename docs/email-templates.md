@@ -85,9 +85,6 @@ The seats you picked ([SEATS LINE]) are no longer held for you. If you'd
 still like to come, you're welcome to book again on the website while seats
 are available.
 
-[IF A PAYMENT WAS RECEIVED: REFUND STEPS TBD; confirm with Patrick before
-sending]
-
 Questions? Just reply to this email or write to
 w4wph.movies4water@gmail.com.
 
@@ -128,6 +125,3 @@ w4wph.movies4water@gmail.com
 
 - **Check-in process:** what guests show at the door (name, reference code,
   or something else). It fills `[CHECK-IN PROCESS TBD]` in template 1.
-- **Refunds for rejected bookings where money did arrive:** the current
-  Refund Policy doesn't cover this case. It fills the refund line in
-  template 2.

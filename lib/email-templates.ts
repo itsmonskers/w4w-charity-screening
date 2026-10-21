@@ -99,10 +99,7 @@ const CONTENT: Record<EmailKind, (contact: string) => Content> = {
       `We're sorry, but we could not verify the payment for your reservation for ${EVENT_NAME}.`,
       'The seats below are no longer held for you.',
     ],
-    outro: [
-      `Please contact us at ${contact} with your reference code so we can help.`,
-      'Refunds: [REFUND POLICY TBD]',
-    ],
+    outro: [`Please contact us at ${contact} with your reference code so we can help.`],
   }),
 }
 
