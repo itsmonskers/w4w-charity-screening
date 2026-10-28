@@ -46,11 +46,11 @@ function csvCell(value: string) {
 }
 
 function exportApproved(bookings: AdminBooking[]) {
-  const header = ['Reference code', 'Name', 'Contact', 'Email', 'Seats', 'Seat count', 'Amount', 'Payment ref', 'Paid by']
+  const header = ['Reference code', 'Name', 'Contact', 'Email', 'Seats', 'Seat count', 'Amount', 'Payment ref', 'Paid by', 'Food allergies']
   const rows = bookings
     .filter(b => b.status === 'approved')
     .sort((a, b) => a.fullName.localeCompare(b.fullName))
-    .map(b => [b.referenceCode, b.fullName, b.contact, b.email, seatsByRow(b.seatIds).join('; '), String(b.seatCount), b.amount === null ? '[PRICE TBD]' : String(b.amount), b.paymentRef ?? '', b.payerName ?? ''])
+    .map(b => [b.referenceCode, b.fullName, b.contact, b.email, seatsByRow(b.seatIds).join('; '), String(b.seatCount), b.amount === null ? '[PRICE TBD]' : String(b.amount), b.paymentRef ?? '', b.payerName ?? '', (b.foodAllergies ?? '').replace(/\s*\r?\n\s*/g, '; ')])
   // BOM so Excel reads ₱ and · correctly
   const csv = '﻿' + [header, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n')
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
@@ -244,6 +244,7 @@ function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (
         <dt>Email</dt><dd><a href={`mailto:${booking.email}`}>{booking.email}</a></dd>
         <dt>Organization</dt><dd>{booking.organization ?? '–'}</dd>
         <dt>Notes</dt><dd>{booking.notes ?? '–'}</dd>
+        <dt>Food allergies</dt><dd>{booking.foodAllergies ?? '–'}</dd>
         <dt>Seats</dt><dd>{seatsByRow(booking.seatIds).map(line => <span key={line}>{line}</span>)}</dd>
         <dt>Received</dt><dd>{formatTime(booking.createdAt)}</dd>
         {booking.reviewedAt && <><dt>{booking.status === 'approved' ? 'Approved' : 'Rejected'}</dt><dd>{formatTime(booking.reviewedAt)}{booking.reviewNote && <span>{booking.reviewNote}</span>}</dd></>}

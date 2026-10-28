@@ -6,7 +6,7 @@ import * as mock from './booking-store.mock'
 import { supabase } from './supabase'
 
 export type Settings = { pricePerSeat: number | null; maxSeats: number; bookingsOpen: boolean }
-export type ReserveInput = Omit<BookingInput, 'proofName'> & { proof: File; paymentRef: string; payerName?: string }
+export type ReserveInput = Omit<BookingInput, 'proofName'> & { proof: File; paymentRef: string; payerName?: string; foodAllergies?: string }
 export type ReserveError = 'bookings_closed' | 'invalid_seat_count' | 'invalid_seats' | 'missing_details' | 'invalid_email' | 'missing_screenshot' | 'invalid_payment_ref' | 'payment_ref_used' | 'upload_failed' | 'unknown'
 export type ReserveResult =
   | { ok: true; referenceCode: string; seats: string[]; amount: number | null }
@@ -90,6 +90,7 @@ export async function reserveSeats(input: ReserveInput): Promise<ReserveResult> 
       p_screenshot_path: path,
       p_payment_ref: input.paymentRef,
       p_payer_name: input.payerName ?? '',
+      p_food_allergies: input.foodAllergies ?? '',
     })
     if (error) {
       if (error.message === 'seats_unavailable') return { ok: false, conflicts: (error.details ?? '').split(',').filter(Boolean) }

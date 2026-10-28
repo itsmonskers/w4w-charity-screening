@@ -18,6 +18,8 @@ export type EmailBooking = {
   amount: number | null
   paymentRef: string | null
   payerName: string | null
+  // "received" email only; absent for approved / rejected
+  foodAllergies?: string | null
 }
 
 const EVENT_NAME = `Movies4Water - ${EVENT.film} Block Screening`
@@ -65,6 +67,7 @@ function bookingDetails(booking: EmailBooking): [string, string[]][] {
     ...optional('Paid by', booking.payerName),
     ['Payment screenshot', ['received']],
     ...optional('Notes', booking.notes),
+    ...optional('Food allergies', booking.foodAllergies ?? null),
   ]
 }
 

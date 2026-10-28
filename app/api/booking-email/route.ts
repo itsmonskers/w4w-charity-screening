@@ -23,12 +23,14 @@ const db = (token?: string) => createClient(url!, anonKey!, {
   ...(token ? { global: { headers: { Authorization: `Bearer ${token}` } } } : {}),
 })
 
-// The booking details every email shows (same columns as claim_received_email returns). Never review_note.
+// The booking details every email shows (claim_received_email returns these plus food_allergies,
+// which only the "received" email shows). Never review_note.
 const DETAIL_COLUMNS = 'full_name, contact, email, organization, notes, seat_ids, seat_count, price_per_seat, amount, payment_ref, payer_name'
 type DetailsRow = {
   full_name: string; contact: string; email: string; organization: string | null; notes: string | null
   seat_ids: string[]; seat_count: number; price_per_seat: number | string | null; amount: number | string | null
   payment_ref: string | null; payer_name: string | null
+  food_allergies?: string | null
 }
 type BookingRow = DetailsRow & { reference_code: string; status: string }
 
@@ -46,6 +48,7 @@ const toEmailBooking = (referenceCode: string, row: DetailsRow): EmailBooking =>
   amount: toNumber(row.amount),
   paymentRef: row.payment_ref,
   payerName: row.payer_name,
+  foodAllergies: row.food_allergies,
 })
 
 export async function POST(request: Request) {

@@ -18,8 +18,8 @@ export const seatsTotal = (price: number | null, count: number) => formatPrice(p
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/webp']
-const FIELD_ORDER = ['seats', 'fullName', 'contact', 'email', 'proof', 'paymentRef', 'consent'] as const
-const emptyForm = { fullName: '', contact: '', email: '', company: '', paymentRef: '', payerName: '', notes: '' }
+const FIELD_ORDER = ['seats', 'fullName', 'contact', 'email', 'foodAllergies', 'proof', 'paymentRef', 'consent'] as const
+const emptyForm = { fullName: '', contact: '', email: '', company: '', foodAllergies: '', paymentRef: '', payerName: '', notes: '' }
 
 type Form = typeof emptyForm
 type Errors = Partial<Record<(typeof FIELD_ORDER)[number], string>>
@@ -29,7 +29,7 @@ const ERROR_MESSAGES: Record<ReserveError, string> = {
   bookings_closed: 'Bookings are closed, so we couldn’t reserve your seats.',
   invalid_seat_count: 'That number of seats can’t be booked. Please change your selection and try again.',
   invalid_seats: 'Some of the selected seats don’t exist. Please refresh the page and choose again.',
-  missing_details: 'Please check your name, contact and email. Each is required, and notes must be under 1,000 characters.',
+  missing_details: 'Please check your name, contact and email. Each is required, notes must be under 1,000 characters and food allergies under 200.',
   invalid_email: 'That email address doesn’t look right. Please check it and try again.',
   missing_screenshot: 'We couldn’t find your payment screenshot. Please upload it again and retry.',
   invalid_payment_ref: 'Please enter the reference number from your payment receipt.',
@@ -45,6 +45,7 @@ function validate(selected: string[], form: Form, file: File | null, consent: bo
   if (!form.contact.trim()) errors.contact = 'Enter your mobile number or Messenger name.'
   if (!form.email.trim()) errors.email = 'Enter your email address.'
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = 'Enter a valid email address, like name@example.com.'
+  if (form.foodAllergies.trim().length > 200) errors.foodAllergies = 'Keep food allergies to 200 characters or fewer.'
   if (!file) errors.proof = 'Upload a screenshot of your payment.'
   else if (!FILE_TYPES.includes(file.type) && !/\.(jpe?g|png|heic|webp)$/i.test(file.name)) errors.proof = 'Use a JPG, PNG, HEIC or WEBP image.'
   else if (file.size > MAX_FILE_BYTES) errors.proof = 'This file is over 10 MB. Please upload a smaller screenshot.'
@@ -151,7 +152,7 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
     }
     setLoading(true)
     onSubmittingChange(true)
-    const input: ReserveInput = { ...form, seats: selected, proof: file }
+    const input: ReserveInput = { ...form, foodAllergies: form.foodAllergies.trim(), seats: selected, proof: file }
     const response = await reserveSeats(input)
     setLoading(false)
     onSubmittingChange(false)
@@ -211,6 +212,10 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
         </Field>
         <Field id="bk-company" label="Company / organization (optional)">
           <input id="bk-company" className="input" autoComplete="organization" value={form.company} onChange={e => update('company', e.target.value)} />
+        </Field>
+        {/* [Allergy consent wording TBD]: hint / consent text from W4W's DPO goes here (health data, Data Privacy Act) */}
+        <Field id="bk-foodAllergies" label="Any food allergies? Let us know (optional)." error={shown.foodAllergies}>
+          <textarea id="bk-foodAllergies" className="input" rows={2} maxLength={200} value={form.foodAllergies} onChange={e => update('foodAllergies', e.target.value)} {...invalid('foodAllergies')} aria-describedby={describedBy(shown.foodAllergies && 'bk-foodAllergies-error')} />
         </Field>
 
         <section className="pay-box" aria-labelledby="bk-pay-title">
