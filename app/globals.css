@@ -1965,18 +1965,6 @@ footer {
   font-size: 16px;
 }
 
-.admin-check-body {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.admin-check-side {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 .admin-find {
   padding: 16px;
   background: var(--ev-input);
@@ -1997,12 +1985,14 @@ footer {
   margin: 0;
 }
 
-.admin-find-list div {
+.admin-find-list div,
+.admin-step-summary div {
   display: grid;
   gap: 4px;
 }
 
-.admin-find-list dt {
+.admin-find-list dt,
+.admin-step-summary dt {
   color: var(--ev-muted);
   font-size: 13px;
   font-weight: 700;
@@ -2010,7 +2000,8 @@ footer {
   text-transform: uppercase;
 }
 
-.admin-find-list dd {
+.admin-find-list dd,
+.admin-step-summary dd {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2042,28 +2033,49 @@ footer {
 }
 
 .admin-question {
-  margin: 0 0 12px;
+  margin: 0;
   color: var(--ev-text);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
 }
 
-.admin-answer-buttons {
+/* Answer and step buttons. Below 1024px they stick to the bottom of the screen, like the
+   guest page's bottom bar: sticky (not fixed), so the bar keeps its own space in the page and
+   nothing is hidden behind it. The safe-area padding clears the iPhone home bar. */
+.admin-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 -20px -20px;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+  background: var(--ev-panel);
+  border-top: 1px solid var(--ev-line);
+  border-radius: 0 0 14px 14px;
 }
 
-.admin-answer-buttons button {
-  flex: 1 1 200px;
+.admin-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-action-buttons button {
+  flex: 1 1 140px;
   min-height: 52px;
+  padding: 10px 16px;
   font-size: 16px;
+  line-height: 1.25;
 }
 
 .admin-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   align-self: flex-start;
   min-height: 44px;
-  margin-top: 8px;
   padding: 0;
   background: none;
   border: 0;
@@ -2073,11 +2085,6 @@ footer {
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
-}
-
-a.admin-text-link {
-  display: inline-flex;
-  align-items: center;
 }
 
 .admin-handled {
@@ -2125,88 +2132,109 @@ a.admin-text-link {
   min-width: 140px;
 }
 
-/* margin: auto centers the modal (the Tailwind reset sets margin: 0 on everything) */
-.admin-dialog {
-  width: min(480px, calc(100% - 32px));
-  max-height: calc(100% - 32px);
-  margin: auto;
-  padding: 0;
-  background: var(--ev-panel);
-  border: 1px solid var(--ev-line);
-  border-radius: 14px;
-  color: var(--ev-text);
-}
-
-.admin-dialog::backdrop {
-  background: color-mix(in srgb, var(--ev-bg) 85%, transparent);
-}
-
-.admin-dialog form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 22px;
-}
-
-.admin-dialog h2 {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-
-.admin-dialog-name {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.admin-dialog-amount {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 0;
-  border-block: 1px solid var(--ev-line);
-  color: var(--ev-muted);
-  font-size: 13px;
-}
-
-.admin-dialog-amount strong {
-  color: var(--ev-text);
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.admin-dialog-seats {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  color: var(--ev-text);
-  font-size: 14px;
-}
-
-.admin-dialog-seats span:last-child {
-  color: var(--ev-muted);
-}
-
 .admin-warning {
   margin: 0;
   padding: 12px 14px;
   border: 1px dashed var(--ev-gold);
   border-radius: 10px;
   color: var(--ev-gold);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.5;
 }
 
-.admin-dialog-actions {
+/* Confirm and not-approved steps */
+.admin-step {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+  padding: 20px;
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 14px;
+}
+
+.admin-step-title {
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.admin-step-title:focus {
+  outline: none;
+}
+
+.admin-step-text {
+  margin: 0;
+  color: var(--ev-text);
+  font-size: 17px;
+}
+
+.admin-step-summary {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 16px;
+  background: var(--ev-input);
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+}
+
+.admin-step-summary dd span {
+  display: block;
+  flex-basis: 100%;
+}
+
+.admin-reasons {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-reason {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-reason:has(input:checked) {
+  background: color-mix(in srgb, var(--ev-accent) 14%, transparent);
+  border-color: var(--ev-accent);
+}
+
+.admin-reasons[aria-invalid="true"] .admin-reason {
+  border-color: #d64545;
+}
+
+.admin-reason input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--ev-accent);
+}
+
+.admin-step-saving {
+  margin: 0;
+  color: var(--ev-accent);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-step-error {
+  font-size: 15px;
 }
 
 /* Animations */
@@ -2375,11 +2403,44 @@ a.admin-text-link {
     padding-top: 32px;
   }
 
-  /* Guided check: screenshot on the left, the payment to find and the answer on the right */
-  .admin-check-body {
+  /* Guided check: screenshot on the left; the payment to find, the answer and more details on the right */
+  .admin-check {
     display: grid;
+    grid-template-areas: "head head" "shot find" "shot answer" "shot more";
     grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    grid-template-rows: auto auto auto 1fr;
     align-items: start;
+    gap: 20px 24px;
+  }
+
+  .admin-check-head {
+    grid-area: head;
+  }
+
+  .admin-check-shot {
+    grid-area: shot;
+  }
+
+  .admin-check .admin-find {
+    grid-area: find;
+  }
+
+  .admin-check-answer {
+    grid-area: answer;
+  }
+
+  .admin-check .admin-more {
+    grid-area: more;
+  }
+
+  /* Laptops: the buttons sit in the page, not stuck to the bottom */
+  .admin-action-bar {
+    position: static;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
   }
 }
 

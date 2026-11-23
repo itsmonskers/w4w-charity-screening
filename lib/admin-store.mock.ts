@@ -96,13 +96,17 @@ export async function getSeatCounts(): Promise<SeatCounts> {
   return { available: TOTAL_SEATS - reserved - taken, reserved, taken }
 }
 
-// Test hook: `window.dispatchEvent(new Event('admin-mock:new-booking'))` adds a fake guest who
-// "just booked", to test bookings arriving during a check. Registered on the first fake load,
-// so it never exists in real mode.
+// Test hooks, registered on the first fake load (so they never exist in real mode):
+// - `window.dispatchEvent(new Event('admin-mock:new-booking'))` adds a fake guest who "just
+//   booked", to test bookings arriving during a check.
+// - `window.dispatchEvent(new Event('admin-mock:fail-next-review'))` makes the next approve or
+//   reject fail with an unknown error (like a lost connection); nothing changes.
 let newBookingHook = false
+let failNextReview = false
 function listenForNewBookings() {
   if (newBookingHook || typeof window === 'undefined') return
   newBookingHook = true
+  window.addEventListener('admin-mock:fail-next-review', () => { failNextReview = true })
   window.addEventListener('admin-mock:new-booking', () => {
     const n = bookings.length + 1
     bookings.push({ id: `mock-new-${n}`, referenceCode: `W4W-DD-TNW${n}`, fullName: 'Sofia Torres', contact: '+63 900 000 9999', email: 'sofia@example.com', organization: null, notes: null, seatIds: ['N-1'], seatCount: 1, amount: PRICE, screenshotPath: `pending/mock-new-${n}.png`, paymentRef: `TEST9${n}0000`, payerName: 'Sofia Torres', foodAllergies: null, status: 'pending', reviewNote: null, reviewedAt: null, createdAt: new Date().toISOString() })
@@ -136,6 +140,7 @@ export async function getScreenshotUrl(path: string, download = false): Promise<
 async function review(fn: 'approve_booking' | 'reject_booking', bookingId: string, note: string): Promise<ReviewResult> {
   console.info(`[admin mock] ${fn}`, JSON.stringify({ p_booking_id: bookingId, p_note: note.trim() || null }))
   await delay(600)
+  if (failNextReview) { failNextReview = false; return { ok: false, error: 'unknown' } }
   const booking = bookings.find(b => b.id === bookingId)
   if (!booking) return { ok: false, error: 'booking_not_found' }
   if (bookingId === HANDLED_ELSEWHERE && booking.status === 'pending') {

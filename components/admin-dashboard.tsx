@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { RefreshCw, Search } from 'lucide-react'
-import { ADMIN_AVAILABLE, approveBooking, checkIsAdmin, getBookings, getSeatCounts, onAuthChange, rejectBooking, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-api'
+import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getSeatCounts, onAuthChange, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
 import { CopyButton } from './admin/copy-button'
 import { GuidedCheck } from './admin/guided-check'
 import { AdminHome } from './admin/home'
+import { ReviewStep, outcomeNotice, type StepKind } from './admin/review-steps'
 import { Screenshot } from './admin/screenshot'
 import { AdminShell, type AdminRoute } from './admin/shell'
 import { exportApproved, formatTime, manilaTime, seatLabel, seatsByRow } from './admin/format'
@@ -84,7 +85,8 @@ function Login({ error, onError }: { error: string; onError: (message: string) =
   </form>
 }
 
-type Review = { kind: 'approve' | 'reject'; booking: AdminBooking }
+// A list card showing the confirm / not-approved step instead of its buttons
+type Review = { kind: StepKind; bookingId: string }
 type Notice = { message: string; error?: boolean }
 
 function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => void }) {
@@ -147,10 +149,13 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   const navCounts = bookings && { pending: all.filter(b => b.status === 'pending').length, approved: all.filter(b => b.status === 'approved').length, rejected: all.filter(b => b.status === 'rejected').length }
   const emptyText = { pending: 'No bookings are waiting for review.', approved: 'No confirmed bookings yet.', rejected: 'No bookings have been marked not approved.' }[tab]
 
+  // A list card's step finished: the card leaves this list on refresh, so focus goes to the page title
   function finishReview(next: Notice) {
     setReview(null)
     setNotice(next)
     refresh()
+    window.scrollTo(0, 0)
+    title.current?.focus()
   }
 
   return <AdminShell route={route} counts={navCounts} email={email} onExport={() => bookings && exportApproved(bookings)} onSignOut={() => signOut()}>
@@ -173,8 +178,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
-      // Until commit 4: the answers open the existing approve / reject pop-up for that booking
-      : route === 'check' ? <GuidedCheck bookings={bookings} onAnswer={(kind, booking) => { setNotice(null); setReview({ kind, booking }) }} />
+      : route === 'check' ? <GuidedCheck bookings={bookings} onNotice={setNotice} onChanged={refresh} onNoAccess={onNoAccess} />
       : <>
         <div className="admin-tabs" role="tablist" aria-label="Booking status">
           {TABS.map(({ status, label, route: to }) => <button key={status} className="admin-tab" type="button" role="tab" id={`tab-${status}`} aria-selected={tab === status} aria-controls="admin-list" onClick={() => { window.location.hash = to }}>{label} <b>{counts(status)}</b></button>)}
@@ -182,15 +186,16 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
 
         <div className="admin-list" id="admin-list" role="tabpanel" aria-labelledby={`tab-${tab}`}>
           {bookings && !visible.length && <p className="admin-empty">{q ? 'No bookings match your search.' : emptyText}</p>}
-          {visible.map(booking => <BookingCard key={booking.id} booking={booking} onReview={kind => { setNotice(null); setReview({ kind, booking }) }} />)}
+          {visible.map(booking => review?.bookingId === booking.id
+            // Approve / Reject open the same confirm / not-approved steps as the guided check
+            ? <ReviewStep key={booking.id + review.kind} kind={review.kind} booking={booking} onBack={() => setReview(null)} onSkip={() => setReview(null)} onDone={outcome => finishReview(outcomeNotice(outcome, booking))} onNoAccess={onNoAccess} />
+            : <BookingCard key={booking.id} booking={booking} onReview={kind => { setNotice(null); setReview({ kind, bookingId: booking.id }) }} />)}
         </div>
       </>}
-
-    {review && <ReviewDialog key={review.booking.id + review.kind} review={review} onClose={() => setReview(null)} onDone={finishReview} onNoAccess={onNoAccess} />}
   </AdminShell>
 }
 
-function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (kind: Review['kind']) => void }) {
+function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (kind: StepKind) => void }) {
   return <article className="admin-booking">
     <header className="admin-booking-head">
       <div>
@@ -226,63 +231,4 @@ function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (
       <button className="btn-primary" type="button" onClick={() => onReview('approve')}>Approve</button>
     </div>}
   </article>
-}
-
-function ReviewDialog({ review, onClose, onDone, onNoAccess }: { review: Review; onClose: () => void; onDone: (notice: Notice) => void; onNoAccess: () => void }) {
-  const { kind, booking } = review
-  const approving = kind === 'approve'
-  const ref = useRef<HTMLDialogElement>(null)
-  const [note, setNote] = useState('')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  useEffect(() => { ref.current?.showModal() }, [])
-
-  async function submit(event: FormEvent) {
-    event.preventDefault()
-    if (!approving && !note.trim()) { setError('Enter a reason for rejecting.'); return }
-    setBusy(true)
-    setError('')
-    const result = await (approving ? approveBooking : rejectBooking)(booking.id, note)
-    setBusy(false)
-    if (result.ok) {
-      const done = approving ? `Approved ${booking.referenceCode}. Its seats are now taken.` : `Rejected ${booking.referenceCode}. Its seats are available again.`
-      if (result.emailSent) return onDone({ message: `${done} The guest has been emailed.` })
-      return onDone({ message: `${done} Email not sent: please email ${booking.email} manually (see docs/email-templates.md).`, error: true })
-    }
-    if (result.error === 'booking_not_pending') return onDone({ message: `Someone else already handled ${booking.referenceCode}. The list has been refreshed.`, error: true })
-    if (result.error === 'booking_not_found') return onDone({ message: `${booking.referenceCode} no longer exists. The list has been refreshed.`, error: true })
-    if (result.error === 'not_admin') return onNoAccess()
-    setError('Couldn’t save this. Check your connection and try again.')
-  }
-
-  return <dialog ref={ref} className="admin-dialog" aria-labelledby="review-title" onClose={onClose} onCancel={event => { if (busy) event.preventDefault() }}>
-    <form onSubmit={submit}>
-      <div>
-        <p className="eyebrow-caps">{booking.referenceCode}</p>
-        <h2 id="review-title">{approving ? 'Approve booking' : 'Reject booking'}</h2>
-      </div>
-      <p className="admin-dialog-name">{booking.fullName}</p>
-      <div className="admin-dialog-amount">
-        <span>Amount</span>
-        <strong>{formatPrice(booking.amount)}</strong>
-      </div>
-      <div className="admin-dialog-seats">
-        {seatsByRow(booking.seatIds).map(line => <span key={line}>{line}</span>)}
-        <span>{seatLabel(booking.seatCount)}</span>
-      </div>
-      {approving
-        ? <p className="admin-warning">{booking.paymentRef && <>Find reference <strong>{booking.paymentRef}</strong> in the account history and check the amount matches. </>}Only approve after confirming this exact amount arrived in the account.</p>
-        : <p className="admin-warning">Rejecting frees these seats immediately, so anyone can book them again.</p>}
-      <div className="field">
-        <label className="field-label" htmlFor="review-note">{approving ? 'Note (optional)' : 'Reason (required)'}</label>
-        <textarea className="input" id="review-note" rows={3} maxLength={500} value={note} onChange={e => setNote(e.target.value)} aria-invalid={!!error && !approving && !note.trim()} aria-describedby={error ? 'review-error' : undefined} />
-      </div>
-      {error && <p className="field-error" id="review-error" role="alert">{error}</p>}
-      <div className="admin-dialog-actions">
-        <button className="btn-ghost" type="button" onClick={() => ref.current?.close()} disabled={busy}>Cancel</button>
-        <button className="btn-primary" type="submit" disabled={busy}>{busy ? 'Saving…' : approving ? 'Approve' : 'Reject'}</button>
-      </div>
-    </form>
-  </dialog>
 }
