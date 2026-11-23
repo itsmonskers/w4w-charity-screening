@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Check, Copy, Download, LogOut, RefreshCw, Search } from 'lucide-react'
-import { ADMIN_AVAILABLE, approveBooking, checkIsAdmin, getBookings, getScreenshotUrl, getSeatCounts, onAuthChange, rejectBooking, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-store'
+import { ADMIN_AVAILABLE, approveBooking, checkIsAdmin, getBookings, getScreenshotUrl, getSeatCounts, onAuthChange, rejectBooking, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
 
 const REFRESH_MS = 30_000
