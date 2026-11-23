@@ -14,18 +14,20 @@ type Props = {
   onOutcome: (outcome: StepOutcome, booking: AdminBooking) => void // message, warnings, reload
   onClearNotice: () => void
   onNoAccess: () => void
+  onAllDone: (allDone: boolean) => void // the All done screen is showing (or not)
+  openWarnings: string[] // booking ids whose failed-email warning is still open
 }
 
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 // One waiting booking at a time, oldest first. The queue is a snapshot: bookings that
 // arrive later join the end, and the booking on screen is never swapped out by a refresh.
-export function GuidedCheck({ bookings, onOutcome, onClearNotice, onNoAccess }: Props) {
+export function GuidedCheck({ bookings, onOutcome, onClearNotice, onNoAccess, onAllDone, openWarnings }: Props) {
   const [queue, setQueue] = useState<string[] | null>(null)
   const [index, setIndex] = useState(0)
   const [step, setStep] = useState<StepKind | null>(null)
-  // What happened in this run, for the All done summary
-  const [tally, setTally] = useState({ confirmed: 0, notApproved: 0, skipped: 0, emailsFailed: 0 })
+  // What happened in this run, for the All done summary (emailsFailed: booking ids)
+  const [tally, setTally] = useState({ confirmed: 0, notApproved: 0, skipped: 0, emailsFailed: [] as string[] })
   // Bookings another admin handled while this screen was open
   const [elsewhere, setElsewhere] = useState<Set<string>>(() => new Set())
   // Last copy of every booking in the queue, in case one disappears from the data
@@ -55,6 +57,11 @@ export function GuidedCheck({ bookings, onOutcome, onClearNotice, onNoAccess }: 
     heading.current?.focus()
   }, [currentId, step, queue === null])
 
+  // Tell the page when the All done screen shows (page title, clearing the "already handled" message)
+  const allDone = !!queue && queue.length > 0 && !currentId
+  useEffect(() => { onAllDone(allDone) }, [allDone, onAllDone])
+  useEffect(() => () => onAllDone(false), [onAllDone])
+
   if (!bookings || !queue) return <p className="admin-empty" role="status">Loading bookings…</p>
 
   const next = () => { setStep(null); setIndex(i => i + 1) }
@@ -80,8 +87,10 @@ export function GuidedCheck({ bookings, onOutcome, onClearNotice, onNoAccess }: 
       </section>
     </div>
     const decisions = tally.confirmed + tally.notApproved
+    const failed = tally.emailsFailed.length
+    const stillOpen = tally.emailsFailed.some(id => openWarnings.includes(id))
+    // No top "Back to Home" link here: the button below is the only one
     return <div className="admin-check-wrap">
-      {top}
       <section className="admin-card admin-done" aria-labelledby="check-end">
         <h2 className="admin-done-title" id="check-end" ref={heading} tabIndex={-1}>All done!</h2>
         <ul className="admin-done-summary">
@@ -89,9 +98,11 @@ export function GuidedCheck({ bookings, onOutcome, onClearNotice, onNoAccess }: 
           <li><strong>{tally.notApproved}</strong> not approved</li>
           <li><strong>{tally.skipped}</strong> skipped</li>
         </ul>
-        {decisions > 0 && (tally.emailsFailed
-          ? <p className="admin-card-text is-warning">{count(tally.emailsFailed, 'email', 'emails')} did not send. The warning above has the text to send by hand.</p>
-          : <p className="admin-card-text is-large">All guests have been emailed.</p>)}
+        {decisions > 0 && (!failed
+          ? <p className="admin-card-text is-large">All guests have been emailed.</p>
+          : stillOpen
+            ? <p className="admin-card-text is-warning">{count(failed, 'email', 'emails')} did not send. The warning above has the text to send by hand.</p>
+            : <p className="admin-card-text is-large">{failed === 1 ? '1 email was' : `${failed} emails were`} sent by hand.</p>)}
         {stillWaiting > 0 && <p className="admin-card-text">{count(stillWaiting, 'booking is', 'bookings are')} still waiting for a check.</p>}
         <a className="btn-primary" href="#home">Back to Home</a>
       </section>
@@ -106,7 +117,7 @@ export function GuidedCheck({ bookings, onOutcome, onClearNotice, onNoAccess }: 
     decided.current.add(booking.id)
     if (outcome.kind === 'done') {
       const { action, emailSent } = outcome
-      setTally(t => ({ ...t, confirmed: t.confirmed + (action === 'approve' ? 1 : 0), notApproved: t.notApproved + (action === 'reject' ? 1 : 0), emailsFailed: t.emailsFailed + (emailSent ? 0 : 1) }))
+      setTally(t => ({ ...t, confirmed: t.confirmed + (action === 'approve' ? 1 : 0), notApproved: t.notApproved + (action === 'reject' ? 1 : 0), emailsFailed: emailSent ? t.emailsFailed : [...t.emailsFailed, booking.id] }))
       return next()
     }
     // Someone else got there first: stay on this booking and say so

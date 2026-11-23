@@ -20,14 +20,17 @@ const NOTE_ROOM = MAX_NOTE - reviewNote(REASONS.reduce((a, b) => a.length >= b.l
 export const firstName = (fullName: string) => fullName.trim().split(/\s+/)[0]
 
 // The message shown after a step finishes (same facts as the old pop-up's messages)
-export function outcomeNotice(outcome: StepOutcome, booking: AdminBooking): { message: string; error?: boolean } {
+// `handled`: a calm "someone else got there first" message, cleared when All done appears.
+// Red (`error`) is only for real errors.
+export function outcomeNotice(outcome: StepOutcome, booking: AdminBooking): { message: string; error?: boolean; handled?: boolean } {
   const name = firstName(booking.fullName)
-  if (outcome.kind === 'handled') return { message: `Someone else already handled ${booking.fullName}’s booking, so nothing was changed.`, error: true }
+  if (outcome.kind === 'handled') return { message: `Someone else already handled ${booking.fullName}’s booking, so nothing was changed.`, handled: true }
   if (outcome.kind === 'missing') return { message: `${booking.fullName}’s booking (${booking.referenceCode}) no longer exists. Nothing was changed.`, error: true }
-  const done = outcome.action === 'approve' ? `Confirmed ${booking.fullName}’s ${seatLabel(booking.seatCount)}.` : `Marked ${booking.fullName} as not approved. The ${seatLabel(booking.seatCount)} are free for others again.`
+  const done = outcome.action === 'approve' ? `Confirmed ${booking.fullName}’s ${seatLabel(booking.seatCount)}.` : `Marked ${booking.fullName} as not approved. The ${seatLabel(booking.seatCount)} ${booking.seatCount === 1 ? 'is' : 'are'} free for others again.`
   if (outcome.emailSent) return { message: `${done} ${name} has been emailed.` }
-  // The details and "Copy email text" are in the warning list, which stays until dismissed
-  return { message: `${done} The email to ${name} did not send: see “emails did not send” above.`, error: true }
+  // Saved, only the email failed: a normal success message. The gold warning list is the
+  // only place that talks about the failed email.
+  return { message: done }
 }
 
 type Props = {

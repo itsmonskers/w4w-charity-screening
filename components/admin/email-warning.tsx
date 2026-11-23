@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle, Check } from 'lucide-react'
 import type { AdminBooking } from '@/lib/admin-api'
 import { EMAIL_CONTACT, decisionEmail, type DecisionEmail } from '@/lib/admin-email-copy'
 import { CopyButton } from './copy-button'
@@ -33,7 +33,7 @@ export function EmailWarnings({ warnings, onDismiss, onAllDismissed }: { warning
           <div className="admin-email-actions">
             <CopyButton text={email.text} label={`email text for ${booking.fullName}`}>Copy email text</CopyButton>
             <CopyButton text={email.subject} label={`email subject for ${booking.fullName}`}>Copy subject</CopyButton>
-            <button className="btn-ghost admin-btn-small admin-email-dismiss" type="button" onClick={() => dismiss(index)} aria-label={`Dismiss: email to ${booking.fullName} sent by hand`}><X size={16} aria-hidden />Dismiss</button>
+            <button className="btn-ghost admin-btn-small admin-email-dismiss" type="button" onClick={() => dismiss(index)} aria-label={`I’ve sent the email to ${booking.fullName} by hand`}><Check size={16} aria-hidden />I’ve sent it</button>
           </div>
         </li>
       })}

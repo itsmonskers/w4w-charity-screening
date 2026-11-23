@@ -85,7 +85,7 @@ function Login({ error, onError }: { error: string; onError: (message: string) =
 
 // A list card showing the confirm / not-approved step instead of its buttons
 type Review = { kind: StepKind; bookingId: string }
-type Notice = { message: string; error?: boolean }
+type Notice = { message: string; error?: boolean; handled?: boolean }
 
 function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => void }) {
   const [bookings, setBookings] = useState<AdminBooking[] | null>(null)
@@ -101,6 +101,13 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   const [notice, setNotice] = useState<Notice | null>(null)
   // Emails that didn't send: kept (across pages) until each one is dismissed
   const [warnings, setWarnings] = useState<EmailWarningItem[]>([])
+  // The guided check is on its All done screen: title "Payment check", and the calm
+  // "someone else already handled" message is cleared
+  const [checkDone, setCheckDone] = useState(false)
+  const onAllDone = useCallback((done: boolean) => {
+    setCheckDone(done)
+    if (done) setNotice(current => current?.handled ? null : current)
+  }, [])
 
   // Things that pause the auto-refresh: open steps / viewer / menu (counted), and a hidden tab
   const [pauses, setPauses] = useState(0)
@@ -199,7 +206,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
 
   return <RefreshPauseContext.Provider value={pause}><AdminShell route={route} counts={navCounts} email={email} onExport={() => bookings && exportApproved(bookings)} onSignOut={() => signOut()}>
     <header className="admin-page-head">
-      <h1 ref={title} tabIndex={-1}>{TITLES[route]}</h1>
+      <h1 ref={title} tabIndex={-1}>{route === 'check' && checkDone ? 'Payment check' : TITLES[route]}</h1>
       {route === 'home' && <p className="admin-lede">Here’s what needs you today.</p>}
     </header>
 
@@ -218,7 +225,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
-      : route === 'check' ? <GuidedCheck bookings={bookings} onOutcome={handleOutcome} onClearNotice={() => setNotice(null)} onNoAccess={onNoAccess} />
+      : route === 'check' ? <GuidedCheck bookings={bookings} onOutcome={handleOutcome} onClearNotice={() => setNotice(null)} onNoAccess={onNoAccess} onAllDone={onAllDone} openWarnings={warnings.map(w => w.booking.id)} />
       : route === 'confirmed' ? <BookingList bookings={bookings} status="approved" query={query} />
       : route === 'not-approved' ? <BookingList bookings={bookings} status="rejected" query={query} />
       : <div className="admin-list">
