@@ -1,64 +1,27 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Check, Copy, Download, LogOut, RefreshCw, Search } from 'lucide-react'
+import { Check, Copy, Download, RefreshCw, Search } from 'lucide-react'
 import { ADMIN_AVAILABLE, approveBooking, checkIsAdmin, getBookings, getScreenshotUrl, getSeatCounts, onAuthChange, rejectBooking, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
+import { AdminHome } from './admin/home'
+import { AdminShell, type AdminRoute } from './admin/shell'
+import { exportApproved, formatTime, manilaTime, seatLabel, seatsByRow } from './admin/format'
 
 const REFRESH_MS = 30_000
 const NO_ACCESS = 'This account doesn’t have admin access.'
-const TABS: { status: BookingStatus; label: string }[] = [
-  { status: 'pending', label: 'Pending' },
-  { status: 'approved', label: 'Approved' },
-  { status: 'rejected', label: 'Rejected' },
+// Until the guided check (commit 3), each Payments page is the existing list with its tab selected.
+const TABS: { status: BookingStatus; label: string; route: AdminRoute }[] = [
+  { status: 'pending', label: 'Waiting for review', route: 'check' },
+  { status: 'approved', label: 'Confirmed', route: 'confirmed' },
+  { status: 'rejected', label: 'Not approved', route: 'not-approved' },
 ]
+const TITLES: Record<AdminRoute, string> = { home: 'Home', check: 'Waiting for review', confirmed: 'Confirmed', 'not-approved': 'Not approved' }
 
-const manilaTime = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' })
-const manilaDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' })
-const formatTime = (iso: string) => `${manilaTime.format(new Date(iso))} (Manila)`
-const seatLabel = (count: number) => `${count} seat${count === 1 ? '' : 's'}`
-
-// "Row L · Seats 7, 8, 9", one line per row, rows and seats ascending (same format as the e-ticket)
-function seatsByRow(seats: string[]) {
-  const rows = new Map<string, number[]>()
-  for (const id of seats) {
-    const [row, number] = id.split('-')
-    rows.set(row, [...(rows.get(row) ?? []), Number(number)])
-  }
-  return [...rows].sort(([a], [b]) => a.localeCompare(b)).map(([row, numbers]) => {
-    numbers.sort((a, b) => a - b)
-    return `Row ${row} · Seat${numbers.length === 1 ? '' : 's'} ${numbers.join(', ')}`
-  })
-}
-
-function approvedTotal(bookings: AdminBooking[]) {
-  const approved = bookings.filter(b => b.status === 'approved')
-  const unpriced = approved.filter(b => b.amount === null).length
-  if (approved.length && unpriced === approved.length) return formatPrice(null)
-  const sum = approved.reduce((total, b) => total + (b.amount ?? 0), 0)
-  return unpriced ? `${formatPrice(sum)} + ${unpriced} at [PRICE TBD]` : formatPrice(sum)
-}
-
-// Quote every cell; neutralise spreadsheet formulas but keep phone numbers like +63 917 … as they are.
-function csvCell(value: string) {
-  const formula = /^[=@\t\r]/.test(value) || (/^[+-]/.test(value) && !/^[+-][\d\s()-]*$/.test(value))
-  return `"${(formula ? `'${value}` : value).replace(/"/g, '""')}"`
-}
-
-function exportApproved(bookings: AdminBooking[]) {
-  const header = ['Reference code', 'Name', 'Contact', 'Email', 'Seats', 'Seat count', 'Amount', 'Payment ref', 'Paid by', 'Food allergies']
-  const rows = bookings
-    .filter(b => b.status === 'approved')
-    .sort((a, b) => a.fullName.localeCompare(b.fullName))
-    .map(b => [b.referenceCode, b.fullName, b.contact, b.email, seatsByRow(b.seatIds).join('; '), String(b.seatCount), b.amount === null ? '[PRICE TBD]' : String(b.amount), b.paymentRef ?? '', b.payerName ?? '', (b.foodAllergies ?? '').replace(/\s*\r?\n\s*/g, '; ')])
-  // BOM so Excel reads ₱ and · correctly
-  const csv = '﻿' + [header, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n')
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `w4w-doomsday-approved-${manilaDate.format(new Date())}.csv`
-  link.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+// Pages live in the URL hash (#home, #check, #confirmed, #not-approved) so the phone's Back button works.
+function readRoute(): AdminRoute {
+  const hash = typeof window === 'undefined' ? '' : window.location.hash.slice(1)
+  return Object.prototype.hasOwnProperty.call(TITLES, hash) ? hash as AdminRoute : 'home'
 }
 
 export function AdminDashboard() {
@@ -127,8 +90,10 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
-  const [tab, setTab] = useState<BookingStatus>('pending')
+  const [route, setRoute] = useState<AdminRoute>(readRoute)
   const [query, setQuery] = useState('')
+  const title = useRef<HTMLHeadingElement>(null)
+  const firstRoute = useRef(true)
   const [review, setReview] = useState<Review | null>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
 
@@ -153,6 +118,20 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     return () => clearInterval(timer)
   }, [refresh])
 
+  useEffect(() => {
+    const onHash = () => setRoute(readRoute())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  // On every page change (not the first load): back to the top, focus on the page title
+  useEffect(() => {
+    if (firstRoute.current) { firstRoute.current = false; return }
+    window.scrollTo(0, 0)
+    title.current?.focus()
+  }, [route])
+
+  const tab = TABS.find(t => t.route === route)?.status ?? 'pending'
   const q = query.trim().toLowerCase()
   // Payment refs are stored without spaces, so match them ignoring spaces
   const qRef = q.replace(/\s/g, '')
@@ -161,7 +140,9 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   const visible = matches
     .filter(b => b.status === tab)
     .sort((a, b) => tab === 'pending' ? a.createdAt.localeCompare(b.createdAt) : (b.reviewedAt ?? b.createdAt).localeCompare(a.reviewedAt ?? a.createdAt))
-  const approvedCount = (bookings ?? []).filter(b => b.status === 'approved').length
+  const all = bookings ?? []
+  const navCounts = bookings && { pending: all.filter(b => b.status === 'pending').length, approved: all.filter(b => b.status === 'approved').length, rejected: all.filter(b => b.status === 'rejected').length }
+  const emptyText = { pending: 'No bookings are waiting for review.', approved: 'No confirmed bookings yet.', rejected: 'No bookings have been marked not approved.' }[tab]
 
   function finishReview(next: Notice) {
     setReview(null)
@@ -169,55 +150,40 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     refresh()
   }
 
-  return <div className="container container-wide">
-    <header className="admin-header">
-      <div>
-        <p className="eyebrow-caps">Movies4Water · Admin</p>
-        <h1>Payment verification</h1>
-      </div>
-      <div className="admin-account">
-        <span>{email}</span>
-        <button className="btn-ghost admin-btn-small" type="button" onClick={() => signOut()}><LogOut size={14} aria-hidden />Sign out</button>
-      </div>
+  return <AdminShell route={route} counts={navCounts} email={email} onExport={() => bookings && exportApproved(bookings)} onSignOut={() => signOut()}>
+    <header className="admin-page-head">
+      <h1 ref={title} tabIndex={-1}>{TITLES[route]}</h1>
+      {route === 'home' && <p className="admin-lede">Here’s what needs you today.</p>}
     </header>
 
-    <section className="admin-summary" aria-label="Summary">
-      <Stat label="Seats available" value={seats?.available} />
-      <Stat label="Seats reserved" value={seats?.reserved} />
-      <Stat label="Seats taken" value={seats?.taken} />
-      <Stat label="Pending bookings" value={bookings?.filter(b => b.status === 'pending').length} />
-      <Stat label="Approved total" value={bookings ? approvedTotal(bookings) : undefined} />
-    </section>
-
-    <div className="admin-toolbar">
+    {route !== 'home' && <div className="admin-toolbar">
       <label className="admin-search">
         <Search size={16} aria-hidden />
         <span className="sr-only">Search bookings</span>
         <input className="input" type="search" placeholder="Search reference, name, email or payment ref" value={query} onChange={e => setQuery(e.target.value)} />
       </label>
-      <button className="btn-ghost admin-btn-small" type="button" onClick={refresh} disabled={loading}><RefreshCw size={14} aria-hidden />{loading ? 'Refreshing…' : 'Refresh'}</button>
-      <button className="btn-ghost admin-btn-small" type="button" onClick={() => bookings && exportApproved(bookings)} disabled={!approvedCount}><Download size={14} aria-hidden />Export approved (CSV)</button>
-    </div>
+      <button className="btn-ghost admin-btn-small" type="button" onClick={refresh} disabled={loading}><RefreshCw size={16} aria-hidden />{loading ? 'Refreshing…' : 'Refresh'}</button>
+    </div>}
     <p className="admin-updated">{updatedAt ? `Updated ${updatedAt} · refreshes every 30 seconds` : 'Loading…'}</p>
 
     {loadError && <p className="admin-notice is-error" role="alert">{loadError}</p>}
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
-    <div className="admin-tabs" role="tablist" aria-label="Booking status">
-      {TABS.map(({ status, label }) => <button key={status} className="admin-tab" type="button" role="tab" id={`tab-${status}`} aria-selected={tab === status} aria-controls="admin-list" onClick={() => setTab(status)}>{label} <b>{counts(status)}</b></button>)}
-    </div>
+    {route === 'home'
+      ? <AdminHome bookings={bookings} seats={seats} />
+      : <>
+        <div className="admin-tabs" role="tablist" aria-label="Booking status">
+          {TABS.map(({ status, label, route: to }) => <button key={status} className="admin-tab" type="button" role="tab" id={`tab-${status}`} aria-selected={tab === status} aria-controls="admin-list" onClick={() => { window.location.hash = to }}>{label} <b>{counts(status)}</b></button>)}
+        </div>
 
-    <div className="admin-list" id="admin-list" role="tabpanel" aria-labelledby={`tab-${tab}`}>
-      {bookings && !visible.length && <p className="admin-empty">{q ? 'No bookings match your search.' : `No ${tab} bookings.`}</p>}
-      {visible.map(booking => <BookingCard key={booking.id} booking={booking} onReview={kind => { setNotice(null); setReview({ kind, booking }) }} />)}
-    </div>
+        <div className="admin-list" id="admin-list" role="tabpanel" aria-labelledby={`tab-${tab}`}>
+          {bookings && !visible.length && <p className="admin-empty">{q ? 'No bookings match your search.' : emptyText}</p>}
+          {visible.map(booking => <BookingCard key={booking.id} booking={booking} onReview={kind => { setNotice(null); setReview({ kind, booking }) }} />)}
+        </div>
+      </>}
 
     {review && <ReviewDialog key={review.booking.id + review.kind} review={review} onClose={() => setReview(null)} onDone={finishReview} onNoAccess={onNoAccess} />}
-  </div>
-}
-
-function Stat({ label, value }: { label: string; value: number | string | undefined }) {
-  return <div className="admin-stat"><span>{label}</span><strong>{value ?? '–'}</strong></div>
+  </AdminShell>
 }
 
 function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (kind: Review['kind']) => void }) {
