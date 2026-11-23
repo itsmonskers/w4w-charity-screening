@@ -9,8 +9,15 @@ standard.
 - Data: all seat/booking data goes through `lib/booking-store.ts`. With the
   Supabase env vars set it uses Supabase; without them it falls back to the
   in-memory mock (`IS_MOCK = true`). Admin data (login, bookings review,
-  approve/reject, screenshots, CSV) goes through `lib/admin-store.ts`.
+  approve/reject, screenshots, CSV) goes through `lib/admin-api.ts`, which
+  passes every call to `lib/admin-store.ts` (the real Supabase store) or, in
+  test mode, to the fake store `lib/admin-store.mock.ts`.
   No other UI file may contain data logic.
+- Admin test mode: `NEXT_PUBLIC_ADMIN_MOCK=true` shows fake bookings (nothing
+  saved, no emails). It only runs on localhost / 127.0.0.1 and only with
+  both Supabase settings blank; anywhere else it shows "Test mode blocked"
+  and never falls back to the real store. Never sign in to the real admin
+  or approve/reject real bookings while testing.
 - Database: Supabase project `w4w-doomsday-screening`. The schema is
   `supabase/schema.sql` plus every file in `supabase/migrations/`, applied in
   number order (tables seats, event_settings, bookings, tickets, admins;

@@ -18,7 +18,7 @@ for W4W brand direction (signed off by Carlo Delantar).
 **Precedence:** Section 0 wins over everything below it. Everything else is the
 shared W4W standard and applies unless Section 0 says otherwise.
 
-Last updated: 2026-09-26. Sources: Pilipinas4Water design standard, FlappyBoard
+Last updated: 2026-11-24. Sources: Pilipinas4Water design standard, FlappyBoard
 microsite.
 
 ---
@@ -310,8 +310,8 @@ gold border is its non-color cue.
     contact w4wph.movies4water@gmail.com with their reference code. The
     reviewer's reason and team note are never sent to the guest; they stay
     in /admin.
-  Format: `W4W-DD-7K2Q · Pending verification`. Admin tabs may keep the
-  internal names Pending / Approved / Rejected.
+  Format: `W4W-DD-7K2Q · Pending verification`. In /admin the three
+  statuses are called Waiting for review, Confirmed and Not approved.
 - **Booking panel (desktop) / sheet (mobile), one column, top to bottom:**
   1. **Your seats:** chips (removable), count, amount due (₱[PRICE TBD]
      while price is null). Empty: "No seats selected · Tap a glowing seat
@@ -414,13 +414,16 @@ gold border is its non-color cue.
   - **Built:** Supabase backend (`supabase/schema.sql` plus
     `supabase/migrations/`) behind `lib/booking-store.ts`, live seat updates,
     booking with payment screenshot and payment reference number, the
-    `/admin` verification page (approve/reject, CSV export) behind
-    `lib/admin-store.ts`, the UnionBank payment QR, the Privacy Policy PDF, the
-    link preview, and automatic confirmation emails (Task 9: booking
+    `/admin` verification page (see "Admin" above; CSV export as "Download
+    guest list") behind `lib/admin-api.ts`, which passes every call to the
+    unchanged `lib/admin-store.ts` and holds the localhost-only test mode
+    (`NEXT_PUBLIC_ADMIN_MOCK`), the UnionBank payment QR, the Privacy Policy
+    PDF, the link preview, and automatic confirmation emails (Task 9: booking
     received, confirmed, not approved) sent via Gmail SMTP from
-    w4wph.movies4water@gmail.com through `app/api/booking-email`. If /admin
-    shows "Email not sent", verifiers send the email by hand using
-    `docs/email-templates.md`.
+    w4wph.movies4water@gmail.com through `app/api/booking-email`. If an
+    automatic email fails, /admin shows a warning (kept until dismissed) with
+    "Copy email text" and "Copy subject", which copy the exact automatic
+    email to send by hand; `docs/email-templates.md` is the backup.
   - **Not built yet:** check-in at the door is undecided
     ([CHECK-IN PROCESS TBD]).
 - **Link preview (Open Graph):** `app/opengraph-image.tsx` generates a
