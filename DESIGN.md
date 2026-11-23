@@ -305,8 +305,11 @@ gold border is its non-color cue.
     verified and your seats are confirmed." Day-of instructions depend on
     the check-in process ([CHECK-IN PROCESS TBD]); don't promise QR
     e-tickets until it's decided.
-  - **Not approved** (after rejection, email): the reason from the
-    verifier plus "Questions? w4wph.movies4water@gmail.com".
+  - **Not approved** (after rejection, email): says we could not verify the
+    payment, that the seats are no longer held, and asks the guest to
+    contact w4wph.movies4water@gmail.com with their reference code. The
+    reviewer's reason and team note are never sent to the guest; they stay
+    in /admin.
   Format: `W4W-DD-7K2Q · Pending verification`. Admin tabs may keep the
   internal names Pending / Approved / Rejected.
 - **Booking panel (desktop) / sheet (mobile), one column, top to bottom:**
@@ -352,6 +355,61 @@ gold border is its non-color cue.
     - Taken: `--muted-dark` 18% fill with "×"
   - No Marvel logos, posters, stills or character art. The film title is
     text only. Don't copy another organization's site styling.
+- **Admin (`/admin`, payment verification).** Built for non-technical
+  verifiers on phones and laptops. Event-theme tokens only; no atmosphere
+  (no light shafts, particles or glows) and **no motion** of its own (the
+  shared button hover is the only movement, and the reduced-motion rule
+  turns it off). Styles live in the admin section of `app/globals.css` and
+  never change shared guest-page rules.
+  - **Layout.** From 1024px: a left sidebar with "MOVIES4WATER"
+    (`.eyebrow-caps`, `--ev-gold`) and "ADMIN"; Home; PAYMENTS: Waiting for
+    review, Confirmed, Not approved (with counts); TOOLS: Download guest
+    list (the approved CSV); at the bottom: View the booking page, "Signed
+    in as …", Sign out. The current page is highlighted in `--ev-gold`.
+    Below 1024px: a top bar with a "Menu" button that opens the same menu
+    as a full-screen modal `<dialog>` with a close (×) button (focus stays
+    inside, Esc closes, focus returns). Pages are URL hashes (`#home`,
+    `#check`, `#waiting`, `#confirmed`, `#not-approved`) so the phone's
+    Back button works.
+  - **Home cards.** One large card with a gold border: badge NEEDS
+    ATTENTION, the number waiting, "The oldest has been waiting …" and
+    "Start checking"; or ALL CLEAR when nothing is waiting. Two small
+    cards: DONE (confirmed) and FOR YOUR INFO (not approved). A collapsed
+    "See the numbers" (seats still free, seats on hold, money confirmed).
+  - **Guided check.** One waiting booking at a time, oldest first, with
+    "Booking 1 of N" and a gold progress bar. The queue is a snapshot: new
+    bookings join the end, and the booking on screen is never swapped out.
+    Shows the guest's name, a large payment screenshot, the "Open the
+    UnionBank app and look for this payment:" box (amount, reference in
+    `--ev-gold` with Copy, payer name) and "Did you find this payment?"
+    with "Yes, I found it" / "No, something's wrong", plus Skip and a
+    collapsed "More details". After each decision it moves to the next
+    booking; at the end, an "All done!" summary.
+  - **Confirm and not-approved steps.** Confirm: "Great! Confirm [name]'s
+    [N] seats?" with the amount, reference and seats. Not approved: one
+    required reason (I can't find the payment / The amount is different /
+    The receipt looks wrong / Something else) and an optional team note
+    the guest never sees, saved as "Reason: …. Note: …" (500 characters
+    max). Both say the action can't be undone, show "Saving… don't close
+    this page" and disable their buttons while saving. The full waiting
+    list (`#waiting`) uses the same steps; there is no other way to
+    approve or reject.
+  - **Screenshot viewer.** The payment screenshot opens full screen inside
+    the dashboard (modal `<dialog>`, Zoom in / Fit to screen, Close or Esc,
+    focus returns). HEIC/HEIF files get a download button instead.
+  - **Phone bottom bar.** Below 1024px the answer and step buttons stick to
+    the bottom of the screen (`position: sticky`, the same approach as the
+    guest page's bottom bar, with safe-area padding), so nothing is hidden
+    behind them. In phone landscape the bar is one row.
+  - **Status badges with words** (pill, never color alone): Waiting in
+    `--ev-gold`; Confirmed in `--ev-accent` (blue) with a check icon; Not
+    approved in `--ev-muted` (grey). No green.
+  - **Buttons.** Admin buttons use Hanken Grotesk in normal case (admin
+    only; the guest page keeps Cinzel, deviation 18). Every tap target is
+    at least 44px tall (the answer and step buttons 52px); inputs stay
+    16px.
+  - **Focus.** An admin-only 2px `--ev-accent` focus ring
+    (`:focus-visible`) so keyboard focus shows on the dark panels.
 - **Build status:**
   - **Built:** Supabase backend (`supabase/schema.sql` plus
     `supabase/migrations/`) behind `lib/booking-store.ts`, live seat updates,
