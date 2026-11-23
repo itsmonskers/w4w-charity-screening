@@ -1,22 +1,25 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Check, Copy, Download, RefreshCw, Search } from 'lucide-react'
-import { ADMIN_AVAILABLE, approveBooking, checkIsAdmin, getBookings, getScreenshotUrl, getSeatCounts, onAuthChange, rejectBooking, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-api'
+import { RefreshCw, Search } from 'lucide-react'
+import { ADMIN_AVAILABLE, approveBooking, checkIsAdmin, getBookings, getSeatCounts, onAuthChange, rejectBooking, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
+import { CopyButton } from './admin/copy-button'
+import { GuidedCheck } from './admin/guided-check'
 import { AdminHome } from './admin/home'
+import { Screenshot } from './admin/screenshot'
 import { AdminShell, type AdminRoute } from './admin/shell'
 import { exportApproved, formatTime, manilaTime, seatLabel, seatsByRow } from './admin/format'
 
 const REFRESH_MS = 30_000
 const NO_ACCESS = 'This account doesn’t have admin access.'
-// Until the guided check (commit 3), each Payments page is the existing list with its tab selected.
+// #check is the guided check; the lists (#waiting = every waiting booking) keep the existing cards and tabs.
 const TABS: { status: BookingStatus; label: string; route: AdminRoute }[] = [
-  { status: 'pending', label: 'Waiting for review', route: 'check' },
+  { status: 'pending', label: 'Waiting for review', route: 'waiting' },
   { status: 'approved', label: 'Confirmed', route: 'confirmed' },
   { status: 'rejected', label: 'Not approved', route: 'not-approved' },
 ]
-const TITLES: Record<AdminRoute, string> = { home: 'Home', check: 'Waiting for review', confirmed: 'Confirmed', 'not-approved': 'Not approved' }
+const TITLES: Record<AdminRoute, string> = { home: 'Home', check: 'Waiting for review', waiting: 'All waiting bookings', confirmed: 'Confirmed', 'not-approved': 'Not approved' }
 
 // Pages live in the URL hash (#home, #check, #confirmed, #not-approved) so the phone's Back button works.
 function readRoute(): AdminRoute {
@@ -156,7 +159,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       {route === 'home' && <p className="admin-lede">Here’s what needs you today.</p>}
     </header>
 
-    {route !== 'home' && <div className="admin-toolbar">
+    {route !== 'home' && route !== 'check' && <div className="admin-toolbar">
       <label className="admin-search">
         <Search size={16} aria-hidden />
         <span className="sr-only">Search bookings</span>
@@ -169,8 +172,9 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     {loadError && <p className="admin-notice is-error" role="alert">{loadError}</p>}
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
-    {route === 'home'
-      ? <AdminHome bookings={bookings} seats={seats} />
+    {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
+      // Until commit 4: the answers open the existing approve / reject pop-up for that booking
+      : route === 'check' ? <GuidedCheck bookings={bookings} onAnswer={(kind, booking) => { setNotice(null); setReview({ kind, booking }) }} />
       : <>
         <div className="admin-tabs" role="tablist" aria-label="Booking status">
           {TABS.map(({ status, label, route: to }) => <button key={status} className="admin-tab" type="button" role="tab" id={`tab-${status}`} aria-selected={tab === status} aria-controls="admin-list" onClick={() => { window.location.hash = to }}>{label} <b>{counts(status)}</b></button>)}
@@ -215,49 +219,13 @@ function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (
         <dt>Received</dt><dd>{formatTime(booking.createdAt)}</dd>
         {booking.reviewedAt && <><dt>{booking.status === 'approved' ? 'Approved' : 'Rejected'}</dt><dd>{formatTime(booking.reviewedAt)}{booking.reviewNote && <span>{booking.reviewNote}</span>}</dd></>}
       </dl>
-      <Screenshot path={booking.screenshotPath} reference={booking.referenceCode} />
+      <Screenshot path={booking.screenshotPath} reference={booking.referenceCode} guest={booking.fullName} />
     </div>
     {booking.status === 'pending' && <div className="admin-actions">
       <button className="btn-ghost" type="button" onClick={() => onReview('reject')}>Reject</button>
       <button className="btn-primary" type="button" onClick={() => onReview('approve')}>Approve</button>
     </div>}
   </article>
-}
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copy, setCopy] = useState<'idle' | 'copied' | 'failed'>('idle')
-  useEffect(() => {
-    if (copy === 'idle') return
-    const timer = window.setTimeout(() => setCopy('idle'), 2000)
-    return () => window.clearTimeout(timer)
-  }, [copy])
-  return <>
-    <button type="button" className="copy-button" aria-label={`Copy ${label}`} onClick={() => navigator.clipboard.writeText(text).then(() => setCopy('copied'), () => setCopy('failed'))}>{copy === 'copied' ? <><Check /> Copied</> : copy === 'failed' ? 'Copy failed' : <><Copy /> Copy</>}</button>
-    <span className="sr-only" aria-live="polite">{copy === 'copied' ? `${label} copied` : ''}</span>
-  </>
-}
-
-function Screenshot({ path, reference }: { path: string; reference: string }) {
-  // HEIC/HEIF won't preview in most browsers: offer a download instead
-  const [download, setDownload] = useState(/\.(heic|heif)$/i.test(path))
-  const [url, setUrl] = useState<string | null>(null)
-  const [missing, setMissing] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    getScreenshotUrl(path, download).then(signed => { if (!cancelled) signed ? setUrl(signed) : setMissing(true) }, () => { if (!cancelled) setMissing(true) })
-    return () => { cancelled = true }
-  }, [path, download])
-
-  if (missing) return <p className="admin-shot-note">Couldn’t load the payment screenshot. Refresh to try again.</p>
-  if (!url) return <div className="admin-shot is-loading">Loading screenshot…</div>
-  if (download) return <div className="admin-shot-note">
-    <span>This screenshot can’t be previewed here.</span>
-    <a className="btn-ghost admin-btn-small" href={url} download><Download size={14} aria-hidden />Download screenshot</a>
-  </div>
-  return <a className="admin-shot" href={url} target="_blank" rel="noopener noreferrer" title="Open full size">
-    <img src={url} alt={`Payment screenshot for ${reference}, opens full size`} onError={() => { setUrl(null); setDownload(true) }} />
-  </a>
 }
 
 function ReviewDialog({ review, onClose, onDone, onNoAccess }: { review: Review; onClose: () => void; onDone: (notice: Notice) => void; onNoAccess: () => void }) {

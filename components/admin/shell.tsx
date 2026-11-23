@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { Download, ExternalLink, LogOut, Menu, X } from 'lucide-react'
 
-export type AdminRoute = 'home' | 'check' | 'confirmed' | 'not-approved'
+export type AdminRoute = 'home' | 'check' | 'waiting' | 'confirmed' | 'not-approved'
 export type NavCounts = { pending: number; approved: number; rejected: number } | null
 
 type ShellProps = {
@@ -54,8 +54,10 @@ function Brand() {
 }
 
 function AdminNav({ route, counts, email, onNavigate, onExport, onSignOut }: { route: AdminRoute; counts: NavCounts; email: string; onNavigate?: () => void; onExport: () => void; onSignOut: () => void }) {
+  // "Waiting for review" covers the guided check and the full waiting list
+  const current = (to: AdminRoute) => route === to || (to === 'check' && route === 'waiting')
   const link = (to: AdminRoute, label: string, count?: number, gold = false) =>
-    <a className="admin-nav-link" href={`#${to}`} aria-current={route === to ? 'page' : undefined} onClick={onNavigate}>
+    <a className="admin-nav-link" href={`#${to}`} aria-current={current(to) ? 'page' : undefined} onClick={onNavigate}>
       <span>{label}</span>
       {count !== undefined && <span className={`admin-count${gold && count > 0 ? ' is-gold' : ''}`}>{count}</span>}
     </a>

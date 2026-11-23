@@ -96,7 +96,21 @@ export async function getSeatCounts(): Promise<SeatCounts> {
   return { available: TOTAL_SEATS - reserved - taken, reserved, taken }
 }
 
+// Test hook: `window.dispatchEvent(new Event('admin-mock:new-booking'))` adds a fake guest who
+// "just booked", to test bookings arriving during a check. Registered on the first fake load,
+// so it never exists in real mode.
+let newBookingHook = false
+function listenForNewBookings() {
+  if (newBookingHook || typeof window === 'undefined') return
+  newBookingHook = true
+  window.addEventListener('admin-mock:new-booking', () => {
+    const n = bookings.length + 1
+    bookings.push({ id: `mock-new-${n}`, referenceCode: `W4W-DD-TNW${n}`, fullName: 'Sofia Torres', contact: '+63 900 000 9999', email: 'sofia@example.com', organization: null, notes: null, seatIds: ['N-1'], seatCount: 1, amount: PRICE, screenshotPath: `pending/mock-new-${n}.png`, paymentRef: `TEST9${n}0000`, payerName: 'Sofia Torres', foodAllergies: null, status: 'pending', reviewNote: null, reviewedAt: null, createdAt: new Date().toISOString() })
+  })
+}
+
 export async function getBookings(): Promise<AdminBooking[]> {
+  listenForNewBookings()
   await delay(300)
   return bookings.map(b => ({ ...b, seatIds: [...b.seatIds] })).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 }
