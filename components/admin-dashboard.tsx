@@ -9,6 +9,7 @@ import { CopyButton } from './admin/copy-button'
 import { EmailWarnings, type EmailWarningItem } from './admin/email-warning'
 import { GuidedCheck } from './admin/guided-check'
 import { AdminHome } from './admin/home'
+import { RefreshPauseContext } from './admin/refresh-pause'
 import { ReviewStep, outcomeNotice, type StepKind, type StepOutcome } from './admin/review-steps'
 import { Screenshot } from './admin/screenshot'
 import { AdminShell, type AdminRoute } from './admin/shell'
@@ -101,25 +102,61 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   // Emails that didn't send: kept (across pages) until each one is dismissed
   const [warnings, setWarnings] = useState<EmailWarningItem[]>([])
 
-  const refresh = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [seatCounts, rows] = await Promise.all([getSeatCounts(), getBookings()])
-      setSeats(seatCounts)
-      setBookings(rows)
-      setUpdatedAt(manilaTime.format(new Date()))
-      setLoadError('')
-    } catch {
-      setLoadError('Couldn’t load the latest data. Check your connection; it retries every 30 seconds.')
-    } finally {
-      setLoading(false)
-    }
+  // Things that pause the auto-refresh: open steps / viewer / menu (counted), and a hidden tab
+  const [pauses, setPauses] = useState(0)
+  const [hidden, setHidden] = useState(false)
+  const pausesNow = useRef(0)
+  const lastLoad = useRef(0)
+  const inFlight = useRef<Promise<void> | null>(null)
+  const pause = useCallback(() => {
+    pausesNow.current++
+    setPauses(pausesNow.current)
+    return () => { pausesNow.current--; setPauses(pausesNow.current) }
   }, [])
 
+  // Only the Refresh button shows "Refreshing…"; automatic refreshes are silent (no flicker).
+  // One load at a time: pressing Refresh during a load waits for that load.
+  const refresh = useCallback(async (manual = false) => {
+    if (manual) setLoading(true)
+    if (!inFlight.current) {
+      lastLoad.current = Date.now()
+      inFlight.current = (async () => {
+        try {
+          const [seatCounts, rows] = await Promise.all([getSeatCounts(), getBookings()])
+          setSeats(seatCounts)
+          setBookings(rows)
+          setUpdatedAt(manilaTime.format(new Date()))
+          setLoadError('')
+        } catch {
+          setLoadError('Couldn’t load the latest data. Check your connection; it retries every 30 seconds.')
+        } finally {
+          inFlight.current = null
+        }
+      })()
+    }
+    await inFlight.current
+    if (manual) setLoading(false)
+  }, [])
+
+  // Every 30 seconds, but not while paused. After a pause, refresh straight away only if one is due.
+  const paused = pauses > 0 || hidden
   useEffect(() => {
-    refresh()
-    const timer = setInterval(refresh, REFRESH_MS)
-    return () => clearInterval(timer)
+    if (paused) return
+    let timer = 0
+    const tick = () => { refresh(); timer = window.setTimeout(tick, REFRESH_MS) }
+    timer = window.setTimeout(tick, Math.max(0, lastLoad.current + REFRESH_MS - Date.now()))
+    return () => window.clearTimeout(timer)
+  }, [paused, refresh])
+
+  // Hidden browser tab: pause. Visible again: refresh once (unless a step, viewer or menu is open).
+  useEffect(() => {
+    const onVisibility = () => {
+      const isHidden = document.visibilityState === 'hidden'
+      if (!isHidden && pausesNow.current === 0) refresh()
+      setHidden(isHidden)
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [refresh])
 
   useEffect(() => {
@@ -160,7 +197,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     title.current?.focus()
   }
 
-  return <AdminShell route={route} counts={navCounts} email={email} onExport={() => bookings && exportApproved(bookings)} onSignOut={() => signOut()}>
+  return <RefreshPauseContext.Provider value={pause}><AdminShell route={route} counts={navCounts} email={email} onExport={() => bookings && exportApproved(bookings)} onSignOut={() => signOut()}>
     <header className="admin-page-head">
       <h1 ref={title} tabIndex={-1}>{TITLES[route]}</h1>
       {route === 'home' && <p className="admin-lede">Here’s what needs you today.</p>}
@@ -172,7 +209,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
         <span className="sr-only">Search bookings</span>
         <input className="input" type="search" placeholder="Search name, payer, phone, email or reference" value={query} onChange={e => setQuery(e.target.value)} />
       </label>
-      <button className="btn-ghost admin-btn-small" type="button" onClick={refresh} disabled={loading}><RefreshCw size={16} aria-hidden />{loading ? 'Refreshing…' : 'Refresh'}</button>
+      <button className="btn-ghost admin-btn-small" type="button" onClick={() => refresh(true)} disabled={loading}><RefreshCw size={16} aria-hidden />{loading ? 'Refreshing…' : 'Refresh'}</button>
     </div>}
     <p className="admin-updated">{updatedAt ? `Updated ${updatedAt} · refreshes every 30 seconds` : 'Loading…'}</p>
 
@@ -191,7 +228,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
           ? <ReviewStep key={booking.id + review.kind} kind={review.kind} booking={booking} onBack={() => setReview(null)} onSkip={() => setReview(null)} onDone={outcome => finishListReview(outcome, booking)} onNoAccess={onNoAccess} />
           : <BookingCard key={booking.id} booking={booking} onReview={kind => { setNotice(null); setReview({ kind, bookingId: booking.id }) }} />)}
       </div>}
-  </AdminShell>
+  </AdminShell></RefreshPauseContext.Provider>
 }
 
 function BookingCard({ booking, onReview }: { booking: AdminBooking; onReview: (kind: StepKind) => void }) {

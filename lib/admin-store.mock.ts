@@ -101,12 +101,19 @@ export async function getSeatCounts(): Promise<SeatCounts> {
 //   booked", to test bookings arriving during a check.
 // - `window.dispatchEvent(new Event('admin-mock:fail-next-review'))` makes the next approve or
 //   reject fail with an unknown error (like a lost connection); nothing changes.
+// - `window.dispatchEvent(new CustomEvent('admin-mock:handle-elsewhere', { detail: 'mock-ana' }))`
+//   confirms a waiting booking as if another admin did it (shows on the next refresh).
+// Every load is logged ("[admin mock] getBookings" with the time) to test the auto-refresh.
 let newBookingHook = false
 let failNextReview = false
 function listenForNewBookings() {
   if (newBookingHook || typeof window === 'undefined') return
   newBookingHook = true
   window.addEventListener('admin-mock:fail-next-review', () => { failNextReview = true })
+  window.addEventListener('admin-mock:handle-elsewhere', event => {
+    const booking = bookings.find(b => b.id === (event as CustomEvent<string>).detail)
+    if (booking?.status === 'pending') Object.assign(booking, { status: 'approved', reviewNote: 'Fake: handled by another admin', reviewedAt: new Date().toISOString() })
+  })
   window.addEventListener('admin-mock:new-booking', () => {
     const n = bookings.length + 1
     bookings.push({ id: `mock-new-${n}`, referenceCode: `W4W-DD-TNW${n}`, fullName: 'Sofia Torres', contact: '+63 900 000 9999', email: 'sofia@example.com', organization: null, notes: null, seatIds: ['N-1'], seatCount: 1, amount: PRICE, screenshotPath: `pending/mock-new-${n}.png`, paymentRef: `TEST9${n}0000`, payerName: 'Sofia Torres', foodAllergies: null, status: 'pending', reviewNote: null, reviewedAt: null, createdAt: new Date().toISOString() })
@@ -115,6 +122,7 @@ function listenForNewBookings() {
 
 export async function getBookings(): Promise<AdminBooking[]> {
   listenForNewBookings()
+  console.info('[admin mock] getBookings', JSON.stringify({ at: Date.now() }))
   await delay(300)
   return bookings.map(b => ({ ...b, seatIds: [...b.seatIds] })).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 }

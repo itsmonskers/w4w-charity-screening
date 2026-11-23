@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { approveBooking, rejectBooking, type AdminBooking } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
 import { seatLabel, seatsByRow } from './format'
+import { usePauseRefresh } from './refresh-pause'
 
 export type StepKind = 'approve' | 'reject'
 // What happened, for the screen that opened the step to decide what comes next
@@ -50,6 +51,7 @@ export function ReviewStep({ kind, booking, onBack, onSkip, onDone, onNoAccess }
   const [busy, setBusy] = useState(false)
   const saving = useRef(false) // blocks a second tap before the screen re-renders
   const title = useRef<HTMLHeadingElement>(null)
+  usePauseRefresh(true) // no auto-refresh while a step is open
 
   useEffect(() => { title.current?.focus() }, [])
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import type { AdminBooking } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
@@ -17,10 +17,25 @@ export function StatusBadge({ status }: { status: AdminBooking['status'] }) {
 // details (read-only, with the payment screenshot) right under it.
 export function BookingList({ bookings, status, query }: { bookings: AdminBooking[] | null; status: 'approved' | 'rejected'; query: string }) {
   const [open, setOpen] = useState<string | null>(null)
+  // While a detail is open, the order is frozen: a refresh never moves or removes the open row
+  // (rows that arrive meanwhile go at the end). Closing the detail returns to newest first.
+  const frozen = useRef<{ ids: string[]; known: Map<string, AdminBooking> } | null>(null)
   if (!bookings) return <p className="admin-empty" role="status">Loading bookings…</p>
 
   const all = bookings.filter(b => b.status === status)
-  const rows = all.filter(b => matchesSearch(b, query)).sort((a, b) => (b.reviewedAt ?? b.createdAt).localeCompare(a.reviewedAt ?? a.createdAt))
+  const sorted = all.filter(b => matchesSearch(b, query)).sort((a, b) => (b.reviewedAt ?? b.createdAt).localeCompare(a.reviewedAt ?? a.createdAt))
+  let rows = sorted
+  if (open && frozen.current) {
+    const { ids, known } = frozen.current
+    const latest = new Map(bookings.map(b => [b.id, b]))
+    ids.forEach(id => { const b = latest.get(id); if (b) known.set(id, b) })
+    rows = [...ids.map(id => known.get(id)!).filter(b => b.id === open || matchesSearch(b, query)), ...sorted.filter(b => !ids.includes(b.id))]
+  }
+  const toggle = (id: string) => {
+    const opening = open !== id
+    frozen.current = opening ? { ids: rows.map(b => b.id), known: new Map(rows.map(b => [b.id, b])) } : null
+    setOpen(opening ? id : null)
+  }
   const decided = status === 'approved' ? 'Confirmed' : 'Marked not approved'
 
   if (!all.length) return <p className="admin-empty">{status === 'approved' ? 'No confirmed bookings yet.' : 'No bookings have been marked not approved.'}</p>
@@ -30,7 +45,7 @@ export function BookingList({ bookings, status, query }: { bookings: AdminBookin
     {rows.map(b => {
       const expanded = open === b.id
       return <li key={b.id} className="admin-row">
-        <button className="admin-row-button" type="button" aria-expanded={expanded} aria-controls={`row-${b.id}`} onClick={() => setOpen(expanded ? null : b.id)}>
+        <button className="admin-row-button" type="button" aria-expanded={expanded} aria-controls={`row-${b.id}`} onClick={() => toggle(b.id)}>
           <span className="admin-row-main">
             <span className="admin-row-name">{b.fullName}</span>
             <span className="admin-row-meta">{formatPrice(b.amount)} · {seatLabel(b.seatCount)} · {manilaDay(b.reviewedAt ?? b.createdAt)}</span>

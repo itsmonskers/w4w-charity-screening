@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Download, ExternalLink, LogOut, Menu, X } from 'lucide-react'
+import { usePauseRefresh } from './refresh-pause'
 
 export type AdminRoute = 'home' | 'check' | 'waiting' | 'confirmed' | 'not-approved'
 export type NavCounts = { pending: number; approved: number; rejected: number } | null
@@ -21,6 +22,8 @@ type ShellProps = {
 export function AdminShell({ route, counts, email, onExport, onSignOut, children }: ShellProps) {
   const menu = useRef<HTMLDialogElement>(null)
   const closeMenu = () => menu.current?.close()
+  const [menuOpen, setMenuOpen] = useState(false)
+  usePauseRefresh(menuOpen) // no auto-refresh while the phone menu is open
 
   // Any page change (link, Back button) closes the phone menu
   useEffect(() => { menu.current?.close() }, [route])
@@ -32,9 +35,9 @@ export function AdminShell({ route, counts, email, onExport, onSignOut, children
 
     <header className="admin-topbar">
       <Brand />
-      <button className="btn-ghost admin-menu-button" type="button" aria-haspopup="dialog" onClick={() => menu.current?.showModal()}><Menu size={18} aria-hidden />Menu</button>
+      <button className="btn-ghost admin-menu-button" type="button" aria-haspopup="dialog" onClick={() => { menu.current?.showModal(); setMenuOpen(true) }}><Menu size={18} aria-hidden />Menu</button>
     </header>
-    <dialog ref={menu} className="admin-menu" aria-label="Admin menu">
+    <dialog ref={menu} className="admin-menu" aria-label="Admin menu" onClose={() => setMenuOpen(false)}>
       <div className="admin-menu-head">
         <Brand />
         <button className="admin-icon-button" type="button" aria-label="Close menu" onClick={closeMenu}><X size={22} aria-hidden /></button>
