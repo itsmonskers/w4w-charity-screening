@@ -12,7 +12,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString()
 
 // Booking ids that act out special cases
-const EMAIL_FAILS = 'mock-liza'      // approve/reject works, but the guest email "fails"
+const EMAIL_FAILS = ['mock-liza', 'mock-jose'] // approve/reject works, but the guest email "fails"
 const HANDLED_ELSEWHERE = 'mock-rafael' // "another admin" handles it first
 
 type Fake = Partial<AdminBooking> & Pick<AdminBooking, 'id' | 'referenceCode' | 'fullName' | 'seatIds'> & { minutesAgo: number }
@@ -25,7 +25,7 @@ const fakes: Fake[] = [
   { id: 'mock-jose', referenceCode: 'W4W-DD-TJR5', fullName: 'Jose Ramos', seatIds: ['B-12', 'B-13'], minutesAgo: 20 * 60, amount: null },
   { id: 'mock-bea', referenceCode: 'W4W-DD-TBV6', fullName: 'Bea Villanueva', seatIds: ['H-9'], minutesAgo: 6 * 60, screenshotPath: 'pending/mock-bea.heic' },
   { id: 'mock-paolo', referenceCode: 'W4W-DD-TPG7', fullName: 'Paolo Garcia', seatIds: ['M-2', 'M-3', 'M-4'], minutesAgo: 3 * 60, screenshotPath: 'pending/mock-missing.png' },
-  { id: EMAIL_FAILS, referenceCode: 'W4W-DD-TLM8', fullName: 'Liza Mendoza', seatIds: ['D-20'], minutesAgo: 60, payerName: 'Liza Mendoza' },
+  { id: 'mock-liza', referenceCode: 'W4W-DD-TLM8', fullName: 'Liza Mendoza', seatIds: ['D-20'], minutesAgo: 60, payerName: 'Liza Mendoza' },
   { id: HANDLED_ELSEWHERE, referenceCode: 'W4W-DD-TRC9', fullName: 'Rafael Cruz', seatIds: ['O-14', 'O-15'], minutesAgo: 20 },
   // Confirmed
   { id: 'mock-nina', referenceCode: 'W4W-DD-TNB2', fullName: 'Nina Bautista', seatIds: ['J-7', 'J-8'], minutesAgo: 5 * 24 * 60, status: 'approved', reviewedAt: ago(4 * 24 * 60), payerName: 'Nina Bautista' },
@@ -148,7 +148,7 @@ async function review(fn: 'approve_booking' | 'reject_booking', bookingId: strin
   }
   if (booking.status !== 'pending') return { ok: false, error: 'booking_not_pending' }
   Object.assign(booking, { status: fn === 'approve_booking' ? 'approved' : 'rejected', reviewNote: note.trim() || null, reviewedAt: new Date().toISOString() })
-  return { ok: true, emailSent: bookingId !== EMAIL_FAILS }
+  return { ok: true, emailSent: !EMAIL_FAILS.includes(bookingId) }
 }
 
 export const approveBooking = (bookingId: string, note: string) => review('approve_booking', bookingId, note)

@@ -1464,6 +1464,12 @@ footer {
   font-weight: 600;
 }
 
+.admin-card-text.is-warning {
+  color: var(--ev-gold);
+  font-size: 16px;
+  font-weight: 600;
+}
+
 /* Status badges: always words, never color alone */
 .admin-badge {
   padding: 4px 12px;
@@ -1577,50 +1583,181 @@ footer {
   color: var(--error-on-dark);
 }
 
-.admin-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 16px 0;
-}
-
-.admin-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid var(--ev-line);
-  border-radius: 999px;
-  color: var(--ev-muted);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.admin-tab[aria-selected="true"] {
-  background: color-mix(in srgb, var(--ev-accent) 14%, transparent);
-  border-color: var(--ev-accent);
-  color: var(--ev-text);
-}
-
-.admin-tab b {
-  color: var(--ev-accent);
-}
-
 .admin-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 16px;
 }
 
 .admin-empty {
   margin: 0;
   padding: 24px 0;
   color: var(--ev-muted);
-  font-size: 14px;
+  font-size: 15px;
   text-align: center;
+}
+
+/* Emails that did not send: stays on every page until each is dismissed */
+.admin-email-warnings {
+  margin-top: 12px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--ev-gold) 10%, var(--ev-panel));
+  border: 1px solid var(--ev-gold);
+  border-radius: 14px;
+}
+
+.admin-email-warnings-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--ev-gold);
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.admin-email-warnings ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-email-warning {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--ev-gold) 40%, transparent);
+  color: var(--ev-text);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.admin-email-warning p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-email-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Guided check: All done */
+.admin-done-title {
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 700;
+}
+
+.admin-done-title:focus {
+  outline: none;
+}
+
+.admin-done-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ev-muted);
+  font-size: 17px;
+}
+
+.admin-done-summary strong {
+  color: var(--ev-text);
+  font-size: 28px;
+}
+
+/* Confirmed / Not approved lists */
+.admin-rows {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-row {
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+}
+
+.admin-row-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  background: none;
+  border: 0;
+  border-radius: 12px;
+  color: var(--ev-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-row-main {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-row-name {
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.admin-row-meta {
+  color: var(--ev-muted);
+  font-size: 14px;
+}
+
+.admin-row-chevron {
+  flex: none;
+  color: var(--ev-muted);
+}
+
+.admin-row-button[aria-expanded="true"] .admin-row-chevron {
+  transform: rotate(180deg);
+}
+
+.admin-row-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 4px 16px 16px;
+  border-top: 1px solid var(--ev-line);
+}
+
+.admin-row-detail .admin-details {
+  flex: 1 1 260px;
+  padding-top: 12px;
+}
+
+.admin-row-detail .admin-shot,
+.admin-row-detail .admin-shot-note {
+  margin-top: 12px;
+}
+
+.admin-row-button .admin-badge {
+  flex: none;
+}
+
+.admin-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .admin-booking {
@@ -2534,6 +2671,42 @@ footer {
   /* Admin: full-width review buttons, easy to hit on a phone */
   .admin-actions button {
     flex: 1;
+  }
+
+  /* Admin list rows: the status badge goes under the name so the details don't break up */
+  .admin-row-button {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 8px;
+  }
+
+  .admin-row-button .admin-badge {
+    grid-row: 2;
+    justify-self: start;
+  }
+}
+
+/* Admin, phone in landscape: a one-row bottom bar (buttons and Skip side by side), so it fits
+   the short screen. The question is hidden from view only; screen readers still hear it. */
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 1023px) {
+  .admin-check-answer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 16px;
+  }
+
+  .admin-check-answer .admin-action-buttons {
+    flex: 1 1 320px;
+  }
+
+  .admin-check-answer .admin-question {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
   }
 }
 

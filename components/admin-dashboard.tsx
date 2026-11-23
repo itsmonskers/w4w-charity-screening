@@ -1,25 +1,22 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { RefreshCw, Search } from 'lucide-react'
-import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getSeatCounts, onAuthChange, signIn, signOut, type AdminBooking, type BookingStatus, type SeatCounts } from '@/lib/admin-api'
+import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getSeatCounts, onAuthChange, signIn, signOut, type AdminBooking, type SeatCounts } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
+import { BookingList } from './admin/booking-lists'
 import { CopyButton } from './admin/copy-button'
+import { EmailWarnings, type EmailWarningItem } from './admin/email-warning'
 import { GuidedCheck } from './admin/guided-check'
 import { AdminHome } from './admin/home'
-import { ReviewStep, outcomeNotice, type StepKind } from './admin/review-steps'
+import { ReviewStep, outcomeNotice, type StepKind, type StepOutcome } from './admin/review-steps'
 import { Screenshot } from './admin/screenshot'
 import { AdminShell, type AdminRoute } from './admin/shell'
-import { exportApproved, formatTime, manilaTime, seatLabel, seatsByRow } from './admin/format'
+import { exportApproved, formatTime, manilaTime, matchesSearch, seatLabel, seatsByRow } from './admin/format'
 
 const REFRESH_MS = 30_000
 const NO_ACCESS = 'This account doesn’t have admin access.'
-// #check is the guided check; the lists (#waiting = every waiting booking) keep the existing cards and tabs.
-const TABS: { status: BookingStatus; label: string; route: AdminRoute }[] = [
-  { status: 'pending', label: 'Waiting for review', route: 'waiting' },
-  { status: 'approved', label: 'Confirmed', route: 'confirmed' },
-  { status: 'rejected', label: 'Not approved', route: 'not-approved' },
-]
+// #check is the guided check; #waiting keeps the full cards; #confirmed and #not-approved are simple lists.
 const TITLES: Record<AdminRoute, string> = { home: 'Home', check: 'Waiting for review', waiting: 'All waiting bookings', confirmed: 'Confirmed', 'not-approved': 'Not approved' }
 
 // Pages live in the URL hash (#home, #check, #confirmed, #not-approved) so the phone's Back button works.
@@ -101,6 +98,8 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   const firstRoute = useRef(true)
   const [review, setReview] = useState<Review | null>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
+  // Emails that didn't send: kept (across pages) until each one is dismissed
+  const [warnings, setWarnings] = useState<EmailWarningItem[]>([])
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -129,31 +128,34 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  // On every page change (not the first load): back to the top, focus on the page title
+  // On every page change (not the first load): clear the last result message and the search,
+  // close any open step, back to the top, focus on the page title. Email warnings stay.
   useEffect(() => {
     if (firstRoute.current) { firstRoute.current = false; return }
+    setNotice(null)
+    setQuery('')
+    setReview(null)
     window.scrollTo(0, 0)
     title.current?.focus()
   }, [route])
 
-  const tab = TABS.find(t => t.route === route)?.status ?? 'pending'
-  const q = query.trim().toLowerCase()
-  // Payment refs are stored without spaces, so match them ignoring spaces
-  const qRef = q.replace(/\s/g, '')
-  const matches = useMemo(() => (bookings ?? []).filter(b => !q || [b.referenceCode, b.fullName, b.email].some(value => value.toLowerCase().includes(q)) || (!!qRef && !!b.paymentRef?.toLowerCase().includes(qRef))), [bookings, q, qRef])
-  const counts = (status: BookingStatus) => matches.filter(b => b.status === status).length
-  const visible = matches
-    .filter(b => b.status === tab)
-    .sort((a, b) => tab === 'pending' ? a.createdAt.localeCompare(b.createdAt) : (b.reviewedAt ?? b.createdAt).localeCompare(a.reviewedAt ?? a.createdAt))
   const all = bookings ?? []
+  const waiting = all.filter(b => b.status === 'pending' && matchesSearch(b, query)).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   const navCounts = bookings && { pending: all.filter(b => b.status === 'pending').length, approved: all.filter(b => b.status === 'approved').length, rejected: all.filter(b => b.status === 'rejected').length }
-  const emptyText = { pending: 'No bookings are waiting for review.', approved: 'No confirmed bookings yet.', rejected: 'No bookings have been marked not approved.' }[tab]
+
+  // Every confirm / not-approved result (guided check or list): message, email warning, reload
+  function handleOutcome(outcome: StepOutcome, booking: AdminBooking) {
+    setNotice(outcomeNotice(outcome, booking))
+    if (outcome.kind === 'done' && !outcome.emailSent) {
+      setWarnings(current => [...current, { key: `${booking.id}-${Date.now()}`, kind: outcome.action === 'approve' ? 'approved' : 'rejected', booking }])
+    }
+    refresh()
+  }
 
   // A list card's step finished: the card leaves this list on refresh, so focus goes to the page title
-  function finishReview(next: Notice) {
+  function finishListReview(outcome: StepOutcome, booking: AdminBooking) {
     setReview(null)
-    setNotice(next)
-    refresh()
+    handleOutcome(outcome, booking)
     window.scrollTo(0, 0)
     title.current?.focus()
   }
@@ -168,30 +170,27 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       <label className="admin-search">
         <Search size={16} aria-hidden />
         <span className="sr-only">Search bookings</span>
-        <input className="input" type="search" placeholder="Search reference, name, email or payment ref" value={query} onChange={e => setQuery(e.target.value)} />
+        <input className="input" type="search" placeholder="Search name, payer, phone, email or reference" value={query} onChange={e => setQuery(e.target.value)} />
       </label>
       <button className="btn-ghost admin-btn-small" type="button" onClick={refresh} disabled={loading}><RefreshCw size={16} aria-hidden />{loading ? 'Refreshing…' : 'Refresh'}</button>
     </div>}
     <p className="admin-updated">{updatedAt ? `Updated ${updatedAt} · refreshes every 30 seconds` : 'Loading…'}</p>
 
     {loadError && <p className="admin-notice is-error" role="alert">{loadError}</p>}
+    <EmailWarnings warnings={warnings} onDismiss={key => setWarnings(current => current.filter(w => w.key !== key))} onAllDismissed={() => title.current?.focus()} />
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
-      : route === 'check' ? <GuidedCheck bookings={bookings} onNotice={setNotice} onChanged={refresh} onNoAccess={onNoAccess} />
-      : <>
-        <div className="admin-tabs" role="tablist" aria-label="Booking status">
-          {TABS.map(({ status, label, route: to }) => <button key={status} className="admin-tab" type="button" role="tab" id={`tab-${status}`} aria-selected={tab === status} aria-controls="admin-list" onClick={() => { window.location.hash = to }}>{label} <b>{counts(status)}</b></button>)}
-        </div>
-
-        <div className="admin-list" id="admin-list" role="tabpanel" aria-labelledby={`tab-${tab}`}>
-          {bookings && !visible.length && <p className="admin-empty">{q ? 'No bookings match your search.' : emptyText}</p>}
-          {visible.map(booking => review?.bookingId === booking.id
-            // Approve / Reject open the same confirm / not-approved steps as the guided check
-            ? <ReviewStep key={booking.id + review.kind} kind={review.kind} booking={booking} onBack={() => setReview(null)} onSkip={() => setReview(null)} onDone={outcome => finishReview(outcomeNotice(outcome, booking))} onNoAccess={onNoAccess} />
-            : <BookingCard key={booking.id} booking={booking} onReview={kind => { setNotice(null); setReview({ kind, bookingId: booking.id }) }} />)}
-        </div>
-      </>}
+      : route === 'check' ? <GuidedCheck bookings={bookings} onOutcome={handleOutcome} onClearNotice={() => setNotice(null)} onNoAccess={onNoAccess} />
+      : route === 'confirmed' ? <BookingList bookings={bookings} status="approved" query={query} />
+      : route === 'not-approved' ? <BookingList bookings={bookings} status="rejected" query={query} />
+      : <div className="admin-list">
+        {bookings && !waiting.length && <p className="admin-empty">{query.trim() ? 'No bookings match your search.' : 'No bookings are waiting for review.'}</p>}
+        {waiting.map(booking => review?.bookingId === booking.id
+          // Approve / Reject open the same confirm / not-approved steps as the guided check
+          ? <ReviewStep key={booking.id + review.kind} kind={review.kind} booking={booking} onBack={() => setReview(null)} onSkip={() => setReview(null)} onDone={outcome => finishListReview(outcome, booking)} onNoAccess={onNoAccess} />
+          : <BookingCard key={booking.id} booking={booking} onReview={kind => { setNotice(null); setReview({ kind, bookingId: booking.id }) }} />)}
+      </div>}
   </AdminShell>
 }
 

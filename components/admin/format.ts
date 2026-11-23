@@ -4,6 +4,9 @@ import { formatPrice } from '@/lib/event-config'
 
 export const manilaTime = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' })
 const manilaDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' })
+const manilaShortDay = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })
+// "Nov 21" (Manila time), for list rows
+export const manilaDay = (iso: string) => manilaShortDay.format(new Date(iso))
 export const formatTime = (iso: string) => `${manilaTime.format(new Date(iso))} (Manila)`
 export const seatLabel = (count: number) => `${count} seat${count === 1 ? '' : 's'}`
 
@@ -48,6 +51,17 @@ export function exportApproved(bookings: AdminBooking[]) {
   link.download = `w4w-doomsday-approved-${manilaDate.format(new Date())}.csv`
   link.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// Search: name, payer name, phone, email, booking code or payment ref. Phone numbers and
+// payment refs also match without spaces or dashes ("0900 000" finds "+63 900 000 …").
+const compact = (value: string) => value.toLowerCase().replace(/[\s()+-]/g, '')
+export function matchesSearch(booking: AdminBooking, query: string) {
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  const fields = [booking.fullName, booking.payerName ?? '', booking.contact, booking.email, booking.referenceCode, booking.paymentRef ?? '']
+  const qc = compact(q)
+  return fields.some(value => value.toLowerCase().includes(q) || (!!qc && compact(value).includes(qc)))
 }
 
 // "3 days", "5 hours", "20 minutes": how long ago a booking came in

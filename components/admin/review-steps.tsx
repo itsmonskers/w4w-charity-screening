@@ -25,7 +25,8 @@ export function outcomeNotice(outcome: StepOutcome, booking: AdminBooking): { me
   if (outcome.kind === 'missing') return { message: `${booking.fullName}’s booking (${booking.referenceCode}) no longer exists. Nothing was changed.`, error: true }
   const done = outcome.action === 'approve' ? `Confirmed ${booking.fullName}’s ${seatLabel(booking.seatCount)}.` : `Marked ${booking.fullName} as not approved. The ${seatLabel(booking.seatCount)} are free for others again.`
   if (outcome.emailSent) return { message: `${done} ${name} has been emailed.` }
-  return { message: `${done} The email to ${name} did not send: please email ${booking.email} yourself (see docs/email-templates.md).`, error: true }
+  // The details and "Copy email text" are in the warning list, which stays until dismissed
+  return { message: `${done} The email to ${name} did not send: see “emails did not send” above.`, error: true }
 }
 
 type Props = {

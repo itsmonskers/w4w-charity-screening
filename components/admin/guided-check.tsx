@@ -6,26 +6,32 @@ import type { AdminBooking } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
 import { CopyButton } from './copy-button'
 import { formatTime, seatLabel, seatsByRow, waitingFor } from './format'
-import { ReviewStep, outcomeNotice, type StepKind, type StepOutcome } from './review-steps'
+import { ReviewStep, type StepKind, type StepOutcome } from './review-steps'
 import { Screenshot } from './screenshot'
 
 type Props = {
   bookings: AdminBooking[] | null
-  onNotice: (notice: { message: string; error?: boolean } | null) => void
-  onChanged: () => void // reload the data after a save
+  onOutcome: (outcome: StepOutcome, booking: AdminBooking) => void // message, warnings, reload
+  onClearNotice: () => void
   onNoAccess: () => void
 }
 
+const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
 // One waiting booking at a time, oldest first. The queue is a snapshot: bookings that
 // arrive later join the end, and the booking on screen is never swapped out by a refresh.
-export function GuidedCheck({ bookings, onNotice, onChanged, onNoAccess }: Props) {
+export function GuidedCheck({ bookings, onOutcome, onClearNotice, onNoAccess }: Props) {
   const [queue, setQueue] = useState<string[] | null>(null)
   const [index, setIndex] = useState(0)
   const [step, setStep] = useState<StepKind | null>(null)
+  // What happened in this run, for the All done summary
+  const [tally, setTally] = useState({ confirmed: 0, notApproved: 0, skipped: 0, emailsFailed: 0 })
   // Bookings another admin handled while this screen was open
   const [elsewhere, setElsewhere] = useState<Set<string>>(() => new Set())
   // Last copy of every booking in the queue, in case one disappears from the data
   const known = useRef(new Map<string, AdminBooking>())
+  // Bookings decided here (or found already handled), so counts are right before the reload arrives
+  const decided = useRef(new Set<string>())
   const heading = useRef<HTMLHeadingElement>(null)
   const firstShown = useRef(true)
 
@@ -52,6 +58,7 @@ export function GuidedCheck({ bookings, onNotice, onChanged, onNoAccess }: Props
   if (!bookings || !queue) return <p className="admin-empty" role="status">Loading bookings…</p>
 
   const next = () => { setStep(null); setIndex(i => i + 1) }
+  const skip = () => { setTally(t => ({ ...t, skipped: t.skipped + 1 })); next() }
   const total = queue.length
   const top = <div className="admin-check-top">
     <a className="admin-back" href="#home"><ArrowLeft size={18} aria-hidden />Back to Home</a>
@@ -63,13 +70,29 @@ export function GuidedCheck({ bookings, onNotice, onChanged, onNoAccess }: Props
   const allWaiting = <a className="admin-text-link" href="#waiting">See all waiting bookings</a>
 
   if (!currentId) {
-    const stillWaiting = bookings.filter(b => b.status === 'pending').length
-    return <div className="admin-check-wrap">
+    const stillWaiting = bookings.filter(b => b.status === 'pending' && !decided.current.has(b.id)).length
+    if (!total) return <div className="admin-check-wrap">
       {top}
       <section className="admin-card" aria-labelledby="check-end">
-        <span className="admin-badge is-accent">{total ? 'End of the list' : 'All clear'}</span>
-        <h2 className="admin-card-text is-large" id="check-end" ref={heading} tabIndex={-1}>{total ? 'You’ve gone through every booking that was waiting.' : 'No bookings are waiting for a check.'}</h2>
-        {stillWaiting > 0 && <p className="admin-card-text">{stillWaiting === 1 ? '1 booking is' : `${stillWaiting} bookings are`} still waiting (skipped or not finished).</p>}
+        <span className="admin-badge is-accent">All clear</span>
+        <h2 className="admin-card-text is-large" id="check-end" ref={heading} tabIndex={-1}>No bookings are waiting for a check.</h2>
+        <a className="btn-primary" href="#home">Back to Home</a>
+      </section>
+    </div>
+    const decisions = tally.confirmed + tally.notApproved
+    return <div className="admin-check-wrap">
+      {top}
+      <section className="admin-card admin-done" aria-labelledby="check-end">
+        <h2 className="admin-done-title" id="check-end" ref={heading} tabIndex={-1}>All done!</h2>
+        <ul className="admin-done-summary">
+          <li><strong>{tally.confirmed}</strong> confirmed</li>
+          <li><strong>{tally.notApproved}</strong> not approved</li>
+          <li><strong>{tally.skipped}</strong> skipped</li>
+        </ul>
+        {decisions > 0 && (tally.emailsFailed
+          ? <p className="admin-card-text is-warning">{count(tally.emailsFailed, 'email', 'emails')} did not send. The warning above has the text to send by hand.</p>
+          : <p className="admin-card-text is-large">All guests have been emailed.</p>)}
+        {stillWaiting > 0 && <p className="admin-card-text">{count(stillWaiting, 'booking is', 'bookings are')} still waiting for a check.</p>}
         <a className="btn-primary" href="#home">Back to Home</a>
       </section>
       {stillWaiting > 0 && allWaiting}
@@ -79,9 +102,13 @@ export function GuidedCheck({ bookings, onNotice, onChanged, onNoAccess }: Props
   const booking = bookings.find(b => b.id === currentId) ?? known.current.get(currentId)!
 
   function finish(outcome: StepOutcome) {
-    onNotice(outcomeNotice(outcome, booking))
-    onChanged()
-    if (outcome.kind === 'done') return next()
+    onOutcome(outcome, booking)
+    decided.current.add(booking.id)
+    if (outcome.kind === 'done') {
+      const { action, emailSent } = outcome
+      setTally(t => ({ ...t, confirmed: t.confirmed + (action === 'approve' ? 1 : 0), notApproved: t.notApproved + (action === 'reject' ? 1 : 0), emailsFailed: t.emailsFailed + (emailSent ? 0 : 1) }))
+      return next()
+    }
     // Someone else got there first: stay on this booking and say so
     setElsewhere(current => new Set(current).add(booking.id))
     setStep(null)
@@ -89,7 +116,7 @@ export function GuidedCheck({ bookings, onNotice, onChanged, onNoAccess }: Props
 
   if (step) return <div className="admin-check-wrap">
     {top}
-    <ReviewStep key={booking.id + step} kind={step} booking={booking} onBack={() => setStep(null)} onSkip={next} onDone={finish} onNoAccess={onNoAccess} />
+    <ReviewStep key={booking.id + step} kind={step} booking={booking} onBack={() => setStep(null)} onSkip={skip} onDone={finish} onNoAccess={onNoAccess} />
   </div>
 
   const handled = booking.status !== 'pending' || elsewhere.has(booking.id)
@@ -141,10 +168,10 @@ export function GuidedCheck({ bookings, onNotice, onChanged, onNoAccess }: Props
           : <>
             <p className="admin-question">Did you find this payment?</p>
             <div className="admin-action-buttons">
-              <button className="btn-primary" type="button" onClick={() => { onNotice(null); setStep('approve') }}><Check size={18} aria-hidden />Yes, I found it</button>
-              <button className="btn-ghost" type="button" onClick={() => { onNotice(null); setStep('reject') }}>No, something’s wrong</button>
+              <button className="btn-primary" type="button" onClick={() => { onClearNotice(); setStep('approve') }}><Check size={18} aria-hidden />Yes, I found it</button>
+              <button className="btn-ghost" type="button" onClick={() => { onClearNotice(); setStep('reject') }}>No, something’s wrong</button>
             </div>
-            <button className="admin-text-link" type="button" onClick={next}>Not sure yet? Skip for now</button>
+            <button className="admin-text-link" type="button" onClick={skip}>Not sure yet? Skip for now</button>
           </>}
       </div>
     </article>
