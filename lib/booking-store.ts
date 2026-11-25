@@ -5,7 +5,8 @@ import type { BookingInput, Seat } from './event-config'
 import * as mock from './booking-store.mock'
 import { supabase } from './supabase'
 
-export type Settings = { pricePerSeat: number | null; maxSeats: number; bookingsOpen: boolean }
+// groupSize / groupPricePerSeat: the Corporate Bundle (both null = off), see lib/pricing.ts
+export type Settings = { pricePerSeat: number | null; maxSeats: number; bookingsOpen: boolean; groupSize: number | null; groupPricePerSeat: number | null }
 export type ReserveInput = Omit<BookingInput, 'proofName'> & { proof: File; paymentRef: string; payerName?: string; foodAllergies?: string }
 export type ReserveError = 'bookings_closed' | 'invalid_seat_count' | 'invalid_seats' | 'missing_details' | 'invalid_email' | 'missing_screenshot' | 'invalid_payment_ref' | 'payment_ref_used' | 'upload_failed' | 'unknown'
 export type ReserveResult =
@@ -42,9 +43,9 @@ export async function getSeats(): Promise<Seat[]> {
 
 export async function getSettings(): Promise<Settings> {
   if (!supabase) return mock.getSettings()
-  const { data, error } = await supabase.from('event_settings').select('price_per_seat, max_seats, bookings_open').single()
+  const { data, error } = await supabase.from('event_settings').select('price_per_seat, max_seats, bookings_open, group_size, group_price_per_seat').single()
   if (error) throw error
-  return { pricePerSeat: toNumber(data.price_per_seat), maxSeats: data.max_seats, bookingsOpen: data.bookings_open }
+  return { pricePerSeat: toNumber(data.price_per_seat), maxSeats: data.max_seats, bookingsOpen: data.bookings_open, groupSize: toNumber(data.group_size), groupPricePerSeat: toNumber(data.group_price_per_seat) }
 }
 
 export function subscribe(callback: (seats: Seat[]) => void): () => void {

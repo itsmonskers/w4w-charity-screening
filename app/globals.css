@@ -797,6 +797,20 @@ button:disabled:not(.seat) {
   font-weight: 600;
 }
 
+/* Corporate Bundle: the regular total, crossed out */
+.amount-regular {
+  margin-left: 6px;
+  color: var(--ev-muted);
+}
+
+.bundle-line {
+  margin: 0;
+  color: var(--ev-gold);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 /* Dark inputs */
 .field {
   display: flex;

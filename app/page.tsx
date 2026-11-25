@@ -3,12 +3,13 @@
 import { Fragment, useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { CinemaAtmosphere } from '@/components/cinema-atmosphere'
-import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE, EVENT_TITLE, POLICIES, seatsTotal } from '@/components/booking-panel'
+import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE, EVENT_TITLE, POLICIES } from '@/components/booking-panel'
 import { SeatMap } from '@/components/seat-map'
 import { StripeWave } from '@/components/stripe-wave'
 import { W4WLogo } from '@/components/w4w-logo'
 import { IS_MOCK, getSeats, getSettings, subscribe, type Settings } from '@/lib/booking-store'
 import { EVENT, formatPrice, type Seat } from '@/lib/event-config'
+import { quote } from '@/lib/pricing'
 
 const steps = ['Pick seats', 'Pay via QR & upload proof', 'Get your confirmation after we verify']
 
@@ -29,6 +30,7 @@ export default function Page() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [settings, setSettings] = useState<Settings | null>(null)
   const price = settings?.pricePerSeat ?? null
+  const due = quote(settings, selected.length)
   const facts = [EVENT_DATE_SHORT, ...EVENT.time.split(' · '), EVENT_PLACE, `${formatPrice(price)} per seat`, 'Includes food and refreshments']
 
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function Page() {
         <div className="map-column">
           <SeatMap selected={selected} onChange={setSelected} submitting={submitting} occupancy={reservedCount / 315} maxSeats={settings?.maxSeats ?? 0} />
           <div className="selection-bar">
-            <div><strong>{selected.length} seat{selected.length === 1 ? '' : 's'}</strong><span>{selected.length ? selected.join(' · ') : 'No seats selected'} · {seatsTotal(price, selected.length)}</span></div>
+            <div><strong>{selected.length} seat{selected.length === 1 ? '' : 's'}</strong><span>{selected.length ? selected.join(' · ') : 'No seats selected'} · {formatPrice(due.total)}{due.bundle && ' (Corporate Bundle)'}</span></div>
             <button className="btn-primary" disabled={!selected.length && !booked} aria-haspopup="dialog" onClick={() => setSheetOpen(true)}>{booked && !selected.length ? 'View reservation' : 'Continue'} <ArrowRight /></button>
           </div>
         </div>

@@ -1,6 +1,11 @@
 // In-memory mock used when the Supabase env vars are not set (preview mode).
-import { MAX_SEATS, PRICE_PER_SEAT, type Seat } from './event-config'
+import { MAX_SEATS, type Seat } from './event-config'
 import type { ReserveInput, ReserveResult, Settings } from './booking-store'
+import { quote } from './pricing'
+
+// Mock only, for testing the Corporate Bundle: ₱1,000 a seat, 10 seats for ₱950 each.
+// The real values live in event_settings; lib/event-config.ts keeps PRICE_PER_SEAT = null.
+const SETTINGS: Settings = { pricePerSeat: 1000, maxSeats: MAX_SEATS, bookingsOpen: true, groupSize: 10, groupPricePerSeat: 950 }
 
 const seats: Seat[] = []
 const reserved = new Set(['A-22', 'B-16', 'D-8', 'G-15', 'J-5', 'M-1', 'O-21', 'Q-7'])
@@ -17,7 +22,7 @@ const listeners = new Set<(seats: Seat[]) => void>()
 const usedPaymentRefs = new Set<string>()
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 export async function getSeats() { await delay(180); return seats.map(s => ({ ...s })) }
-export async function getSettings(): Promise<Settings> { return { pricePerSeat: PRICE_PER_SEAT, maxSeats: MAX_SEATS, bookingsOpen: true } }
+export async function getSettings(): Promise<Settings> { return { ...SETTINGS } }
 export function subscribe(callback: (seats: Seat[]) => void) { listeners.add(callback); return () => { listeners.delete(callback) } }
 export async function reserveSeats(input: ReserveInput): Promise<ReserveResult> {
   await delay(1000)
@@ -29,5 +34,5 @@ export async function reserveSeats(input: ReserveInput): Promise<ReserveResult> 
   usedPaymentRefs.add(paymentRef)
   input.seats.forEach(id => { const seat = seats.find(s => s.id === id); if (seat) seat.status = 'reserved' })
   listeners.forEach(listener => listener(seats.map(s => ({ ...s }))))
-  return { ok: true, referenceCode: `W4W-DD-${Math.random().toString(36).slice(2, 6).toUpperCase()}`, seats: input.seats, amount: PRICE_PER_SEAT === null ? null : PRICE_PER_SEAT * input.seats.length }
+  return { ok: true, referenceCode: `W4W-DD-${Math.random().toString(36).slice(2, 6).toUpperCase()}`, seats: input.seats, amount: quote(SETTINGS, input.seats.length).total }
 }

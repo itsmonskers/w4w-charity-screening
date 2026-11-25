@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type Dispatch, type FormEvent, type ReactN
 import { Check, Copy, Download, Upload, X } from 'lucide-react'
 import { reserveSeats, type ReserveError, type ReserveInput, type Settings } from '@/lib/booking-store'
 import { EVENT, formatPrice } from '@/lib/event-config'
+import { bundleOffer, quote } from '@/lib/pricing'
 
 export const EVENT_DATE_SHORT = 'Sat, Dec 19, 2026'
 export const EVENT_PLACE = `Cinema 7, ${EVENT.venue}`
@@ -14,7 +15,6 @@ export const POLICIES = [
 ]
 const [PRIVACY] = POLICIES
 const PolicyLink = ({ href, label }: (typeof POLICIES)[number]) => <a href={href} target="_blank" rel="noopener noreferrer">{label}</a>
-export const seatsTotal = (price: number | null, count: number) => formatPrice(price === null ? null : price * count)
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/webp']
@@ -109,6 +109,8 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
   const errorCount = Object.keys(errors).length
   const update = (key: keyof Form, value: string) => setForm(current => ({ ...current, [key]: value }))
   const invalid = (key: keyof Errors) => shown[key] ? { 'aria-invalid': true as const } : {}
+  const due = quote(settings, selected.length)
+  const bundle = bundleOffer(settings)
 
   // Mobile bottom sheet: focus trapped, Esc closes, focus returns to the opener
   useEffect(() => {
@@ -197,7 +199,8 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
           <div id="bk-seats" className="chips" tabIndex={-1} aria-describedby={describedBy(shown.seats && 'bk-seats-error')}>
             {selected.length ? selected.map(id => <span className="chip" key={id}>{id}<button type="button" aria-label={`Remove seat ${id}`} onClick={() => onSelectedChange(current => current.filter(seat => seat !== id))}><X /></button></span>) : <p className="panel-empty">No seats selected · Tap a glowing seat to start</p>}
           </div>
-          <div className="amount-row"><span>{selected.length} seat{selected.length === 1 ? '' : 's'}</span><span>Amount due <strong>{seatsTotal(settings?.pricePerSeat ?? null, selected.length)}</strong></span></div>
+          <div className="amount-row"><span>{selected.length} seat{selected.length === 1 ? '' : 's'}</span><span>Amount due {due.bundle && <s className="amount-regular"><span className="sr-only">Regular price </span>{formatPrice(due.regular)}</s>}<strong>{formatPrice(due.total)}</strong></span></div>
+          {due.bundle && bundle && <p className="bundle-line">Corporate Bundle: {bundle.size} seats for {formatPrice(bundle.total)} (save {formatPrice(bundle.saving)})</p>}
           {shown.seats && <p className="field-error" id="bk-seats-error">{shown.seats}</p>}
         </section>
 
