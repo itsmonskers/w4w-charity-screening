@@ -223,6 +223,7 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
 
         <section className="pay-box" aria-labelledby="bk-pay-title">
           <h2 id="bk-pay-title" className="eyebrow-caps panel-title">How to pay</h2>
+          <p><strong>All bookings are final.</strong> Seats can’t be changed or refunded.</p>
           <p>Scan with GCash, Maya or your bank app, enter the exact amount due, then attach the screenshot below.</p>
           {/* Static UnionBank QR Ph code (no amount inside): the guest types the amount */}
           <figure className="qr-card">
