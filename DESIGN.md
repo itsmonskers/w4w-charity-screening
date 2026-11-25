@@ -132,8 +132,12 @@ gold border is its non-color cue.
        · Movie 4:00 PM · Cinema 7, Power Plant Mall, Makati · ₱[price] per
        seat · Includes food and refreshments" (the price comes from
        `event_settings`; each fact stays unbroken; wrapping happens only
-       between facts). Never state how the ₱1,000 is split (ticket, food,
-       clean water) until it's confirmed.
+       between facts). **How the ₱1,000 is split:** Simon approved
+       (2026-11-25) using W4W's Movies4Water deck figures, and only these:
+       ₱500 of every ticket goes to clean water; a filter + bucket costs
+       about ₱3,500, is shared by about 25 people and gives 5–10 years of
+       clean water. Don't state the rest of the split (ticket, food), and
+       never add a per-ticket "people helped" claim.
      - **Cause line** (our version of JCI's gold tagline slot): "Your seat
        helps bring clean water to Filipino communities." in Cinzel, small
        caps style, `--ev-gold`, `letter-spacing: .2em`, ~12px. This is now
@@ -294,6 +298,38 @@ gold border is its non-color cue.
       `color-mix(in srgb, var(--ev-accent) 50%, var(--ev-input))` so input
       boundaries meet the 3:1 non-text contrast minimum. Focus: solid
       `--ev-accent` border + 25% accent ring.
+  21. **Event exclusives popup (cinema-ticket card).** Shown only while the
+      Corporate Bundle is on (`group_size` and `group_price_per_seat` set in
+      `event_settings`), about 2 seconds after the page loads, once per
+      visitor (browser storage, in try/catch), never on top of the open
+      booking sheet, never on /admin. Native modal `<dialog>`: closes with
+      ×, "Pick your seats", Esc and tapping outside; focus stays inside and
+      returns on close. Below 700px it is a bottom sheet (slides up,
+      rounded top corners, grab handle, page visible above it); from 700px
+      a centred card about 460px wide (enters like the reservation card).
+      Works from 320px. Tokens only, inline stroke icons (no emoji, no
+      Marvel images or logos), no numbered markers.
+      - **Ticket:** `--ev-panel`, 1px `--ev-line` border, 16px radius. A
+        top and a bottom section separated by a dashed `--ev-line` tear
+        line with a round notch cut into each side (CSS mask, so the
+        backdrop shows through).
+      - **Top:** `.eyebrow-caps` "Event exclusives" with a ticket icon;
+        title "One night. One cinema. 315 heroes." (Cinzel, uppercase);
+        subtitle "Assemble for water." in `--ev-gold`; a × close button
+        (44px) in the top-right corner.
+      - **Bottom, in order:** Corporate Bundle box (1px `--ev-gold`
+        border, warm dark fill `color-mix(in srgb, var(--ev-gold) 9%,
+        var(--ev-panel))`): "Corporate Bundle", "₱9,500 for 10 tickets"
+        and a gold "Save ₱500" badge (all from `event_settings`); raffle
+        row (gift icon): "**1 ticket = 1 raffle entry.** Win prizes from
+        Columbia, The Coffee Bean & Tea Leaf, Nono’s and RAF Forwarding.";
+        food row (bottle icon) "Chips and bottled water included", hidden
+        (`SHOW_FOOD_LINE = false`) until the venue confirms; impact box
+        (water-drop icon) "₱500 of every ticket goes straight to clean
+        water" with three stats: "~₱3,500" 1 filter + bucket, "~25
+        people" share each filter, "5–10 years" of clean water; one
+        full-width `.btn-primary` "Pick your seats" (closes the popup). No
+        other buttons.
 - **Booking status wording (one code, three statuses).** Every booking has
   ONE reference code (e.g. `W4W-DD-7K2Q`), created at submission and never
   changed. Wherever a guest sees the code, the status is shown right next to

@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { CinemaAtmosphere } from '@/components/cinema-atmosphere'
+import { EventExclusives } from '@/components/event-exclusives'
 import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE, EVENT_TITLE, POLICIES } from '@/components/booking-panel'
 import { SeatMap } from '@/components/seat-map'
 import { StripeWave } from '@/components/stripe-wave'
@@ -91,6 +92,7 @@ export default function Page() {
         <BookingPanel settings={settings} selected={selected} onSelectedChange={setSelected} onSubmittingChange={setSubmitting} onBookedChange={setBooked} onReserveMore={() => { setSheetOpen(false); scrollToMap() }} sheetOpen={sheetOpen} onSheetOpenChange={setSheetOpen} />
       </div>
     </section>
+    <EventExclusives settings={settings} blocked={sheetOpen} />
     <footer><div className="container container-wide footer-inner"><p>© 2026 Waves for Water Philippines · Questions? <a href="mailto:w4wph.movies4water@gmail.com">w4wph.movies4water@gmail.com</a>{POLICIES.map(({ href, label }) => <Fragment key={href}> · <a href={href} target="_blank" rel="noopener noreferrer">{label}</a></Fragment>)}</p></div></footer>
   </main>
 }
