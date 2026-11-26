@@ -293,7 +293,7 @@ button:disabled:not(.seat) {
 /* Raffle box under the cause line: same gold box as the popup's Corporate Bundle; Hanken, since Cinzel may lack ₱ */
 .raffle-box {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   width: fit-content;
   max-width: 100%;
@@ -321,7 +321,14 @@ button:disabled:not(.seat) {
   height: 18px;
 }
 
-.raffle-box p {
+.raffle-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.raffle-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -331,9 +338,34 @@ button:disabled:not(.seat) {
   line-height: 1.4;
 }
 
-.raffle-box strong {
+.raffle-text strong {
   color: var(--ev-text);
   font-size: 14px;
+}
+
+/* "See the prizes": gold outline pill under the raffle text; opens the prizes panel */
+.prizes-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px 0 20px;
+  border: 1px solid var(--ev-gold);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ev-gold);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prizes-button:hover {
+  background: color-mix(in srgb, var(--ev-gold) 12%, transparent);
+}
+
+.prizes-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .status-row {
@@ -1219,12 +1251,15 @@ textarea.input {
   color: var(--ev-text);
 }
 
-/* Event exclusives popup: a cinema ticket (modal <dialog>); a bottom sheet below 700px */
-html:has(.exclusives[open]) {
+/* Event exclusives popup: a cinema ticket (modal <dialog>); a bottom sheet below 700px.
+   The prizes panel shares the same dialog box, entrance and sheet rules. */
+html:has(.exclusives[open]),
+html:has(.prizes[open]) {
   overflow: hidden;
 }
 
-.exclusives {
+.exclusives,
+.prizes {
   width: min(460px, 100% - 32px);
   max-width: none;
   max-height: calc(100% - 32px);
@@ -1237,11 +1272,13 @@ html:has(.exclusives[open]) {
   overscroll-behavior: contain;
 }
 
-.exclusives[open] {
+.exclusives[open],
+.prizes[open] {
   animation: ticket-in .4s ease-out;
 }
 
-.exclusives::backdrop {
+.exclusives::backdrop,
+.prizes::backdrop {
   background: color-mix(in srgb, var(--ev-bg) 72%, transparent);
 }
 
@@ -1441,6 +1478,160 @@ html:has(.exclusives[open]) {
   color: var(--ev-accent);
   font-size: clamp(14px, 4.4vw, 18px);
   font-weight: 700;
+}
+
+/* Prizes panel ("See the prizes"): same dialog box as the popup, one card, prizes by sponsor */
+.prizes-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 16px;
+}
+
+.prizes-top {
+  position: relative;
+  padding-right: 52px;
+}
+
+.prizes-title {
+  margin: 0 0 6px;
+  font-size: clamp(20px, 6vw, 24px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.prizes-lead {
+  margin: 0;
+  color: var(--ev-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.prizes-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prizes-sponsor {
+  margin: 0;
+  color: var(--ev-gold);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.prizes-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.prizes-list li + li {
+  border-top: 1px solid var(--ev-line);
+}
+
+/* Columns: photo icon · name · quantity · chevron (icon slots stay empty on rows without a photo) */
+.prizes-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ev-text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+button.prizes-row {
+  cursor: pointer;
+}
+
+button.prizes-row:hover {
+  background: color-mix(in srgb, var(--ev-accent) 8%, transparent);
+}
+
+.prizes-row-icon {
+  display: inline-flex;
+  color: var(--ev-muted);
+}
+
+.prizes-row-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.prizes-qty {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--ev-gold);
+  color: var(--ev-bg);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Photo viewer: a nested modal <dialog> over the panel; × / Esc / tapping outside close it */
+.prizes-viewer {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 64px 16px 24px;
+  border: 0;
+  background: color-mix(in srgb, var(--ev-bg) 94%, transparent);
+  color: var(--ev-text);
+}
+
+.prizes-viewer[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prizes-viewer::backdrop {
+  background: transparent;
+}
+
+.prizes-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: min(100%, 720px);
+  margin: 0;
+}
+
+.prizes-photo img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 160px);
+  border-radius: 12px;
+  background: #fff;
+  object-fit: contain;
+}
+
+.prizes-photo figcaption {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
 }
 
 /* Footer */
@@ -3005,15 +3196,23 @@ footer {
     padding: 14px 16px;
   }
 
-  /* Event exclusives: a bottom sheet with a grab handle; the page stays visible above it */
-  .exclusives {
+  /* Event exclusives and prizes panel: a bottom sheet with a grab handle; the page stays visible above it */
+  .exclusives,
+  .prizes {
     width: 100%;
     max-height: calc(100% - 48px);
     margin: auto 0 0;
   }
 
-  .exclusives[open] {
+  .exclusives[open],
+  .prizes[open] {
     animation: sheet-up .35s ease-out;
+  }
+
+  .prizes-card {
+    padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
   }
 
   .exclusives-top {

@@ -152,7 +152,10 @@ gold border is its non-color cue.
        to its content. A gift icon in a 36px solid `--ev-gold` circle
        (`--ev-bg` icon), then bold `--ev-text` "Get a chance to win
        prizes" and under it, Hanken 13px `--ev-muted`, "₱9,000 to ₱10,000
-       worth of giveaways".
+       worth of giveaways". Under the text, a **"See the prizes"** button
+       with a right chevron: pill, 44px tall, 1px `--ev-gold` outline,
+       `--ev-gold` text, transparent fill (12% gold on hover). It opens
+       the prizes panel (deviation 22).
      - Status row: a pill badge "[n] seats available" (number in
        `--ev-accent`) · LIVE indicator · "[n] days to go"
      - Compact steps line: "01 Pick seats · 02 Pay via QR & upload proof ·
@@ -336,6 +339,43 @@ gold border is its non-color cue.
         people" share each filter, "5–10 years" of clean water; one
         full-width `.btn-primary` "Pick your seats" (closes the popup). No
         other buttons.
+  22. **Prizes panel ("See the prizes").** Opened only by the raffle box
+      button; never on /admin. Native modal `<dialog>` with the same box,
+      entrance and phone bottom sheet as the popup (deviation 21): below
+      700px a bottom sheet (rounded top corners, grab handle, page visible
+      above); from 700px a centred card about 460px wide. Scrolls inside
+      itself when taller than the screen. Closes with ×, "Pick your
+      seats", Esc and tapping outside; focus stays inside and returns to
+      the "See the prizes" button. The popup and the panel never open on
+      top of each other (the popup waits while the panel is open). Works
+      from 320px. Tokens only; no prices, no sponsor logos.
+      - **Card:** `--ev-panel`, 1px `--ev-line` border, 16px radius. Top:
+        title "Raffle prizes" (Cinzel, uppercase), line "1 ticket = 1
+        raffle entry. Book 10, get 10 entries." in `--ev-muted`, × close
+        button (44px) in the top-right corner.
+      - **Prizes by sponsor:** a small gold uppercase sponsor heading
+        (Hanken, like the Corporate Bundle label), then a rounded list
+        (1px `--ev-line` border, 12px radius, `--ev-line` dividers). Each
+        row: item name in `--ev-text` and a gold quantity badge ("×1",
+        "×275"; `--ev-gold` fill, `--ev-bg` text). The list lives in ONE
+        content file, `components/raffle-prizes.ts` (items, quantities,
+        photos); change prizes only there.
+      - **Rows with a photo** (photos in `public/prizes/`): a small image
+        icon before the name and a chevron after the badge (both
+        `--ev-muted`); the whole row is a button that opens the photo
+        viewer. **Rows without a photo** (vouchers, tumblers, popcorn
+        maker) are plain text: not tappable, no icons, names aligned with
+        the photo rows.
+      - **Photo viewer:** a nested modal `<dialog>` over the panel, full
+        screen, `color-mix(in srgb, var(--ev-bg) 94%, transparent)`. The
+        photo (unedited file, on a `#fff` card, 12px radius, scaled to
+        fit) with the item name as a caption and a 44px × button. Closes
+        with ×, Esc or tapping outside; focus returns to the row. Alt text
+        is the sponsor + item, e.g. "Columbia Women’s Puffect Jacket".
+        Photos are loaded only when their row is tapped, never on page
+        load. No animation of its own.
+      - Bottom: one full-width `.btn-primary` "Pick your seats" (closes
+        the panel). No other buttons.
 - **Booking status wording (one code, three statuses).** Every booking has
   ONE reference code (e.g. `W4W-DD-7K2Q`), created at submission and never
   changed. Wherever a guest sees the code, the status is shown right next to

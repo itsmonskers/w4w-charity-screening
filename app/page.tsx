@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { ArrowRight, Gift } from 'lucide-react'
 import { CinemaAtmosphere } from '@/components/cinema-atmosphere'
 import { EventExclusives } from '@/components/event-exclusives'
+import { PrizesPanel } from '@/components/prizes-panel'
 import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE, EVENT_TITLE, POLICIES } from '@/components/booking-panel'
 import { SeatMap } from '@/components/seat-map'
 import { StripeWave } from '@/components/stripe-wave'
@@ -29,6 +30,7 @@ export default function Page() {
   const [submitting, setSubmitting] = useState(false)
   const [booked, setBooked] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [prizesOpen, setPrizesOpen] = useState(false)
   const [settings, setSettings] = useState<Settings | null>(null)
   const price = settings?.pricePerSeat ?? null
   const due = quote(settings, selected.length)
@@ -72,7 +74,10 @@ export default function Page() {
         <p className="cause-line">Every seat helps bring clean water to 4 Filipinos.</p>
         <div className="raffle-box">
           <span className="raffle-icon" aria-hidden="true"><Gift /></span>
-          <p><strong>Get a chance to win prizes</strong><span>₱9,000 to ₱10,000 worth of giveaways</span></p>
+          <div className="raffle-copy">
+            <p className="raffle-text"><strong>Get a chance to win prizes</strong><span>₱9,000 to ₱10,000 worth of giveaways</span></p>
+            <PrizesPanel onOpenChange={setPrizesOpen} />
+          </div>
         </div>
         <div className="status-row">
           <span className="status-pill"><b>{animatedSeatsLeft}</b> seats available</span>
@@ -95,7 +100,7 @@ export default function Page() {
         <BookingPanel settings={settings} selected={selected} onSelectedChange={setSelected} onSubmittingChange={setSubmitting} onBookedChange={setBooked} onReserveMore={() => { setSheetOpen(false); scrollToMap() }} sheetOpen={sheetOpen} onSheetOpenChange={setSheetOpen} />
       </div>
     </section>
-    <EventExclusives settings={settings} blocked={sheetOpen} />
+    <EventExclusives settings={settings} blocked={sheetOpen || prizesOpen} />
     <footer><div className="container container-wide footer-inner"><p>© 2026 Waves for Water Philippines · Questions? <a href="mailto:w4wph.movies4water@gmail.com">w4wph.movies4water@gmail.com</a>{POLICIES.map(({ href, label }) => <Fragment key={href}> · <a href={href} target="_blank" rel="noopener noreferrer">{label}</a></Fragment>)}</p></div></footer>
   </main>
 }
