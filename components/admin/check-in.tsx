@@ -62,6 +62,20 @@ export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner }: Pro
   const search = useRef<HTMLInputElement>(null)
   const first = useRef(true)
 
+  // Keep the phone screen on while the Check-in page is open (Wake Lock: Android Chrome,
+  // iPhone Safari 16.4+). Not supported or refused: nothing happens, the screen dims as usual.
+  useEffect(() => {
+    let lock: WakeLockSentinel | null = null
+    let closed = false
+    const request = () => {
+      if (document.visibilityState !== 'visible' || !('wakeLock' in navigator)) return
+      navigator.wakeLock.request('screen').then(sentinel => { if (closed) sentinel.release(); else lock = sentinel }, () => {})
+    }
+    request()
+    document.addEventListener('visibilitychange', request)
+    return () => { closed = true; document.removeEventListener('visibilitychange', request); lock?.release() }
+  }, [])
+
   // Each new screen: focus its heading (not on the first load, so the page title keeps focus)
   useEffect(() => {
     if (first.current) { first.current = false; return }

@@ -6,6 +6,7 @@ import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getCheckInState, getSeatCou
 import { formatPrice } from '@/lib/event-config'
 import { BookingList } from './admin/booking-lists'
 import { CheckIn } from './admin/check-in'
+import { QrScanner } from './admin/qr-scanner'
 import { CopyButton } from './admin/copy-button'
 import { EmailWarnings, type EmailWarningItem } from './admin/email-warning'
 import { GuidedCheck } from './admin/guided-check'
@@ -233,7 +234,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
-      : route === 'checkin' ? <CheckIn bookings={bookings} state={checkIn} onChanged={() => refresh()} onNoAccess={onNoAccess} scanner={() => <p className="admin-scanner-note">Camera scanning isn’t available in this version. Use Search instead.</p>} />
+      : route === 'checkin' ? <CheckIn bookings={bookings} state={checkIn} onChanged={() => refresh()} onNoAccess={onNoAccess} scanner={onCode => <QrScanner onCode={onCode} />} />
       : route === 'check' ? <GuidedCheck bookings={bookings} onOutcome={handleOutcome} onClearNotice={() => setNotice(null)} onNoAccess={onNoAccess} onAllDone={onAllDone} openWarnings={warnings.map(w => w.booking.id)} />
       : route === 'confirmed' ? <BookingList bookings={bookings} status="approved" query={query} />
       : route === 'not-approved' ? <BookingList bookings={bookings} status="rejected" query={query} />
