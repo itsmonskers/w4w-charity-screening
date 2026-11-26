@@ -18,7 +18,7 @@ for W4W brand direction (signed off by Carlo Delantar).
 **Precedence:** Section 0 wins over everything below it. Everything else is the
 shared W4W standard and applies unless Section 0 says otherwise.
 
-Last updated: 2026-11-24. Sources: Pilipinas4Water design standard, FlappyBoard
+Last updated: 2026-11-26. Sources: Pilipinas4Water design standard, FlappyBoard
 microsite.
 
 ---
@@ -128,27 +128,31 @@ gold border is its non-color cue.
      - `h1` "Movies4Water - Avengers: Doomsday Block Screening" in Cinzel 700 uppercase at
        `clamp(24px, 3vw, 40px)`, `--ev-text` (like JCI's title line). The
        old "Claim a seat. Bring clean water." headline is removed.
-     - ONE line of facts in `--ev-muted`: "Sat, Dec 19, 2026 · Doors 3:30 PM
+     - ONE line of facts in `--ev-muted`: "Sat, Dec 19, 2026 · Doors 3:45 PM
        · Movie 4:00 PM · Cinema 7, Power Plant Mall, Makati · ₱[price] per
-       seat · Includes food and refreshments" (the price comes from
+       seat · Snacks and refreshments" (the price comes from
        `event_settings`; each fact stays unbroken; wrapping happens only
        between facts). **How the ₱1,000 is split:** Simon approved
        (2026-11-25) using W4W's Movies4Water deck figures, and only these:
        ₱500 of every ticket goes to clean water; a filter + bucket costs
        about ₱3,500, is shared by about 25 people and gives 5–10 years of
-       clean water. Don't state the rest of the split (ticket, food), and
-       never add a per-ticket "people helped" claim.
-     - **Cause line** (our version of JCI's gold tagline slot): "Your seat
-       helps bring clean water to Filipino communities." in Cinzel, small
-       caps style, `--ev-gold`, `letter-spacing: .2em`, ~12px. This is now
-       the only place the page says what the money is for; keep it.
-     - **Impact line** right under it, Hanken 13px `--ev-muted`: "One
-       ₱3,500 water filter gives 25 people clean water for 5 to 10 years."
-       Source: senior lead of field operations (filter + bucket ₱3,450,
-       rounded to ₱3,500 per Carlo; delivery and training excluded; one
-       filter serves 5 households / 25 people for 5–10 years). Don't claim
-       "1 seat = 1 Filipino for 5 years" until it's confirmed that at least
-       ₱140 of each seat reaches the water program.
+       clean water. Simon also approved (2026-11-26, from the same deck)
+       one per-seat claim: "Every seat helps bring clean water to 4
+       Filipinos", and its multiples (N seats → N × 4 Filipinos) in the
+       "What's included" box. Don't state the rest of the split (ticket,
+       food), and don't add any other per-ticket "people helped" claim.
+     - **Cause line** (our version of JCI's gold tagline slot): "Every seat
+       helps bring clean water to 4 Filipinos." in Cinzel, small caps
+       style, `--ev-gold`, `letter-spacing: .2em`, ~12px. This is now the
+       only place the title block says what the money is for; keep it.
+     - **Raffle box** right under it (replaces the old ₱3,500 filter
+       line, which is no longer on the home page): the popup's Corporate
+       Bundle box style (1px `--ev-gold` border, 12px radius, fill
+       `color-mix(in srgb, var(--ev-gold) 9%, var(--ev-panel))`), sized
+       to its content. A gift icon in a 36px solid `--ev-gold` circle
+       (`--ev-bg` icon), then bold `--ev-text` "Get a chance to win
+       prizes" and under it, Hanken 13px `--ev-muted`, "₱9,000 to ₱10,000
+       worth of giveaways".
      - Status row: a pill badge "[n] seats available" (number in
        `--ev-accent`) · LIVE indicator · "[n] days to go"
      - Compact steps line: "01 Pick seats · 02 Pay via QR & upload proof ·
@@ -204,7 +208,7 @@ gold border is its non-color cue.
          transparent)` fill, `--blue-light` text). Headline "You're in." in
          Oswald 700 uppercase, ~32px.
        - **Event:** "Movies4Water - Avengers: Doomsday Block Screening",
-         "Sat, Dec 19, 2026", "Doors 3:30 PM · Movie 4:00 PM", "Cinema 7,
+         "Sat, Dec 19, 2026", "Doors 3:45 PM · Movie 4:00 PM", "Cinema 7,
          Power Plant Mall, Makati".
        - **Seats:** grouped by row and sorted ascending, e.g. "Row L ·
          Seats 7, 8, 9" (one line per row), then "3 seats · Total
@@ -301,7 +305,8 @@ gold border is its non-color cue.
   21. **Event exclusives popup (cinema-ticket card).** Shown only while the
       Corporate Bundle is on (`group_size` and `group_price_per_seat` set in
       `event_settings`), about 2 seconds after the page loads, once per
-      visitor (browser storage, in try/catch), never on top of the open
+      visit (`sessionStorage`, in try/catch: it shows again in a new visit
+      but not on reloads or when coming back from GCash), never on top of the open
       booking sheet, never on /admin. Native modal `<dialog>`: closes with
       ×, "Pick your seats", Esc and tapping outside; focus stays inside and
       returns on close. Below 700px it is a bottom sheet (slides up,
@@ -323,8 +328,9 @@ gold border is its non-color cue.
         and a gold "Save ₱500" badge (all from `event_settings`); raffle
         row (gift icon): "**1 ticket = 1 raffle entry.** Win prizes from
         Columbia, The Coffee Bean & Tea Leaf, Nono’s and RAF Forwarding.";
-        food row (bottle icon) "Chips and bottled water included", hidden
-        (`SHOW_FOOD_LINE = false`) until the venue confirms; impact box
+        food row (bottle icon) "Snacks and refreshments included", shown
+        (`SHOW_FOOD_LINE = true`; the same switch controls the snacks row
+        in the "What's included" box); impact box
         (water-drop icon) "₱500 of every ticket goes straight to clean
         water" with three stats: "~₱3,500" 1 filter + bucket, "~25
         people" share each filter, "5–10 years" of clean water; one
@@ -370,8 +376,18 @@ gold border is its non-color cue.
      for Water Philippines and agree to W4W processing my details for this
      booking under the Data Privacy Act of 2012." "Privacy Policy" links to
      `public/policies/privacy-policy.pdf`, opening in a new tab, in
-     `--ev-accent`. Then full-width
-     `.btn-primary` "Reserve seats".
+     `--ev-accent`. Then the **"What's included" box** (only while at
+     least 1 seat is picked; same spot in the phone sheet and the laptop
+     panel): 1px `--ev-gold` border, `--ev-panel` fill, 14px radius, gold
+     label "What's included" with a ticket icon, then three rows with the
+     popup's inline stroke icons (gift and bottle in `--ev-gold`, water
+     drop in `--ev-accent` like the popup), numbers updating live:
+     gift "**[N] raffle entries** (1 per seat) for ₱9,000 to ₱10,000 worth
+     of giveaways" ("1 raffle entry" for one seat); bottle "**Snacks and
+     refreshments**" (same `SHOW_FOOD_LINE` switch as the popup); water
+     drop "Your [N] seats help bring clean water to **[N × 4] Filipinos**"
+     (one seat: "Your seat helps bring clean water to **4 Filipinos**").
+     Then full-width `.btn-primary` "Reserve seats".
   7. On success, the panel content is replaced by the e-ticket card
      (deviation 8) with "Reserve more seats".
   Validation: inline errors under each field on submit (required fields,

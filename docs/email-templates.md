@@ -55,7 +55,7 @@ Your payment is verified and your seats for Movies4Water - Avengers: Doomsday Bl
 
 Reference: [REFERENCE CODE]
 Event: Movies4Water - Avengers: Doomsday Block Screening
-When: Saturday, December 19, 2026 · Doors 3:30 PM · Movie 4:00 PM
+When: Saturday, December 19, 2026 · Doors 3:45 PM · Movie 4:00 PM
 Where: Cinema 7, Power Plant Mall, Makati
 Name: [GUEST NAME]
 Email: [GUEST EMAIL]
@@ -97,7 +97,7 @@ The seats below are no longer held for you.
 
 Reference: [REFERENCE CODE]
 Event: Movies4Water - Avengers: Doomsday Block Screening
-When: Saturday, December 19, 2026 · Doors 3:30 PM · Movie 4:00 PM
+When: Saturday, December 19, 2026 · Doors 3:45 PM · Movie 4:00 PM
 Where: Cinema 7, Power Plant Mall, Makati
 Name: [GUEST NAME]
 Email: [GUEST EMAIL]
@@ -136,7 +136,7 @@ Thanks for booking! We received your reservation and payment screenshot for Movi
 
 Reference: [REFERENCE CODE]
 Event: Movies4Water - Avengers: Doomsday Block Screening
-When: Saturday, December 19, 2026 · Doors 3:30 PM · Movie 4:00 PM
+When: Saturday, December 19, 2026 · Doors 3:45 PM · Movie 4:00 PM
 Where: Cinema 7, Power Plant Mall, Makati
 Name: [GUEST NAME]
 Email: [GUEST EMAIL]
