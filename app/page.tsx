@@ -1,10 +1,11 @@
 'use client'
 
 import { Fragment, useEffect, useState } from 'react'
-import { ArrowRight, Gift } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { CinemaAtmosphere } from '@/components/cinema-atmosphere'
 import { EventExclusives } from '@/components/event-exclusives'
 import { PrizesPanel } from '@/components/prizes-panel'
+import { RAFFLE_THUMBS } from '@/components/raffle-prizes'
 import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE, EVENT_TITLE, POLICIES } from '@/components/booking-panel'
 import { SeatMap } from '@/components/seat-map'
 import { StripeWave } from '@/components/stripe-wave'
@@ -72,13 +73,14 @@ export default function Page() {
         <h1>{EVENT_TITLE}</h1>
         <p className="facts-line">{facts.map((fact, i) => <Fragment key={fact}>{i > 0 && ' '}<span>{fact}{i < facts.length - 1 && ' ·'}</span></Fragment>)}</p>
         <p className="cause-line">Every seat helps bring clean water to 4 Filipinos.</p>
-        <div className="raffle-box">
-          <span className="raffle-icon" aria-hidden="true"><Gift /></span>
-          <div className="raffle-copy">
-            <p className="raffle-text"><strong>Get a chance to win prizes</strong><span>₱9,000 to ₱10,000 worth of giveaways</span></p>
-            <PrizesPanel onOpenChange={setPrizesOpen} />
-          </div>
-        </div>
+        <PrizesPanel onOpenChange={setPrizesOpen}>
+          <span className="prizes-thumbs">{RAFFLE_THUMBS.map(src => <img key={src} src={src} alt="" width={44} height={44} decoding="async" />)}</span>
+          <span className="prizes-strip-text">
+            <strong>Get a chance to win prizes</strong>
+            <span>₱9,000 to ₱10,000 worth of giveaways</span>
+            <span className="prizes-strip-link">See the prizes <span aria-hidden="true">›</span></span>
+          </span>
+        </PrizesPanel>
         <div className="status-row">
           <span className="status-pill"><b>{animatedSeatsLeft}</b> seats available</span>
           {live ? <span className="live eyebrow-caps"><i aria-hidden="true" />Live</span> : <span className="live">Connecting…</span>}

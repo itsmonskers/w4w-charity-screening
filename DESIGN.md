@@ -145,17 +145,29 @@ gold border is its non-color cue.
        helps bring clean water to 4 Filipinos." in Cinzel, small caps
        style, `--ev-gold`, `letter-spacing: .2em`, ~12px. This is now the
        only place the title block says what the money is for; keep it.
-     - **Raffle box** right under it (replaces the old ₱3,500 filter
-       line, which is no longer on the home page): the popup's Corporate
-       Bundle box style (1px `--ev-gold` border, 12px radius, fill
-       `color-mix(in srgb, var(--ev-gold) 9%, var(--ev-panel))`), sized
-       to its content. A gift icon in a 36px solid `--ev-gold` circle
-       (`--ev-bg` icon), then bold `--ev-text` "Get a chance to win
-       prizes" and under it, Hanken 13px `--ev-muted`, "₱9,000 to ₱10,000
-       worth of giveaways". Under the text, a **"See the prizes"** button
-       with a right chevron: pill, 44px tall, 1px `--ev-gold` outline,
-       `--ev-gold` text, transparent fill (12% gold on hover). It opens
-       the prizes panel (deviation 22).
+     - **Prize strip** right under it (replaces the earlier gold raffle
+       box and its "See the prizes" pill; the old ₱3,500 filter line is
+       no longer on the home page). The raffle stays visible but lighter
+       than "Pick your seats", which stays the only main button in the
+       title block: no gold box, no gold circle, no outlined button.
+       - Three round photos (44px, `#fff` background, 2px `--ev-bg`
+         border, overlapping by 14px) from the 96×96 thumbnails in
+         `public/prizes/` (`*-thumb.jpg`, listed in
+         `components/raffle-prizes.ts`). Decorative: empty alt.
+       - Next to them, Hanken: bold `--ev-text` "Get a chance to win
+         prizes" (14px), "₱9,000 to ₱10,000 worth of giveaways" in
+         `--ev-muted` (13px), and a gold text link "See the prizes ›"
+         (`--ev-gold`, 14px, 600; no box, no outline; underlined on
+         hover).
+       - The whole strip is ONE button that opens the prizes panel
+         (deviation 22); focus returns to it on close.
+       - Laptop (from 700px): a slim pill that hugs its content, 1px
+         `--ev-line` border, fill
+         `color-mix(in srgb, var(--ev-bg) 85%, transparent)` (reads
+         slightly darker against the light shafts); photos, text and link
+         in one row (title and value stacked, link beside them).
+       - Phone (below 700px): full width, no fill, a 1px `--ev-line`
+         line above and below, the link on its own line under the text.
      - Status row: a pill badge "[n] seats available" (number in
        `--ev-accent`) · LIVE indicator · "[n] days to go"
      - Compact steps line: "01 Pick seats · 02 Pay via QR & upload proof ·
@@ -339,14 +351,14 @@ gold border is its non-color cue.
         people" share each filter, "5–10 years" of clean water; one
         full-width `.btn-primary` "Pick your seats" (closes the popup). No
         other buttons.
-  22. **Prizes panel ("See the prizes").** Opened only by the raffle box
-      button; never on /admin. Native modal `<dialog>` with the same box,
+  22. **Prizes panel ("See the prizes").** Opened only by the prize
+      strip; never on /admin. Native modal `<dialog>` with the same box,
       entrance and phone bottom sheet as the popup (deviation 21): below
       700px a bottom sheet (rounded top corners, grab handle, page visible
       above); from 700px a centred card about 460px wide. Scrolls inside
       itself when taller than the screen. Closes with ×, "Pick your
       seats", Esc and tapping outside; focus stays inside and returns to
-      the "See the prizes" button. The popup and the panel never open on
+      the prize strip. The popup and the panel never open on
       top of each other (the popup waits while the panel is open). Works
       from 320px. Tokens only; no prices, no sponsor logos.
       - **Card:** `--ev-panel`, 1px `--ev-line` border, 16px radius. Top:

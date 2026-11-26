@@ -290,82 +290,71 @@ button:disabled:not(.seat) {
   text-transform: uppercase;
 }
 
-/* Raffle box under the cause line: same gold box as the popup's Corporate Bundle; Hanken, since Cinzel may lack ₱ */
-.raffle-box {
-  display: flex;
-  align-items: flex-start;
+/* Prize strip under the cause line: one button that opens the prizes panel. Laptop: a slim
+   pill that hugs its content, all in one row; phone (≤700px): full width, link on its own line.
+   Lighter than "Pick your seats", which stays the main button here. Hanken, since Cinzel may lack ₱ */
+.prizes-strip {
+  display: inline-flex;
+  align-items: center;
   gap: 12px;
-  width: fit-content;
   max-width: 100%;
   margin-top: 12px;
-  padding: 10px 16px 10px 10px;
-  border: 1px solid var(--ev-gold);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--ev-gold) 9%, var(--ev-panel));
-}
-
-.raffle-icon {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
+  padding: 6px 22px 6px 6px;
+  border: 1px solid var(--ev-line);
   border-radius: 999px;
-  background: var(--ev-gold);
-  color: var(--ev-bg);
-}
-
-.raffle-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.raffle-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.raffle-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
+  background: color-mix(in srgb, var(--ev-bg) 85%, transparent);
   color: var(--ev-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Three round thumbnails, overlapping; decorative (empty alt) */
+.prizes-thumbs {
+  display: flex;
+  flex: none;
+}
+
+.prizes-thumbs img {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--ev-bg);
+  border-radius: 999px;
+  background: #fff;
+  object-fit: cover;
+}
+
+.prizes-thumbs img + img {
+  margin-left: -14px;
+}
+
+/* Title and value stacked; the link sits beside them on laptop */
+.prizes-strip-text {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 20px;
+  row-gap: 2px;
   font-size: 13px;
   line-height: 1.4;
 }
 
-.raffle-text strong {
+.prizes-strip-text strong {
   color: var(--ev-text);
   font-size: 14px;
 }
 
-/* "See the prizes": gold outline pill under the raffle text; opens the prizes panel */
-.prizes-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 0 16px 0 20px;
-  border: 1px solid var(--ev-gold);
-  border-radius: 999px;
-  background: transparent;
+.prizes-strip-link {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   color: var(--ev-gold);
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
+  white-space: nowrap;
 }
 
-.prizes-button:hover {
-  background: color-mix(in srgb, var(--ev-gold) 12%, transparent);
-}
-
-.prizes-button svg {
-  width: 16px;
-  height: 16px;
+.prizes-strip:hover .prizes-strip-link {
+  text-decoration: underline;
 }
 
 .status-row {
@@ -3150,6 +3139,27 @@ footer {
 
   .title-cta {
     margin-top: 14px;
+  }
+
+  /* Prize strip: full width between thin lines; the link goes on its own line under the text */
+  .prizes-strip {
+    display: flex;
+    width: 100%;
+    padding: 12px 0;
+    border-width: 1px 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .prizes-strip-text {
+    grid-template-columns: auto;
+    justify-content: start;
+  }
+
+  .prizes-strip-link {
+    grid-column: 1;
+    grid-row: auto;
+    margin-top: 2px;
   }
 
   .seat-scroll-hint {

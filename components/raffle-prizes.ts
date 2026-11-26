@@ -2,6 +2,13 @@
 // change items, quantities or photos here. Photos live in public/prizes/; leave `photo` out
 // for items without one (those rows are plain text). No prices, no logos.
 
+// The three small round photos in the home page prize strip (96×96 thumbnails, decorative)
+export const RAFFLE_THUMBS = [
+  '/prizes/columbia-puffect-jacket-thumb.jpg',
+  '/prizes/columbia-puffect-vest-thumb.jpg',
+  '/prizes/columbia-trail-traveler-backpack-thumb.jpg',
+]
+
 export type RafflePrize = { name: string; quantity: number; photo?: string }
 export type RaffleSponsor = { sponsor: string; prizes: RafflePrize[] }
 

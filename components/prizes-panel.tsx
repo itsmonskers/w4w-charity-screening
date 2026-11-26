@@ -1,10 +1,10 @@
 'use client'
 
-import { useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type SyntheticEvent } from 'react'
+import { useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode, type SyntheticEvent } from 'react'
 import { ChevronRight, Image as ImageIcon, X } from 'lucide-react'
 import { RAFFLE_PRIZES } from '@/components/raffle-prizes'
 
-// "See the prizes" button + prizes panel (DESIGN.md Section 0). Native modal <dialog>s:
+// Prize strip button + prizes panel (DESIGN.md Section 0). Native modal <dialog>s:
 // the panel is a bottom sheet on phones and a centred card from 700px; tapping a row with a
 // photo opens it full screen in a nested <dialog>. Photos load only when a row is tapped.
 
@@ -27,8 +27,9 @@ function useBackdropClose(close: () => void) {
   }
 }
 
+// children: the content of the home page prize strip, which is the button that opens the panel.
 // onOpenChange: lets the page keep the event exclusives popup from opening on top
-export function PrizesPanel({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+export function PrizesPanel({ onOpenChange, children }: { onOpenChange: (open: boolean) => void; children: ReactNode }) {
   const panel = useRef<HTMLDialogElement>(null)
   const viewer = useRef<HTMLDialogElement>(null)
   const card = useRef<HTMLDivElement>(null)
@@ -65,7 +66,7 @@ export function PrizesPanel({ onOpenChange }: { onOpenChange: (open: boolean) =>
   const viewerBackdrop = useBackdropClose(closePhoto)
 
   return <>
-    <button ref={opener} type="button" className="prizes-button" aria-haspopup="dialog" onClick={open}>See the prizes <ChevronRight aria-hidden="true" /></button>
+    <button ref={opener} type="button" className="prizes-strip" aria-haspopup="dialog" onClick={open}>{children}</button>
     <dialog
       ref={panel}
       className="prizes"
