@@ -8,6 +8,9 @@ const TOKEN = /^[0-9a-f]{64}$/
 
 export const checkinQrText = (token: string) => `${CHECKIN_QR_PREFIX}${token}`
 
+// Content-ID of the QR image attached to the email (the HTML shows it with src="cid:…")
+export const CHECKIN_QR_CID = 'checkin-qr'
+
 // The token from a scanned code, or null when it isn't one of our check-in codes
 export function tokenFromQr(text: string): string | null {
   const value = text.trim()

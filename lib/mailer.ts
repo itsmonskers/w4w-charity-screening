@@ -2,7 +2,10 @@
 // and nothing else. SMTP_USER / SMTP_APP_PASSWORD must never be NEXT_PUBLIC_.
 import nodemailer from 'nodemailer'
 
-export type Email = { to: string; subject: string; html: string; text: string }
+// Inline image (the check-in QR): the HTML shows it with <img src="cid:[cid]">, which Gmail
+// displays (it blocks data: images). Passed to nodemailer as-is by sendEmail.
+export type EmailAttachment = { filename: string; content: Buffer; cid: string; contentType: string }
+export type Email = { to: string; subject: string; html: string; text: string; attachments?: EmailAttachment[] }
 
 // The Gmail address emails are sent from; also the contact address in every email.
 export const SMTP_USER = process.env.SMTP_USER ?? ''

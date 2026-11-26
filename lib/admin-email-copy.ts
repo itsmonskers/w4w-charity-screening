@@ -8,8 +8,11 @@ import { buildEmail } from './email-templates'
 // It is public: the site footer and docs/email-templates.md show it too.
 export const EMAIL_CONTACT = 'w4wph.movies4water@gmail.com'
 
-export type DecisionEmail = 'approved' | 'rejected'
+// 'checkin': the separate "Your check-in QR code" email (one-time send)
+export type DecisionEmail = 'approved' | 'rejected' | 'checkin'
 
+// The text can't carry the QR image: the confirmed and check-in texts include the QR box
+// wording, and the admin attaches the image from "Download QR code".
 export function decisionEmail(kind: DecisionEmail, booking: AdminBooking) {
   const email = buildEmail(kind, {
     referenceCode: booking.referenceCode,
@@ -27,6 +30,6 @@ export function decisionEmail(kind: DecisionEmail, booking: AdminBooking) {
     paymentRef: booking.paymentRef,
     payerName: booking.payerName,
     // The confirmed / not-approved emails don't show food allergies (same as the server)
-  }, EMAIL_CONTACT)
+  }, EMAIL_CONTACT, { checkInQr: kind === 'approved' })
   return { to: email.to, subject: email.subject, text: email.text }
 }

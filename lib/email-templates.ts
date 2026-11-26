@@ -1,10 +1,15 @@
-// Server only: the three booking emails, each as plain HTML + a text version.
-// Event facts come from event-config; the contact address is the SMTP_USER env var.
-// No images, no Marvel assets.
+// The booking emails, each as plain HTML + a text version. Event facts come from
+// event-config; the contact address is the SMTP_USER env var. No Marvel assets.
+// The only image is the check-in QR ("Booking confirmed" and "Your check-in QR code"
+// emails): the HTML points at an attached image (cid:), which the email route adds.
+// This file never makes the QR itself, so /admin can also build the text in the browser.
+import { CHECKIN_QR_CID } from './checkin-code'
 import { EVENT, formatPrice } from './event-config'
 import type { Email } from './mailer'
 
-export type EmailKind = 'received' | 'approved' | 'rejected'
+// 'checkin': the separate "Your check-in QR code" email, for bookings confirmed before
+// the QR was added to the "Booking confirmed" email
+export type EmailKind = 'received' | 'approved' | 'rejected' | 'checkin'
 export type EmailBooking = {
   referenceCode: string
   fullName: string
@@ -104,11 +109,48 @@ const CONTENT: Record<EmailKind, (contact: string) => Content> = {
     ],
     outro: [`Please contact us at ${contact} with your reference code so we can help.`],
   }),
+  checkin: contact => ({
+    subject: 'Your check-in QR code',
+    status: 'Confirmed',
+    intro: ['Here\'s your QR code for check-in on December 19.'],
+    outro: [`Questions? Reply to this email or write to ${contact} with your reference code.`],
+  }),
 }
 
-export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: string): Email {
+// "Your check-in QR code" box: the QR (attached image), the reference code in large text,
+// the seats, and what to do at the door. Wording approved by Simon.
+const QR_TITLE = 'Your check-in QR code'
+const QR_NOTE = 'Show this at the cinema entrance. Can\'t open it? Just tell our staff your reference code.'
+
+function qrBoxText(booking: EmailBooking) {
+  return [
+    QR_TITLE.toUpperCase(),
+    '(QR code image attached to this email)',
+    `Reference code: ${booking.referenceCode}`,
+    ...seatsByRow(booking.seatIds).map((line, i) => i ? `    ${line}` : `Seats: ${line}`),
+    QR_NOTE,
+  ]
+}
+
+// Table layout and inline styles only, so it holds together in Gmail and Outlook
+function qrBoxHtml(booking: EmailBooking) {
+  return [
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 16px 0; border: 2px solid; border-radius: 12px;"><tr><td style="padding: 16px 20px; text-align: center;">',
+    `<p style="margin: 0 0 12px; font-size: 18px; font-weight: bold;">${escapeHtml(QR_TITLE)}</p>`,
+    `<img src="cid:${CHECKIN_QR_CID}" width="220" height="220" alt="${escapeHtml(`Check-in QR code for ${booking.referenceCode}`)}" style="display: block; margin: 0 auto; border: 0;">`,
+    `<p style="margin: 12px 0 4px; font-size: 28px; font-weight: bold; letter-spacing: 2px;">${escapeHtml(booking.referenceCode)}</p>`,
+    `<p style="margin: 0 0 12px;">${seatsByRow(booking.seatIds).map(escapeHtml).join('<br>')}</p>`,
+    `<p style="margin: 0;">${escapeHtml(QR_NOTE)}</p>`,
+    '</td></tr></table>',
+  ].join('\n')
+}
+
+// checkInQr: add the QR box to the "Booking confirmed" email (the route attaches the image).
+// The "Your check-in QR code" email always has it, and no booking details table.
+export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: string, options: { checkInQr?: boolean } = {}): Email {
   const content = CONTENT[kind](contact)
-  const details = bookingDetails(booking)
+  const withQr = kind === 'checkin' || (kind === 'approved' && options.checkInQr === true)
+  const details = kind === 'checkin' ? [] : bookingDetails(booking)
   const subject = `${content.subject} · ${booking.referenceCode} · Movies4Water`
 
   const text = [
@@ -118,8 +160,8 @@ export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: stri
     '',
     ...content.intro,
     '',
-    ...details.map(([label, lines]) => `${label}: ${lines.join('\n    ')}`),
-    '',
+    ...(withQr ? [...qrBoxText(booking), ''] : []),
+    ...(details.length ? [...details.map(([label, lines]) => `${label}: ${lines.join('\n    ')}`), ''] : []),
     ...content.outro.flatMap(line => [line, '']),
     'Waves for Water Philippines',
     contact,
@@ -131,9 +173,12 @@ export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: stri
     p(`Hi ${booking.fullName},`),
     `<p><strong>${escapeHtml(`${booking.referenceCode} · ${content.status}`)}</strong></p>`,
     ...content.intro.map(p),
-    '<table cellpadding="4" cellspacing="0">',
-    ...details.map(([label, lines]) => `<tr><td valign="top"><strong>${escapeHtml(label)}</strong></td><td>${lines.map(escapeHtml).join('<br>')}</td></tr>`),
-    '</table>',
+    ...(withQr ? [qrBoxHtml(booking)] : []),
+    ...(details.length ? [
+      '<table cellpadding="4" cellspacing="0">',
+      ...details.map(([label, lines]) => `<tr><td valign="top"><strong>${escapeHtml(label)}</strong></td><td>${lines.map(escapeHtml).join('<br>')}</td></tr>`),
+      '</table>',
+    ] : []),
     ...content.outro.map(p),
     `<p>Waves for Water Philippines<br>${escapeHtml(contact)}</p>`,
     '</body></html>',

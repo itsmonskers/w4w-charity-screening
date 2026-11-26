@@ -10,7 +10,8 @@ available (for example, the warning was already dismissed, or a guest says
 they got nothing).
 
 The site sends these emails automatically from
-**w4wph.movies4water@gmail.com** (booking received, confirmed, not approved).
+**w4wph.movies4water@gmail.com** (booking received, confirmed, not approved,
+and the one-time "Your check-in QR code" email).
 Use these templates only as a fallback: when /admin says an email
 **did not send**, or when a guest says they got nothing (check
 spam first). Send them by hand from **w4wph.movies4water@gmail.com**.
@@ -33,7 +34,11 @@ Rules for every email:
 - Put the reference code and status together, exactly like this:
   `W4W-DD-7K2Q · Confirmed`.
 - Copy the seats line exactly as /admin shows it, e.g. `Row L · Seats 7, 8, 9`.
-- Don't promise QR codes, e-tickets or receipts. None of these are decided yet.
+- **Check-in QR code:** the confirmed email (template 1) and template 4 carry the
+  guest's check-in QR code as an image. A hand-sent email can't make it: in
+  /admin, use **Download QR code** on the warning and attach the image to your
+  email. Never make a QR code yourself or send someone else's.
+- Don't promise e-tickets or receipts. Neither is decided.
 - Don't add any `[... TBD]` text yourself. Only keep it where the automatic
   email already shows it (for example `Amount: [PRICE TBD]`).
 
@@ -52,6 +57,12 @@ Hi [GUEST NAME],
 [REFERENCE CODE] · Confirmed
 
 Your payment is verified and your seats for Movies4Water - Avengers: Doomsday Block Screening are confirmed.
+
+YOUR CHECK-IN QR CODE
+(QR code image attached to this email)
+Reference code: [REFERENCE CODE]
+Seats: [SEATS, as /admin shows them, e.g. Row L · Seats 7, 8, 9]
+Show this at the cinema entrance. Can't open it? Just tell our staff your reference code.
 
 Reference: [REFERENCE CODE]
 Event: Movies4Water - Avengers: Doomsday Block Screening
@@ -163,8 +174,29 @@ w4wph.movies4water@gmail.com
 
 ---
 
-## Still to decide before these are final
+## 4. Your check-in QR code (one-time, for bookings confirmed before the QR)
 
-- **Check-in process:** what guests show at the door (name, reference code,
-  or something else). When it's decided, add it to the automatic emails
-  (`lib/email-templates.ts`) and to these templates.
+Guests confirmed before the QR code was added to the confirmed email get this
+once, from **Tools → Send check-in QR codes** in /admin. Send it by hand only if
+/admin says it did not send. Attach the image from **Download QR code**.
+
+**Subject:** Your check-in QR code · [REFERENCE CODE] · Movies4Water
+
+```
+Hi [GUEST NAME],
+
+[REFERENCE CODE] · Confirmed
+
+Here's your QR code for check-in on December 19.
+
+YOUR CHECK-IN QR CODE
+(QR code image attached to this email)
+Reference code: [REFERENCE CODE]
+Seats: [SEATS, as /admin shows them, e.g. Row L · Seats 7, 8, 9]
+Show this at the cinema entrance. Can't open it? Just tell our staff your reference code.
+
+Questions? Reply to this email or write to w4wph.movies4water@gmail.com with your reference code.
+
+Waves for Water Philippines
+w4wph.movies4water@gmail.com
+```
