@@ -18,7 +18,7 @@ for W4W brand direction (signed off by Carlo Delantar).
 **Precedence:** Section 0 wins over everything below it. Everything else is the
 shared W4W standard and applies unless Section 0 says otherwise.
 
-Last updated: 2026-11-26. Sources: Pilipinas4Water design standard, FlappyBoard
+Last updated: 2026-11-26 (event-day check-in). Sources: Pilipinas4Water design standard, FlappyBoard
 microsite.
 
 ---
@@ -396,9 +396,15 @@ gold border is its non-color cue.
     [guest's email] once your payment is verified. Keep your reference
     code." Showing the email lets guests spot a typo before they leave.
   - **Confirmed** (after approval, confirmation email): "Your payment is
-    verified and your seats are confirmed." Day-of instructions depend on
-    the check-in process ([CHECK-IN PROCESS TBD]); don't promise QR
-    e-tickets until it's decided.
+    verified and your seats are confirmed." The email carries the guest's
+    **check-in QR code** in a box titled "Your check-in QR code": the QR
+    (an inline image), the reference code in large text, the seats, and
+    "Show this at the cinema entrance. Can't open it? Just tell our staff
+    your reference code." One QR per booking; it is a check-in code, not an
+    e-ticket. Guests confirmed before the QR existed get it once in a
+    separate email, "Your check-in QR code · [reference] · Movies4Water"
+    ("Here's your QR code for check-in on December 19." and the same box).
+    Staff check guests in at the door in /admin (see "Event-day check-in").
   - **Not approved** (after rejection, email): says we could not verify the
     payment, that the seats are no longer held, and asks the guest to
     contact w4wph.movies4water@gmail.com with their reference code. The
@@ -466,15 +472,17 @@ gold border is its non-color cue.
   turns it off). Styles live in the admin section of `app/globals.css` and
   never change shared guest-page rules.
   - **Layout.** From 1024px: a left sidebar with "MOVIES4WATER"
-    (`.eyebrow-caps`, `--ev-gold`) and "ADMIN"; Home; PAYMENTS: Waiting for
-    review, Confirmed, Not approved (with counts); TOOLS: Download guest
-    list (the approved CSV); at the bottom: View the booking page, "Signed
-    in as …", Sign out. The current page is highlighted in `--ev-gold`.
+    (`.eyebrow-caps`, `--ev-gold`) and "ADMIN"; Home; EVENT DAY: Check-in
+    (with "arrived/total", e.g. 12/315); PAYMENTS: Waiting for review,
+    Confirmed, Not approved (with counts); TOOLS: Download guest list (the
+    approved CSV), Send check-in QR codes; at the bottom: View the booking
+    page, "Signed in as …", Sign out. The current page is highlighted in
+    `--ev-gold`.
     Below 1024px: a top bar with a "Menu" button that opens the same menu
     as a full-screen modal `<dialog>` with a close (×) button (focus stays
     inside, Esc closes, focus returns). Pages are URL hashes (`#home`,
-    `#check`, `#waiting`, `#confirmed`, `#not-approved`) so the phone's
-    Back button works.
+    `#checkin`, `#check`, `#waiting`, `#confirmed`, `#not-approved`,
+    `#qr-emails`) so the phone's Back button works.
   - **Home cards.** One large card with a gold border: badge NEEDS
     ATTENTION, the number waiting, "The oldest has been waiting …" and
     "Start checking"; or ALL CLEAR when nothing is waiting. Two small
@@ -514,6 +522,51 @@ gold border is its non-color cue.
     16px.
   - **Focus.** An admin-only 2px `--ev-accent` focus ring
     (`:focus-visible`) so keyboard focus shows on the dark panels.
+  - **Event-day check-in (`#checkin`).** Phone-first, one screen at a time,
+    for trusted W4W staff with their normal admin login (no separate door
+    role). Each new screen moves focus to its heading. While the page is
+    open it asks to keep the phone screen on (Wake Lock, where supported).
+    - **Start:** a card with the live counter "[X] of [Y] guests arrived"
+      (Y = seats of confirmed bookings; refreshes every 10 seconds on this
+      page) and a gold progress bar, one big (56px) `.btn-primary` "Scan
+      QR code", then "No QR code?" and a "Search name or reference" box.
+      Search lists matching bookings: confirmed ones with "Check in" (or
+      "Arrived [time]" / "[n] of [N] arrived"); waiting ones with a gold
+      "Not confirmed yet" badge and no button. Not-approved bookings are
+      not listed.
+    - **Scan:** the back camera in a square live view with a gold aiming
+      frame, "Point the camera at the guest's QR code.", "Search instead"
+      and "Back to check-in". The camera only starts on this screen and is
+      switched off when it closes, after a read, and while the tab is
+      hidden. Camera blocked or missing: a short message in
+      `--error-on-dark` with "Try the camera again" and Search instead.
+      The QR holds "W4W1:" + the booking's secret token; any other QR shows
+      "Not a valid ticket".
+    - **Result:** reference code, the guest's name (large), the seats as
+      chips, all selected in `--ev-gold` (tap a seat to leave it for later,
+      for groups arriving separately; unselected chips are dashed), a gold
+      **Food allergies** box when the guest gave any, and "Check in [N]
+      guests". Seats already checked in show in a dashed gold warning
+      ("Already checked in" with the time and the admin's name); a booking
+      that isn't confirmed shows "Not confirmed yet, check with the team
+      lead." and can't be checked in.
+    - **Checked in:** blue CHECKED IN badge, "[N] guests checked in: Row P ·
+      Seats 1, 2", seats still to arrive, seats someone else checked in
+      first, then "Scan next guest" (big) and "Undo this check-in".
+    - **Undo:** "Undo check-in" on an already-checked-in booking asks first
+      ("Undo check-in for … ? They'll show as not arrived.").
+    - Check-in is one database step (`check_in_seats`, migration 007) that
+      only marks seats not yet checked in, so two phones can't check the
+      same seat in twice. Every check-in and undo is logged.
+  - **Send check-in QR codes (`#qr-emails`, Tools).** One-time: lists
+    confirmed guests who haven't had their check-in QR email, asks before
+    sending ("Send 'Your check-in QR code' to these [N] guests now? Each
+    guest gets it once."), sends one at a time with a badge per guest (Sent
+    / Already sent / Didn't send) and offers Retry, Copy email text, Copy
+    subject and **Download QR code** for any that didn't send. The server
+    marks each email as sent in the same step, so nobody gets it twice.
+    "Email did not send" warnings for confirmed emails also offer Download
+    QR code (the copied text can't carry the image).
 - **Build status:**
   - **Built:** Supabase backend (`supabase/schema.sql` plus
     `supabase/migrations/`) behind `lib/booking-store.ts`, live seat updates,
@@ -528,8 +581,9 @@ gold border is its non-color cue.
     automatic email fails, /admin shows a warning (kept until dismissed) with
     "Copy email text" and "Copy subject", which copy the exact automatic
     email to send by hand; `docs/email-templates.md` is the backup.
-  - **Not built yet:** check-in at the door is undecided
-    ([CHECK-IN PROCESS TBD]).
+    Event-day check-in (migration 007): the check-in QR in the confirmed
+    email, the one-time "Send check-in QR codes" tool, and the `#checkin`
+    scanner page.
 - **Link preview (Open Graph):** `app/opengraph-image.tsx` generates a
   1200×630 image at build time: the W4W Philippines logo centered on
   `--char`, then "Movies4Water", "Avengers: Doomsday Block Screening" and the
