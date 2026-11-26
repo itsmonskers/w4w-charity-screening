@@ -9,13 +9,14 @@ import { bundleOffer } from '@/lib/pricing'
 // Event exclusives popup (DESIGN.md Section 0): a cinema-ticket card, a bottom sheet on phones.
 // Native modal <dialog>: focus stays inside, Esc closes; × / "Pick your seats" / tapping outside also close.
 
-// Hidden until the venue confirms the food
-const SHOW_FOOD_LINE = false
+// Snacks line: shown in this popup and in the "What's included" box at checkout
+export const SHOW_FOOD_LINE = true
 const SEEN_KEY = 'w4w-event-exclusives-seen'
 const OPEN_AFTER_MS = 2000
 
-const wasSeen = () => { try { return localStorage.getItem(SEEN_KEY) === '1' } catch { return false } }
-const markSeen = () => { try { localStorage.setItem(SEEN_KEY, '1') } catch { /* storage blocked: it may show again */ } }
+// Once per visit: sessionStorage survives reloads and coming back from GCash, but not a new visit
+const wasSeen = () => { try { return sessionStorage.getItem(SEEN_KEY) === '1' } catch { return false } }
+const markSeen = () => { try { sessionStorage.setItem(SEEN_KEY, '1') } catch { /* storage blocked: it may show again */ } }
 
 const STATS = [
   { value: '~₱3,500', label: '1 filter + bucket' },
@@ -23,7 +24,7 @@ const STATS = [
   { value: '5–10 years', label: 'of clean water' },
 ]
 
-function BottleIcon() {
+export function BottleIcon() {
   return <svg className="exclusives-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M10 2h4" />
     <path d="M10 2v3l-2 3v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V8l-2-3V2" />
@@ -42,7 +43,7 @@ export function EventExclusives({ settings, blocked }: { settings: Settings | nu
 
   useEffect(() => { blockedRef.current = blocked }, [blocked])
 
-  // Once per visitor, about 2 seconds after the page is ready, and only while the bundle is on
+  // Once per visit, about 2 seconds after the page is ready, and only while the bundle is on
   useEffect(() => {
     if (!on || wasSeen()) return
     const timer = window.setTimeout(() => {
@@ -87,7 +88,7 @@ export function EventExclusives({ settings, blocked }: { settings: Settings | nu
       </div>
       <ul className="exclusives-perks">
         <li><Gift className="exclusives-icon" aria-hidden="true" /><span><strong>1 ticket = 1 raffle entry.</strong> Win prizes from Columbia, The Coffee Bean &amp; Tea Leaf, Nono’s and RAF Forwarding.</span></li>
-        {SHOW_FOOD_LINE && <li><BottleIcon /><span>Chips and bottled water included</span></li>}
+        {SHOW_FOOD_LINE && <li><BottleIcon /><span>Snacks and refreshments included</span></li>}
       </ul>
       <div className="exclusives-impact">
         <p className="exclusives-impact-lead"><Droplet className="exclusives-icon" aria-hidden="true" />₱500 of every ticket goes straight to clean water</p>
