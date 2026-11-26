@@ -255,3 +255,46 @@ async function changeCheckIn(fn: 'check_in_seats' | 'undo_check_in', bookingId: 
 // One database step: only seats not yet checked in are marked, so two phones can't both do it
 export const checkInSeats = (bookingId: string, seatIds: string[]) => changeCheckIn('check_in_seats', bookingId, seatIds)
 export const undoCheckIn = (bookingId: string, seatIds: string[]) => changeCheckIn('undo_check_in', bookingId, seatIds)
+
+// One-time "Send check-in QR codes": confirmed bookings whose QR email hasn't gone out yet
+// (bookings.checkin_email_at is empty). Throws 'not_set_up' before migration 007.
+export type QrEmailBooking = { id: string; referenceCode: string; fullName: string; email: string; seatIds: string[] }
+// sent; already_sent: someone else sent it first (the server checks, so it's never sent twice)
+export type QrEmailResult = 'sent' | 'already_sent' | 'failed'
+
+export async function getQrEmailsToSend(): Promise<QrEmailBooking[]> {
+  const { data, error } = await client()
+    .from('bookings')
+    .select('id, reference_code, full_name, email, seat_ids')
+    .eq('status', 'approved')
+    .is('checkin_email_at', null)
+    .order('full_name', { ascending: true })
+  // 42703: column doesn't exist (migration 007 not run)
+  if (error) throw new Error(error.code === '42703' ? 'not_set_up' : error.message)
+  return (data as { id: string; reference_code: string; full_name: string; email: string; seat_ids: string[] }[])
+    .map(row => ({ id: row.id, referenceCode: row.reference_code, fullName: row.full_name, email: row.email, seatIds: row.seat_ids }))
+}
+
+export async function sendCheckInQrEmail(bookingId: string): Promise<QrEmailResult> {
+  try {
+    const { data } = await client().auth.getSession()
+    const token = data.session?.access_token
+    if (!token) return 'failed'
+    const response = await fetch('/api/booking-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ kind: 'checkin', bookingId }),
+    })
+    const result = await response.json() as { sent?: boolean; reason?: string }
+    return result.sent === true ? 'sent' : result.reason === 'already_sent' ? 'already_sent' : 'failed'
+  } catch {
+    return 'failed'
+  }
+}
+
+// The booking's check-in QR secret, for "Download QR code" (when an email has to be sent by hand)
+export async function getCheckInToken(bookingId: string): Promise<string | null> {
+  const { data, error } = await client().from('bookings').select('checkin_token').eq('id', bookingId).maybeSingle()
+  if (error || !data) return null
+  return (data as { checkin_token: string | null }).checkin_token
+}

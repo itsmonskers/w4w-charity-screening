@@ -5,6 +5,7 @@ import { AlertTriangle, Check } from 'lucide-react'
 import type { AdminBooking } from '@/lib/admin-api'
 import { EMAIL_CONTACT, decisionEmail, type DecisionEmail } from '@/lib/admin-email-copy'
 import { CopyButton } from './copy-button'
+import { QrDownloadButton } from './qr-download'
 
 export type EmailWarningItem = { key: string; kind: DecisionEmail; booking: AdminBooking }
 
@@ -27,12 +28,14 @@ export function EmailWarnings({ warnings, onDismiss, onAllDismissed }: { warning
     <ul ref={list}>
       {warnings.map(({ key, kind, booking }, index) => {
         const email = decisionEmail(kind, booking)
-        const what = kind === 'approved' ? 'confirmed' : 'not approved'
+        const what = kind === 'rejected' ? 'not approved' : 'confirmed'
+        const name = kind === 'approved' ? 'Booking confirmed' : kind === 'rejected' ? 'Booking not approved' : 'Your check-in QR code'
         return <li key={key} className="admin-email-warning">
-          <p>The ‘{kind === 'approved' ? 'Booking confirmed' : 'Booking not approved'}’ email to <strong>{booking.fullName}</strong> (<strong>{booking.email}</strong>) did not send. The booking is still {what}. Please send it yourself from {EMAIL_CONTACT}.</p>
+          <p>The ‘{name}’ email to <strong>{booking.fullName}</strong> (<strong>{booking.email}</strong>) did not send. The booking is still {what}. Please send it yourself from {EMAIL_CONTACT}{kind === 'rejected' ? '' : ', with the downloaded QR code attached'}.</p>
           <div className="admin-email-actions">
             <CopyButton text={email.text} label={`email text for ${booking.fullName}`}>Copy email text</CopyButton>
             <CopyButton text={email.subject} label={`email subject for ${booking.fullName}`}>Copy subject</CopyButton>
+            {kind !== 'rejected' && <QrDownloadButton bookingId={booking.id} reference={booking.referenceCode} guest={booking.fullName} />}
             <button className="btn-ghost admin-btn-small admin-email-dismiss" type="button" onClick={() => dismiss(index)} aria-label={`I’ve sent the email to ${booking.fullName} by hand`}><Check size={16} aria-hidden />I’ve sent it</button>
           </div>
         </li>

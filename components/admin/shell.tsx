@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Download, ExternalLink, LogOut, Menu, X } from 'lucide-react'
 import { usePauseRefresh } from './refresh-pause'
 
-export type AdminRoute = 'home' | 'checkin' | 'check' | 'waiting' | 'confirmed' | 'not-approved'
+export type AdminRoute = 'home' | 'checkin' | 'check' | 'waiting' | 'confirmed' | 'not-approved' | 'qr-emails'
 // checkIn: "arrived/total" guests, e.g. "12/315" (missing until the counter loads)
 export type NavCounts = { pending: number; approved: number; rejected: number; checkIn?: string } | null
 
@@ -84,6 +84,7 @@ function AdminNav({ route, counts, email, onNavigate, onExport, onSignOut }: { r
       <span className="admin-nav-icon"><Download size={18} aria-hidden />Download guest list</span>
     </button>
     {!canExport && <p className="admin-nav-hint" id={hintId}>{counts ? 'Available once a booking is confirmed.' : 'Loading…'}</p>}
+    {link('qr-emails', 'Send check-in QR codes')}
 
     <div className="admin-nav-foot">
       <a className="admin-nav-link" href="/" target="_blank" rel="noopener noreferrer"><span className="admin-nav-icon"><ExternalLink size={18} aria-hidden />View the booking page</span></a>

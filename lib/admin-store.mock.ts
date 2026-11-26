@@ -2,7 +2,7 @@
 // Same functions and types as lib/admin-store.ts. Everything lives in memory: nothing
 // is saved, no email is sent, and this file never imports the Supabase client.
 // Names, emails, phone numbers, payment refs and screenshots are all invented.
-import type { AdminBooking, CheckInBooking, CheckInError, CheckInLookup, CheckInResult, CheckInState, ReviewResult, SeatCounts, SignInResult } from './admin-store'
+import type { AdminBooking, CheckInBooking, CheckInError, CheckInLookup, CheckInResult, CheckInState, QrEmailBooking, QrEmailResult, ReviewResult, SeatCounts, SignInResult } from './admin-store'
 
 export const ADMIN_AVAILABLE = true
 
@@ -162,7 +162,10 @@ async function review(fn: 'approve_booking' | 'reject_booking', bookingId: strin
   Object.assign(booking, { status: fn === 'approve_booking' ? 'approved' : 'rejected', reviewNote: note.trim() || null, reviewedAt: new Date().toISOString() })
   // Like approve_booking: one ticket per seat, ready for check-in
   if (fn === 'approve_booking') addTickets(booking)
-  return { ok: true, emailSent: !EMAIL_FAILS.includes(bookingId) }
+  const emailSent = !EMAIL_FAILS.includes(bookingId)
+  // The "Booking confirmed" email carries the check-in QR, so it counts as the QR email
+  if (fn === 'approve_booking' && emailSent) qrEmailed.add(bookingId)
+  return { ok: true, emailSent }
 }
 
 export const approveBooking = (bookingId: string, note: string) => review('approve_booking', bookingId, note)
@@ -275,3 +278,42 @@ async function fakeChange(fn: 'check_in_seats' | 'undo_check_in', bookingId: str
 
 export const checkInSeats = (bookingId: string, seatIds: string[]) => fakeChange('check_in_seats', bookingId, seatIds)
 export const undoCheckIn = (bookingId: string, seatIds: string[]) => fakeChange('undo_check_in', bookingId, seatIds)
+
+// One-time "Send check-in QR codes" (fake: nothing is sent). The confirmed fakes start without
+// it, like the 2 live bookings confirmed before the QR existed. Marco's first send "fails"
+// (to test Retry). Test hook: `window.dispatchEvent(new CustomEvent('admin-mock:qr-sent-elsewhere',
+// { detail: 'mock-nina' }))` marks one as sent by another admin (the next send says "already sent").
+const QR_FAILS_ONCE = new Set(['mock-marco'])
+const qrEmailed = new Set<string>()
+let qrHooks = false
+function listenForQrHooks() {
+  if (qrHooks || typeof window === 'undefined') return
+  qrHooks = true
+  window.addEventListener('admin-mock:qr-sent-elsewhere', event => { qrEmailed.add((event as CustomEvent<string>).detail) })
+}
+
+export async function getQrEmailsToSend(): Promise<QrEmailBooking[]> {
+  listenForQrHooks()
+  await delay(300)
+  if (notSetUp) throw new Error('not_set_up')
+  return bookings.filter(b => b.status === 'approved' && !qrEmailed.has(b.id))
+    .map(b => ({ id: b.id, referenceCode: b.referenceCode, fullName: b.fullName, email: b.email, seatIds: [...b.seatIds] }))
+    .sort((a, b) => a.fullName.localeCompare(b.fullName))
+}
+
+// Same rules as the email route: confirmed only, once per booking
+export async function sendCheckInQrEmail(bookingId: string): Promise<QrEmailResult> {
+  console.info('[admin mock] send checkin email', JSON.stringify({ bookingId }))
+  await delay(700)
+  const booking = bookings.find(b => b.id === bookingId)
+  if (!booking || booking.status !== 'approved') return 'failed'
+  if (qrEmailed.has(bookingId)) return 'already_sent'
+  if (QR_FAILS_ONCE.delete(bookingId)) return 'failed'
+  qrEmailed.add(bookingId)
+  return 'sent'
+}
+
+export async function getCheckInToken(bookingId: string): Promise<string | null> {
+  await delay(150)
+  return notSetUp ? null : tokens.get(bookingId) ?? null
+}

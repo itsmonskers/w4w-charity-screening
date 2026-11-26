@@ -7,6 +7,7 @@ import { formatPrice } from '@/lib/event-config'
 import { BookingList } from './admin/booking-lists'
 import { CheckIn } from './admin/check-in'
 import { QrScanner } from './admin/qr-scanner'
+import { SendQrEmails } from './admin/send-qr-emails'
 import { CopyButton } from './admin/copy-button'
 import { EmailWarnings, type EmailWarningItem } from './admin/email-warning'
 import { GuidedCheck } from './admin/guided-check'
@@ -22,7 +23,7 @@ const REFRESH_MS = 30_000
 const CHECKIN_REFRESH_MS = 10_000
 const NO_ACCESS = 'This account doesn’t have admin access.'
 // #check is the guided check; #waiting keeps the full cards; #confirmed and #not-approved are simple lists.
-const TITLES: Record<AdminRoute, string> = { home: 'Home', checkin: 'Check-in', check: 'Waiting for review', waiting: 'All waiting bookings', confirmed: 'Confirmed', 'not-approved': 'Not approved' }
+const TITLES: Record<AdminRoute, string> = { home: 'Home', checkin: 'Check-in', check: 'Waiting for review', waiting: 'All waiting bookings', confirmed: 'Confirmed', 'not-approved': 'Not approved', 'qr-emails': 'Send check-in QR codes' }
 
 // Pages live in the URL hash (#home, #check, #confirmed, #not-approved) so the phone's Back button works.
 function readRoute(): AdminRoute {
@@ -219,7 +220,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       {route === 'home' && <p className="admin-lede">Here’s what needs you today.</p>}
     </header>
 
-    {route !== 'home' && route !== 'check' && route !== 'checkin' && <div className="admin-toolbar">
+    {route !== 'home' && route !== 'check' && route !== 'checkin' && route !== 'qr-emails' && <div className="admin-toolbar">
       <label className="admin-search">
         <Search size={16} aria-hidden />
         <span className="sr-only">Search bookings</span>
@@ -235,6 +236,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
       : route === 'checkin' ? <CheckIn bookings={bookings} state={checkIn} onChanged={() => refresh()} onNoAccess={onNoAccess} scanner={onCode => <QrScanner onCode={onCode} />} />
+      : route === 'qr-emails' ? <SendQrEmails bookings={bookings} />
       : route === 'check' ? <GuidedCheck bookings={bookings} onOutcome={handleOutcome} onClearNotice={() => setNotice(null)} onNoAccess={onNoAccess} onAllDone={onAllDone} openWarnings={warnings.map(w => w.booking.id)} />
       : route === 'confirmed' ? <BookingList bookings={bookings} status="approved" query={query} />
       : route === 'not-approved' ? <BookingList bookings={bookings} status="rejected" query={query} />

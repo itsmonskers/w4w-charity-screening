@@ -2348,6 +2348,42 @@ footer {
   text-align: left;
 }
 
+/* Tools → Send check-in QR codes (#qr-emails) */
+.admin-qr-emails {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.admin-qr-emails .admin-rows {
+  margin: 0;
+}
+
+.admin-qr-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 16px;
+}
+
+.admin-qr-row-actions {
+  flex-basis: 100%;
+}
+
+.admin-qr-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.admin-qr-failed {
+  color: var(--error-on-dark);
+  font-size: 13px;
+}
+
 /* Emails that did not send: stays on every page until each is dismissed */
 .admin-email-warnings {
   margin-top: 12px;
