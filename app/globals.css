@@ -2106,6 +2106,203 @@ footer {
   text-align: center;
 }
 
+/* Event-day check-in (#checkin): phone-first, one screen at a time, big tap targets */
+.admin-checkin {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-checkin-panel {
+  align-items: stretch;
+  margin-top: 16px;
+}
+
+.admin-checkin-panel.is-error {
+  border-color: #d64545;
+}
+
+.admin-checkin-panel.is-done {
+  border-color: var(--ev-accent);
+}
+
+.admin-checkin-panel > .admin-badge,
+.admin-checkin-panel > .admin-ref {
+  align-self: flex-start;
+}
+
+.admin-checkin-heading {
+  margin: 0;
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* Gets focus on every new screen; not interactive, so no ring */
+.admin-checkin-heading:focus {
+  outline: none;
+}
+
+.admin-checkin-subheading {
+  margin: 0;
+  color: var(--ev-muted);
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-checkin-search {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* In this column the toolbar's 240px flex-basis would become a height */
+.admin-checkin-search .admin-search {
+  flex: none;
+}
+
+.admin-checkin-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-checkin-buttons > .btn-primary,
+.admin-checkin-buttons > .btn-ghost {
+  flex: 1 1 160px;
+}
+
+.admin-checkin-buttons > .admin-checkin-main {
+  flex-basis: 100%;
+}
+
+/* The one big button per screen (Scan QR code, Check in N guests, Scan next guest) */
+.admin .admin-checkin-main {
+  min-height: 56px;
+  font-size: 18px;
+}
+
+.admin-checkin-panel .admin-warning svg {
+  vertical-align: -3px;
+}
+
+.admin-checkin-warning-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.admin-warning ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  font-weight: 500;
+}
+
+/* Seats: selected = checking in now (gold, like the guest page); dashed = left for later */
+.admin-seat-chips {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-seat-chips legend {
+  padding: 0;
+  color: var(--ev-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-seat-chips legend span {
+  color: var(--ev-muted);
+  font-weight: 400;
+}
+
+.admin-seat-chips div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.admin-seat-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 76px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px dashed var(--ev-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ev-muted);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-seat-chip[aria-pressed="true"] {
+  border: 1px solid var(--ev-gold);
+  background: var(--ev-gold);
+  color: var(--ev-bg);
+}
+
+.admin-allergies {
+  padding: 12px 14px;
+  border: 1px solid var(--ev-gold);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ev-gold) 10%, var(--ev-panel));
+}
+
+.admin-allergies p {
+  margin: 0;
+  color: var(--ev-text);
+  font-size: 16px;
+  white-space: pre-line;
+}
+
+.admin-allergies .admin-allergies-title {
+  margin-bottom: 4px;
+  color: var(--ev-gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.admin-checkin-undo {
+  flex-basis: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--ev-line);
+  border-radius: 10px;
+}
+
+.admin-checkin-undo p {
+  margin: 0 0 10px;
+  color: var(--ev-text);
+  font-size: 15px;
+}
+
+.admin-checkin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 16px;
+}
+
+.admin-scanner-note {
+  margin: 0;
+  color: var(--ev-muted);
+  font-size: 15px;
+}
+
 /* Emails that did not send: stays on every page until each is dismissed */
 .admin-email-warnings {
   margin-top: 12px;

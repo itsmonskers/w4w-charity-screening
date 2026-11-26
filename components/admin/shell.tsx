@@ -4,8 +4,9 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Download, ExternalLink, LogOut, Menu, X } from 'lucide-react'
 import { usePauseRefresh } from './refresh-pause'
 
-export type AdminRoute = 'home' | 'check' | 'waiting' | 'confirmed' | 'not-approved'
-export type NavCounts = { pending: number; approved: number; rejected: number } | null
+export type AdminRoute = 'home' | 'checkin' | 'check' | 'waiting' | 'confirmed' | 'not-approved'
+// checkIn: "arrived/total" guests, e.g. "12/315" (missing until the counter loads)
+export type NavCounts = { pending: number; approved: number; rejected: number; checkIn?: string } | null
 
 type ShellProps = {
   route: AdminRoute
@@ -59,16 +60,19 @@ function Brand() {
 function AdminNav({ route, counts, email, onNavigate, onExport, onSignOut }: { route: AdminRoute; counts: NavCounts; email: string; onNavigate?: () => void; onExport: () => void; onSignOut: () => void }) {
   // "Waiting for review" covers the guided check and the full waiting list
   const current = (to: AdminRoute) => route === to || (to === 'check' && route === 'waiting')
-  const link = (to: AdminRoute, label: string, count?: number, gold = false) =>
+  const link = (to: AdminRoute, label: string, count?: number | string, gold = false, countLabel?: string) =>
     <a className="admin-nav-link" href={`#${to}`} aria-current={current(to) ? 'page' : undefined} onClick={onNavigate}>
       <span>{label}</span>
-      {count !== undefined && <span className={`admin-count${gold && count > 0 ? ' is-gold' : ''}`}>{count}</span>}
+      {count !== undefined && <span className={`admin-count${gold && Number(count) > 0 ? ' is-gold' : ''}`} aria-label={countLabel}>{count}</span>}
     </a>
   const canExport = !!counts?.approved
   const hintId = useId()
 
   return <nav className="admin-nav">
     {link('home', 'Home')}
+
+    <p className="admin-nav-label">Event day</p>
+    {link('checkin', 'Check-in', counts?.checkIn, false, counts?.checkIn && `${counts.checkIn.replace('/', ' of ')} guests arrived`)}
 
     <p className="admin-nav-label">Payments</p>
     {link('check', 'Waiting for review', counts?.pending, true)}

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { RefreshCw, Search } from 'lucide-react'
-import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getSeatCounts, onAuthChange, signIn, signOut, type AdminBooking, type SeatCounts } from '@/lib/admin-api'
+import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getCheckInState, getSeatCounts, onAuthChange, signIn, signOut, type AdminBooking, type CheckInState, type SeatCounts } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
 import { BookingList } from './admin/booking-lists'
+import { CheckIn } from './admin/check-in'
 import { CopyButton } from './admin/copy-button'
 import { EmailWarnings, type EmailWarningItem } from './admin/email-warning'
 import { GuidedCheck } from './admin/guided-check'
@@ -16,9 +17,11 @@ import { AdminShell, type AdminRoute } from './admin/shell'
 import { exportApproved, formatTime, manilaTime, matchesSearch, seatLabel, seatsByRow } from './admin/format'
 
 const REFRESH_MS = 30_000
+// Check-in page: the arrived counter refreshes faster, since several phones scan at once
+const CHECKIN_REFRESH_MS = 10_000
 const NO_ACCESS = 'This account doesn’t have admin access.'
 // #check is the guided check; #waiting keeps the full cards; #confirmed and #not-approved are simple lists.
-const TITLES: Record<AdminRoute, string> = { home: 'Home', check: 'Waiting for review', waiting: 'All waiting bookings', confirmed: 'Confirmed', 'not-approved': 'Not approved' }
+const TITLES: Record<AdminRoute, string> = { home: 'Home', checkin: 'Check-in', check: 'Waiting for review', waiting: 'All waiting bookings', confirmed: 'Confirmed', 'not-approved': 'Not approved' }
 
 // Pages live in the URL hash (#home, #check, #confirmed, #not-approved) so the phone's Back button works.
 function readRoute(): AdminRoute {
@@ -90,6 +93,7 @@ type Notice = { message: string; error?: boolean; handled?: boolean }
 function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => void }) {
   const [bookings, setBookings] = useState<AdminBooking[] | null>(null)
   const [seats, setSeats] = useState<SeatCounts | null>(null)
+  const [checkIn, setCheckIn] = useState<CheckInState | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
@@ -129,9 +133,11 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       lastLoad.current = Date.now()
       inFlight.current = (async () => {
         try {
-          const [seatCounts, rows] = await Promise.all([getSeatCounts(), getBookings()])
+          // The check-in counter never blocks the payment data: if it fails, the last one stays
+          const [seatCounts, rows, arrivals] = await Promise.all([getSeatCounts(), getBookings(), getCheckInState().catch(() => null)])
           setSeats(seatCounts)
           setBookings(rows)
+          if (arrivals) setCheckIn(arrivals)
           setUpdatedAt(manilaTime.format(new Date()))
           setLoadError('')
         } catch {
@@ -145,15 +151,17 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     if (manual) setLoading(false)
   }, [])
 
-  // Every 30 seconds, but not while paused. After a pause, refresh straight away only if one is due.
+  // Every 30 seconds (10 on Check-in), but not while paused. After a pause, refresh straight
+  // away only if one is due.
   const paused = pauses > 0 || hidden
+  const every = route === 'checkin' ? CHECKIN_REFRESH_MS : REFRESH_MS
   useEffect(() => {
     if (paused) return
     let timer = 0
-    const tick = () => { refresh(); timer = window.setTimeout(tick, REFRESH_MS) }
-    timer = window.setTimeout(tick, Math.max(0, lastLoad.current + REFRESH_MS - Date.now()))
+    const tick = () => { refresh(); timer = window.setTimeout(tick, every) }
+    timer = window.setTimeout(tick, Math.max(0, lastLoad.current + every - Date.now()))
     return () => window.clearTimeout(timer)
-  }, [paused, refresh])
+  }, [paused, refresh, every])
 
   // Hidden browser tab: pause. Visible again: refresh once (unless a step, viewer or menu is open).
   useEffect(() => {
@@ -185,7 +193,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
 
   const all = bookings ?? []
   const waiting = all.filter(b => b.status === 'pending' && matchesSearch(b, query)).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-  const navCounts = bookings && { pending: all.filter(b => b.status === 'pending').length, approved: all.filter(b => b.status === 'approved').length, rejected: all.filter(b => b.status === 'rejected').length }
+  const navCounts = bookings && { pending: all.filter(b => b.status === 'pending').length, approved: all.filter(b => b.status === 'approved').length, rejected: all.filter(b => b.status === 'rejected').length, checkIn: checkIn ? `${checkIn.arrived}/${checkIn.total}` : undefined }
 
   // Every confirm / not-approved result (guided check or list): message, email warning, reload
   function handleOutcome(outcome: StepOutcome, booking: AdminBooking) {
@@ -210,7 +218,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       {route === 'home' && <p className="admin-lede">Here’s what needs you today.</p>}
     </header>
 
-    {route !== 'home' && route !== 'check' && <div className="admin-toolbar">
+    {route !== 'home' && route !== 'check' && route !== 'checkin' && <div className="admin-toolbar">
       <label className="admin-search">
         <Search size={16} aria-hidden />
         <span className="sr-only">Search bookings</span>
@@ -218,13 +226,14 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       </label>
       <button className="btn-ghost admin-btn-small" type="button" onClick={() => refresh(true)} disabled={loading}><RefreshCw size={16} aria-hidden />{loading ? 'Refreshing…' : 'Refresh'}</button>
     </div>}
-    <p className="admin-updated">{updatedAt ? `Updated ${updatedAt} · refreshes every 30 seconds` : 'Loading…'}</p>
+    <p className="admin-updated">{updatedAt ? `Updated ${updatedAt} · refreshes every ${every / 1000} seconds` : 'Loading…'}</p>
 
     {loadError && <p className="admin-notice is-error" role="alert">{loadError}</p>}
     <EmailWarnings warnings={warnings} onDismiss={key => setWarnings(current => current.filter(w => w.key !== key))} onAllDismissed={() => title.current?.focus()} />
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
+      : route === 'checkin' ? <CheckIn bookings={bookings} state={checkIn} onChanged={() => refresh()} onNoAccess={onNoAccess} scanner={() => <p className="admin-scanner-note">Camera scanning isn’t available in this version. Use Search instead.</p>} />
       : route === 'check' ? <GuidedCheck bookings={bookings} onOutcome={handleOutcome} onClearNotice={() => setNotice(null)} onNoAccess={onNoAccess} onAllDone={onAllDone} openWarnings={warnings.map(w => w.booking.id)} />
       : route === 'confirmed' ? <BookingList bookings={bookings} status="approved" query={query} />
       : route === 'not-approved' ? <BookingList bookings={bookings} status="rejected" query={query} />
