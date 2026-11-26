@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment, useEffect, useState } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Gift } from 'lucide-react'
 import { CinemaAtmosphere } from '@/components/cinema-atmosphere'
 import { EventExclusives } from '@/components/event-exclusives'
 import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE, EVENT_TITLE, POLICIES } from '@/components/booking-panel'
@@ -32,7 +32,7 @@ export default function Page() {
   const [settings, setSettings] = useState<Settings | null>(null)
   const price = settings?.pricePerSeat ?? null
   const due = quote(settings, selected.length)
-  const facts = [EVENT_DATE_SHORT, ...EVENT.time.split(' · '), EVENT_PLACE, `${formatPrice(price)} per seat`, 'Includes food and refreshments']
+  const facts = [EVENT_DATE_SHORT, ...EVENT.time.split(' · '), EVENT_PLACE, `${formatPrice(price)} per seat`, 'Snacks and refreshments']
 
   useEffect(() => {
     getSeats().then(seats => { setAvailableSeats(seats); setLive(true) }, () => {})
@@ -69,8 +69,11 @@ export default function Page() {
         <p className="eyebrow-caps">Now booking</p>
         <h1>{EVENT_TITLE}</h1>
         <p className="facts-line">{facts.map((fact, i) => <Fragment key={fact}>{i > 0 && ' '}<span>{fact}{i < facts.length - 1 && ' ·'}</span></Fragment>)}</p>
-        <p className="cause-line">Your seat helps bring clean water to Filipino communities.</p>
-        <p className="impact-line">One ₱3,500 water filter gives 25 people clean water for 5 to 10 years.</p>
+        <p className="cause-line">Every seat helps bring clean water to 4 Filipinos.</p>
+        <div className="raffle-box">
+          <span className="raffle-icon" aria-hidden="true"><Gift /></span>
+          <p><strong>Get a chance to win prizes</strong><span>₱9,000 to ₱10,000 worth of giveaways</span></p>
+        </div>
         <div className="status-row">
           <span className="status-pill"><b>{animatedSeatsLeft}</b> seats available</span>
           {live ? <span className="live eyebrow-caps"><i aria-hidden="true" />Live</span> : <span className="live">Connecting…</span>}

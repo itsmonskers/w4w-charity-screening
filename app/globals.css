@@ -290,12 +290,50 @@ button:disabled:not(.seat) {
   text-transform: uppercase;
 }
 
-/* Impact explainer under the cause line: Hanken, since Cinzel may lack ₱ */
-.impact-line {
-  margin: 4px 0 0;
+/* Raffle box under the cause line: same gold box as the popup's Corporate Bundle; Hanken, since Cinzel may lack ₱ */
+.raffle-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px 10px 10px;
+  border: 1px solid var(--ev-gold);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ev-gold) 9%, var(--ev-panel));
+}
+
+.raffle-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--ev-gold);
+  color: var(--ev-bg);
+}
+
+.raffle-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.raffle-box p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
   color: var(--ev-muted);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.4;
+}
+
+.raffle-box strong {
+  color: var(--ev-text);
+  font-size: 14px;
 }
 
 .status-row {
