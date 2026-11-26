@@ -161,3 +161,97 @@ async function review(fn: 'approve_booking' | 'reject_booking', bookingId: strin
 
 export const approveBooking = (bookingId: string, note: string) => review('approve_booking', bookingId, note)
 export const rejectBooking = (bookingId: string, note: string) => review('reject_booking', bookingId, note)
+
+// ---------------------------------------------------------------------------
+// Event-day check-in (migration 007). Separate from getBookings on purpose: if this code
+// goes live before 007 is run, only the check-in screens show "not set up yet"; the
+// payment screens keep working.
+// ---------------------------------------------------------------------------
+
+export type CheckInSeat = { seatId: string; checkedInAt: string | null; checkedInBy: string | null }
+export type CheckInBooking = {
+  bookingId: string
+  referenceCode: string
+  fullName: string
+  status: BookingStatus
+  foodAllergies: string | null
+  seatIds: string[]
+  // One per seat of a confirmed booking (empty for bookings that aren't confirmed)
+  seats: CheckInSeat[]
+}
+export type CheckInError = 'not_admin' | 'booking_not_found' | 'booking_not_confirmed' | 'invalid_seats' | 'not_set_up' | 'unknown'
+// booking null: no booking has that token ("Not a valid ticket")
+export type CheckInLookup = { ok: true; booking: CheckInBooking | null } | { ok: false; error: CheckInError }
+// changed: the seats this call checked in (or undid); seats already done are not in it
+export type CheckInResult = { ok: true; changed: string[]; booking: CheckInBooking } | { ok: false; error: CheckInError }
+// Per confirmed booking: how many of its seats have arrived, and when the latest one did
+export type CheckInState = { total: number; arrived: number; bookings: Record<string, { seats: number; arrived: number; lastAt: string | null }> }
+
+const CHECKIN_ERRORS: CheckInError[] = ['not_admin', 'booking_not_found', 'booking_not_confirmed', 'invalid_seats']
+
+type CheckInJson = {
+  booking_id: string; reference_code: string; full_name: string; status: BookingStatus
+  food_allergies: string | null; seat_ids: string[]
+  seats: { seat_id: string; checked_in_at: string | null; checked_in_by: string | null }[]
+}
+
+const toCheckInBooking = (row: CheckInJson): CheckInBooking => ({
+  bookingId: row.booking_id,
+  referenceCode: row.reference_code,
+  fullName: row.full_name,
+  status: row.status,
+  foodAllergies: row.food_allergies,
+  seatIds: row.seat_ids,
+  seats: row.seats.map(s => ({ seatId: s.seat_id, checkedInAt: s.checked_in_at, checkedInBy: s.checked_in_by })),
+})
+
+// PostgREST says PGRST202 when a function doesn't exist: migration 007 hasn't been run
+const checkInError = (error: { code?: string; message: string }): CheckInError =>
+  error.code === 'PGRST202' ? 'not_set_up' : CHECKIN_ERRORS.find(known => known === error.message) ?? 'unknown'
+
+// Counter and "Arrived" labels: every ticket (tickets exist only for confirmed bookings)
+export async function getCheckInState(): Promise<CheckInState> {
+  const { data, error } = await client().from('tickets').select('booking_id, checked_in_at')
+  if (error) throw error
+  const state: CheckInState = { total: 0, arrived: 0, bookings: {} }
+  for (const { booking_id, checked_in_at } of data as { booking_id: string; checked_in_at: string | null }[]) {
+    const entry = state.bookings[booking_id] ??= { seats: 0, arrived: 0, lastAt: null }
+    state.total++
+    entry.seats++
+    if (!checked_in_at) continue
+    state.arrived++
+    entry.arrived++
+    if (!entry.lastAt || checked_in_at > entry.lastAt) entry.lastAt = checked_in_at
+  }
+  return state
+}
+
+async function lookup(fn: 'checkin_lookup' | 'checkin_booking', args: Record<string, string>): Promise<CheckInLookup> {
+  try {
+    const { data, error } = await client().rpc(fn, args)
+    if (error) return { ok: false, error: checkInError(error) }
+    return { ok: true, booking: data ? toCheckInBooking(data as CheckInJson) : null }
+  } catch {
+    return { ok: false, error: 'unknown' }
+  }
+}
+
+// A scanned QR's token (without the "W4W1:" prefix)
+export const lookupCheckIn = (token: string) => lookup('checkin_lookup', { p_token: token })
+// A booking picked from the search list
+export const getCheckInBooking = (bookingId: string) => lookup('checkin_booking', { p_booking_id: bookingId })
+
+async function changeCheckIn(fn: 'check_in_seats' | 'undo_check_in', bookingId: string, seatIds: string[]): Promise<CheckInResult> {
+  try {
+    const { data, error } = await client().rpc(fn, { p_booking_id: bookingId, p_seat_ids: seatIds })
+    if (error) return { ok: false, error: checkInError(error) }
+    const result = data as { changed: string[]; booking: CheckInJson }
+    return { ok: true, changed: result.changed, booking: toCheckInBooking(result.booking) }
+  } catch {
+    return { ok: false, error: 'unknown' }
+  }
+}
+
+// One database step: only seats not yet checked in are marked, so two phones can't both do it
+export const checkInSeats = (bookingId: string, seatIds: string[]) => changeCheckIn('check_in_seats', bookingId, seatIds)
+export const undoCheckIn = (bookingId: string, seatIds: string[]) => changeCheckIn('undo_check_in', bookingId, seatIds)

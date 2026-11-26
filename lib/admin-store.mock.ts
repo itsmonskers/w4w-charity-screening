@@ -2,7 +2,7 @@
 // Same functions and types as lib/admin-store.ts. Everything lives in memory: nothing
 // is saved, no email is sent, and this file never imports the Supabase client.
 // Names, emails, phone numbers, payment refs and screenshots are all invented.
-import type { AdminBooking, ReviewResult, SeatCounts, SignInResult } from './admin-store'
+import type { AdminBooking, CheckInBooking, CheckInError, CheckInLookup, CheckInResult, CheckInState, ReviewResult, SeatCounts, SignInResult } from './admin-store'
 
 export const ADMIN_AVAILABLE = true
 
@@ -112,7 +112,10 @@ function listenForNewBookings() {
   window.addEventListener('admin-mock:fail-next-review', () => { failNextReview = true })
   window.addEventListener('admin-mock:handle-elsewhere', event => {
     const booking = bookings.find(b => b.id === (event as CustomEvent<string>).detail)
-    if (booking?.status === 'pending') Object.assign(booking, { status: 'approved', reviewNote: 'Fake: handled by another admin', reviewedAt: new Date().toISOString() })
+    if (booking?.status === 'pending') {
+      Object.assign(booking, { status: 'approved', reviewNote: 'Fake: handled by another admin', reviewedAt: new Date().toISOString() })
+      addTickets(booking)
+    }
   })
   window.addEventListener('admin-mock:new-booking', () => {
     const n = bookings.length + 1
@@ -153,11 +156,122 @@ async function review(fn: 'approve_booking' | 'reject_booking', bookingId: strin
   if (!booking) return { ok: false, error: 'booking_not_found' }
   if (bookingId === HANDLED_ELSEWHERE && booking.status === 'pending') {
     Object.assign(booking, { status: 'approved', reviewNote: 'Fake: handled by another admin', reviewedAt: new Date().toISOString() })
+    addTickets(booking)
   }
   if (booking.status !== 'pending') return { ok: false, error: 'booking_not_pending' }
   Object.assign(booking, { status: fn === 'approve_booking' ? 'approved' : 'rejected', reviewNote: note.trim() || null, reviewedAt: new Date().toISOString() })
+  // Like approve_booking: one ticket per seat, ready for check-in
+  if (fn === 'approve_booking') addTickets(booking)
   return { ok: true, emailSent: !EMAIL_FAILS.includes(bookingId) }
 }
 
 export const approveBooking = (bookingId: string, note: string) => review('approve_booking', bookingId, note)
 export const rejectBooking = (bookingId: string, note: string) => review('reject_booking', bookingId, note)
+
+// ---------------------------------------------------------------------------
+// Event-day check-in (fake). Each fake booking's QR token is its position in the list above
+// (1-based) as two hex digits, repeated 32 times: Ana = "01" × 32, Nina = "09" × 32,
+// Marco = "0a" × 32, Grace = "0b" × 32, Ken (not approved) = "0c" × 32. The QR text is
+// "W4W1:" + token. Confirmed bookings get one ticket per seat, like approve_booking.
+// Test hooks (registered on the first fake load, so never in real mode):
+// - `window.dispatchEvent(new CustomEvent('admin-mock:checked-in-elsewhere', { detail: { bookingId: 'mock-grace', seatIds: ['P-1'] } }))`
+//   checks seats in as if another staff member did it (seatIds optional: all seats).
+// - `window.dispatchEvent(new Event('admin-mock:fail-next-checkin'))`: the next lookup,
+//   check-in or undo fails with an unknown error (like a lost connection); nothing changes.
+// - `window.dispatchEvent(new Event('admin-mock:not-set-up'))`: check-in acts as if
+//   migration 007 hasn't been run (until reload).
+// ---------------------------------------------------------------------------
+
+const OTHER_STAFF = 'Jenna (fake)'
+type FakeTicket = { seatId: string; checkedInAt: string | null; checkedInBy: string | null }
+const tokens = new Map(bookings.map((b, i) => [b.id, (i + 1).toString(16).padStart(2, '0').repeat(32)]))
+const tickets = new Map<string, FakeTicket[]>()
+function addTickets(booking: AdminBooking) {
+  if (!tickets.has(booking.id)) tickets.set(booking.id, booking.seatIds.map(seatId => ({ seatId, checkedInAt: null, checkedInBy: null })))
+}
+bookings.filter(b => b.status === 'approved').forEach(addTickets)
+
+let failNextCheckIn = false
+let notSetUp = false
+let checkInHooks = false
+function listenForCheckInHooks() {
+  if (checkInHooks || typeof window === 'undefined') return
+  checkInHooks = true
+  window.addEventListener('admin-mock:fail-next-checkin', () => { failNextCheckIn = true })
+  window.addEventListener('admin-mock:not-set-up', () => { notSetUp = true })
+  window.addEventListener('admin-mock:checked-in-elsewhere', event => {
+    const { bookingId, seatIds } = (event as CustomEvent<{ bookingId: string; seatIds?: string[] }>).detail
+    const now = new Date().toISOString()
+    for (const t of tickets.get(bookingId) ?? []) {
+      if (!t.checkedInAt && (!seatIds || seatIds.includes(t.seatId))) Object.assign(t, { checkedInAt: now, checkedInBy: OTHER_STAFF })
+    }
+  })
+}
+
+// A failure set by a test hook, or null to carry on
+function checkInTrouble(): CheckInError | null {
+  listenForCheckInHooks()
+  if (notSetUp) return 'not_set_up'
+  if (failNextCheckIn) { failNextCheckIn = false; return 'unknown' }
+  return null
+}
+
+const details = (booking: AdminBooking): CheckInBooking => ({
+  bookingId: booking.id,
+  referenceCode: booking.referenceCode,
+  fullName: booking.fullName,
+  status: booking.status,
+  foodAllergies: booking.foodAllergies,
+  seatIds: [...booking.seatIds],
+  seats: (tickets.get(booking.id) ?? []).map(t => ({ ...t })),
+})
+
+export async function getCheckInState(): Promise<CheckInState> {
+  listenForCheckInHooks()
+  await delay(200)
+  const state: CheckInState = { total: 0, arrived: 0, bookings: {} }
+  for (const [bookingId, list] of tickets) {
+    const arrived = list.filter(t => t.checkedInAt)
+    const lastAt = arrived.reduce<string | null>((latest, t) => !latest || t.checkedInAt! > latest ? t.checkedInAt : latest, null)
+    state.bookings[bookingId] = { seats: list.length, arrived: arrived.length, lastAt }
+    state.total += list.length
+    state.arrived += arrived.length
+  }
+  return state
+}
+
+async function fakeLookup(find: () => AdminBooking | undefined, log: string): Promise<CheckInLookup> {
+  console.info(`[admin mock] ${log}`)
+  await delay(300)
+  const trouble = checkInTrouble()
+  if (trouble) return { ok: false, error: trouble }
+  const booking = find()
+  return { ok: true, booking: booking ? details(booking) : null }
+}
+
+export const lookupCheckIn = (token: string) => fakeLookup(() => bookings.find(b => tokens.get(b.id) === token.trim().toLowerCase()), `checkin_lookup ${JSON.stringify({ p_token: token })}`)
+export const getCheckInBooking = (bookingId: string) => fakeLookup(() => bookings.find(b => b.id === bookingId), `checkin_booking ${JSON.stringify({ p_booking_id: bookingId })}`)
+
+// Same rules as check_in_seats / undo_check_in: confirmed only, seats must belong to the
+// booking, and only seats in the other state change
+async function fakeChange(fn: 'check_in_seats' | 'undo_check_in', bookingId: string, seatIds: string[]): Promise<CheckInResult> {
+  console.info(`[admin mock] ${fn}`, JSON.stringify({ p_booking_id: bookingId, p_seat_ids: seatIds }))
+  await delay(500)
+  const trouble = checkInTrouble()
+  if (trouble) return { ok: false, error: trouble }
+  const booking = bookings.find(b => b.id === bookingId)
+  if (!booking) return { ok: false, error: 'booking_not_found' }
+  if (fn === 'check_in_seats' && booking.status !== 'approved') return { ok: false, error: 'booking_not_confirmed' }
+  if (!seatIds.length || !seatIds.every(id => booking.seatIds.includes(id))) return { ok: false, error: 'invalid_seats' }
+  const now = new Date().toISOString()
+  const changed: string[] = []
+  for (const t of tickets.get(bookingId) ?? []) {
+    if (!seatIds.includes(t.seatId)) continue
+    if (fn === 'check_in_seats' && !t.checkedInAt) { Object.assign(t, { checkedInAt: now, checkedInBy: signedInEmail ?? 'you' }); changed.push(t.seatId) }
+    if (fn === 'undo_check_in' && t.checkedInAt) { Object.assign(t, { checkedInAt: null, checkedInBy: null }); changed.push(t.seatId) }
+  }
+  return { ok: true, changed, booking: details(booking) }
+}
+
+export const checkInSeats = (bookingId: string, seatIds: string[]) => fakeChange('check_in_seats', bookingId, seatIds)
+export const undoCheckIn = (bookingId: string, seatIds: string[]) => fakeChange('undo_check_in', bookingId, seatIds)

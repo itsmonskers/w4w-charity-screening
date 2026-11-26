@@ -7,7 +7,7 @@ import * as real from './admin-store'
 import * as mock from './admin-store.mock'
 import { supabase } from './supabase'
 
-export type { AdminBooking, BookingStatus, ReviewError, ReviewResult, SeatCounts, SignInResult } from './admin-store'
+export type { AdminBooking, BookingStatus, CheckInBooking, CheckInError, CheckInLookup, CheckInResult, CheckInSeat, CheckInState, ReviewError, ReviewResult, SeatCounts, SignInResult } from './admin-store'
 
 // Inlined at build time, so a normal build always takes the real path.
 export const MOCK_REQUESTED = process.env.NEXT_PUBLIC_ADMIN_MOCK === 'true'
@@ -43,3 +43,9 @@ export const getBookings: typeof real.getBookings = () => store().getBookings()
 export const getScreenshotUrl: typeof real.getScreenshotUrl = (...args) => store().getScreenshotUrl(...args)
 export const approveBooking: typeof real.approveBooking = (...args) => store().approveBooking(...args)
 export const rejectBooking: typeof real.rejectBooking = (...args) => store().rejectBooking(...args)
+// Event-day check-in
+export const getCheckInState: typeof real.getCheckInState = () => store().getCheckInState()
+export const lookupCheckIn: typeof real.lookupCheckIn = (...args) => store().lookupCheckIn(...args)
+export const getCheckInBooking: typeof real.getCheckInBooking = (...args) => store().getCheckInBooking(...args)
+export const checkInSeats: typeof real.checkInSeats = (...args) => store().checkInSeats(...args)
+export const undoCheckIn: typeof real.undoCheckIn = (...args) => store().undoCheckIn(...args)
