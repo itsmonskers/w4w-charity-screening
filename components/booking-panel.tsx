@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, type Dispatch, type FormEvent, type ReactNode, type RefObject, type SetStateAction } from 'react'
-import { Check, Copy, Download, Upload, X } from 'lucide-react'
+import { Check, Copy, Download, Droplet, Gift, Ticket as TicketIcon, Upload, X } from 'lucide-react'
+import { BottleIcon, SHOW_FOOD_LINE } from '@/components/event-exclusives'
 import { reserveSeats, type ReserveError, type ReserveInput, type Settings } from '@/lib/booking-store'
 import { EVENT, formatPrice } from '@/lib/event-config'
 import { bundleOffer, quote } from '@/lib/pricing'
@@ -261,6 +262,7 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
           {shown.consent && <p className="field-error" id="bk-consent-error">{shown.consent}</p>}
         </div>
 
+        {selected.length > 0 && <Included count={selected.length} />}
         {settings?.bookingsOpen === false && <p className="info-notice" role="status">Bookings are closed</p>}
         <button type="submit" className="btn-primary full" disabled={loading || !settings?.bookingsOpen}>{loading ? 'Reserving…' : 'Reserve seats'} <Check /></button>
         {showErrors && errorCount > 0 && <p className="field-error" role="alert">Please check the {errorCount === 1 ? 'highlighted field' : `${errorCount} highlighted fields`} above.</p>}
@@ -268,6 +270,19 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
       </form>}
     </div>
   </aside>
+}
+
+// "What's included" box above "Reserve seats"; 4 Filipinos per seat (DESIGN.md Section 0)
+function Included({ count }: { count: number }) {
+  const one = count === 1
+  return <section className="included" aria-labelledby="bk-included-title">
+    <h2 id="bk-included-title" className="included-label"><TicketIcon aria-hidden="true" />What’s included</h2>
+    <ul>
+      <li><Gift className="exclusives-icon" aria-hidden="true" /><span><strong>{count} raffle {one ? 'entry' : 'entries'}</strong> (1 per seat) for ₱9,000 to ₱10,000 worth of giveaways</span></li>
+      {SHOW_FOOD_LINE && <li><BottleIcon /><span><strong>Snacks and refreshments</strong></span></li>}
+      <li><Droplet className="exclusives-icon included-drop" aria-hidden="true" /><span>{one ? 'Your seat helps' : `Your ${count} seats help`} bring clean water to <strong>{count * 4} Filipinos</strong></span></li>
+    </ul>
+  </section>
 }
 
 function Ticket({ booking, headingRef, onReserveMore }: { booking: Booking; headingRef: RefObject<HTMLHeadingElement | null>; onReserveMore: () => void }) {
