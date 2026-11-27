@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { ImageResponse } from 'next/og'
 import { EVENT } from '@/lib/event-config'
 
-export const alt = 'Waves for Water Philippines · Movies4Water - Avengers: Doomsday Block Screening'
+export const alt = 'Waves For Water Philippines · Movies4Water - Avengers: Doomsday Block Screening'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 

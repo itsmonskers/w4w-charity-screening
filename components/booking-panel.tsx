@@ -228,8 +228,8 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
           <p>Scan with GCash, Maya or your bank app, enter the exact amount due, then attach the screenshot below.</p>
           {/* Static UnionBank QR Ph code (no amount inside): the guest types the amount */}
           <figure className="qr-card">
-            <img src="/payment-qr.png" width={360} height={360} alt="InstaPay QR code for the Waves for Water Organization, Inc. UnionBank account" />
-            <figcaption>Account name: <strong>Waves for Water Organization, Inc.</strong> · UnionBank via InstaPay</figcaption>
+            <img src="/payment-qr.png" width={360} height={360} alt="InstaPay QR code for the Waves For Water Organization, Inc. UnionBank account" />
+            <figcaption>Account name: <strong>Waves For Water Organization, Inc.</strong> · UnionBank via InstaPay</figcaption>
           </figure>
           <a className="btn-ghost" href="/payment-qr.png" download="W4W-UnionBank-QR.png"><Download /> Save QR code</a>
           <p>Before you pay, check that your app shows the account name <strong>WAVES FOR WATER ORGANIZAT…</strong></p>
@@ -258,7 +258,7 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
         </Field>
 
         <div className="field">
-          <label className="consent"><input id="bk-consent" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} {...invalid('consent')} aria-describedby={describedBy(shown.consent && 'bk-consent-error')} /><span>I have read the <PolicyLink {...PRIVACY} /> of Waves for Water Philippines and agree to W4W processing my details for this booking under the Data Privacy Act of 2012.</span></label>
+          <label className="consent"><input id="bk-consent" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} {...invalid('consent')} aria-describedby={describedBy(shown.consent && 'bk-consent-error')} /><span>I have read the <PolicyLink {...PRIVACY} /> of Waves For Water Philippines and agree to W4W processing my details for this booking under the Data Privacy Act of 2012.</span></label>
           {shown.consent && <p className="field-error" id="bk-consent-error">{shown.consent}</p>}
         </div>
 

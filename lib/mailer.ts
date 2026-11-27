@@ -26,7 +26,7 @@ export async function sendEmail(email: Email): Promise<boolean> {
     return false
   }
   try {
-    await transport.sendMail({ from: { name: 'Waves for Water PH', address: SMTP_USER }, replyTo: SMTP_USER, ...email })
+    await transport.sendMail({ from: { name: 'Waves For Water PH', address: SMTP_USER }, replyTo: SMTP_USER, ...email })
     return true
   } catch (error) {
     console.error(`[email] not sent: "${email.subject}"`, error instanceof Error ? error.message : error)

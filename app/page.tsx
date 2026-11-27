@@ -103,6 +103,6 @@ export default function Page() {
       </div>
     </section>
     <EventExclusives settings={settings} blocked={sheetOpen || prizesOpen} />
-    <footer><div className="container container-wide footer-inner"><p>© 2026 Waves for Water Philippines · Questions? <a href="mailto:w4wph.movies4water@gmail.com">w4wph.movies4water@gmail.com</a>{POLICIES.map(({ href, label }) => <Fragment key={href}> · <a href={href} target="_blank" rel="noopener noreferrer">{label}</a></Fragment>)}</p></div></footer>
+    <footer><div className="container container-wide footer-inner"><p>© 2026 Waves For Water Philippines · Questions? <a href="mailto:w4wph.movies4water@gmail.com">w4wph.movies4water@gmail.com</a>{POLICIES.map(({ href, label }) => <Fragment key={href}> · <a href={href} target="_blank" rel="noopener noreferrer">{label}</a></Fragment>)}</p></div></footer>
   </main>
 }

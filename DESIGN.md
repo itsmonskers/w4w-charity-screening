@@ -1,4 +1,4 @@
-# Waves for Water Philippines — Design System
+# Waves For Water Philippines — Design System
 
 > Project copy: Doomsday Charity Screening seat reservation microsite.
 
@@ -122,7 +122,7 @@ gold border is its non-color cue.
      - **W4W logo**, top-left: `/w4w-logo.png` (trimmed transparent PNG,
        542×480), shown at 88px tall on desktop and 64px on mobile (the
        stacked logo's "PHILIPPINES" line is unreadable smaller than that).
-       `alt="Waves for Water Philippines"`, no box or card behind it.
+       `alt="Waves For Water Philippines"`, no box or card behind it.
        20px gap between the logo and the eyebrow (16px on mobile).
      - `.eyebrow-caps` "Now booking" in `--ev-gold`.
      - `h1` "Movies4Water - Avengers: Doomsday Block Screening" in Cinzel 700 uppercase at
@@ -186,7 +186,7 @@ gold border is its non-color cue.
        with a close button (focus trapped, Esc closes, returns focus).
      - No separate "How it works" or "Finish your booking" sections.
   5. **Footer: one slim line**, no mission quote or core belief:
-     "© 2026 Waves for Water Philippines · Questions?
+     "© 2026 Waves For Water Philippines · Questions?
      w4wph.movies4water@gmail.com · Privacy Policy" (a `mailto:` link and
      the Privacy Policy PDF, links in
      `--ev-accent`) in
@@ -412,7 +412,7 @@ gold border is its non-color cue.
     Jenna Escueta / 📞 +63 993 502 1347 / ✉️ jenna@wavesforwater.org,
     "Thank you for supporting Movies4Water and helping bring clean water to
     communities!", "See you at the screening!", "Waves For Water
-    Philippines" (capital F, as Jenna wrote it). The email carries the guest's
+    Philippines". The email carries the guest's
     **check-in QR code** in a box titled "Your check-in QR code": the QR
     (an inline image), an "Open your QR code" button (a bold link with a 2px
     border and no fill colour; emails use no hex) with, under it in bold
@@ -456,7 +456,7 @@ gold border is its non-color cue.
      due, then attach the screenshot below.", the UnionBank InstaPay QR
      (`/payment-qr.png`, a static QR Ph code with no amount inside; account
      name "WAVES FOR WATER ORGANIZAT" as encoded) on a white `#fff` card
-     with the caption "Account name: Waves for Water Organization, Inc. ·
+     with the caption "Account name: Waves For Water Organization, Inc. ·
      UnionBank via InstaPay", `.btn-ghost` "Save QR code" (downloads the
      image), the paying-from-this-phone instructions, and "Before you pay,
      check that your app shows the account name WAVES FOR WATER
@@ -464,7 +464,7 @@ gold border is its non-color cue.
   4. Payment screenshot* upload (JPG/PNG/HEIC/WEBP, 10 MB).
   5. Notes (optional, textarea).
   6. Consent (inline checkbox): "I have read the Privacy Policy of Waves
-     for Water Philippines and agree to W4W processing my details for this
+     For Water Philippines and agree to W4W processing my details for this
      booking under the Data Privacy Act of 2012." "Privacy Policy" links to
      `public/policies/privacy-policy.pdf`, opening in a new tab, in
      `--ev-accent`. Then the **"What's included" box** (only while at
@@ -804,7 +804,9 @@ on a solid background. It's the only divider style.
 - **Never invent facts:** no prices, stats, partner names, dates,
   testimonials or claims. Use a visible placeholder like `[PRICE TBD]` or
   `[CONTACT EMAIL TBD]` until the real value is confirmed.
-- **Organization name:** "Waves for Water Philippines" in full on first use;
+- **Organization name:** "Waves For Water Philippines" (capital F; confirmed
+  as the official name by W4W's communications officer, 2026-11-27) in full
+  on first use;
   "W4W" is fine afterwards.
 - **Mission, when quoted, exactly:** "To get clean water to every single
   person who needs it."
@@ -949,7 +951,7 @@ with this file attached or in the repo:
 
 ```
 Read DESIGN.md before doing anything. Section 0 has this project's overrides
-and wins over the rest; the rest is the Waves for Water Philippines design
+and wins over the rest; the rest is the Waves For Water Philippines design
 standard. Follow its tokens, fonts, buttons, section rhythm and copy rules.
 Never hardcode hex, never invent facts (use [PLACEHOLDER TBD] instead), and
 never add a color, font or divider style that isn't in the file. If a task

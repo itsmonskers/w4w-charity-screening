@@ -114,7 +114,7 @@ const CONTENT: Record<EmailKind, (contact: string, attached: Attached) => Conten
       'Our updates sometimes land in spam. Please check your spam or junk folder, and mark this address as not spam.',
       `Questions? Reply to this email or write to ${contact} with your reference code.`,
     ],
-    signoff: ['Waves for Water Philippines', contact],
+    signoff: ['Waves For Water Philippines', contact],
   }),
   // Jenna's text (approved 2026-11-27): no status line; her contact details instead of the inbox
   approved: (_contact, attached) => ({
@@ -138,7 +138,7 @@ const CONTENT: Record<EmailKind, (contact: string, attached: Attached) => Conten
       'The seats below are no longer held for you.',
     ],
     outro: [`Please contact us at ${contact} with your reference code so we can help.`],
-    signoff: ['Waves for Water Philippines', contact],
+    signoff: ['Waves For Water Philippines', contact],
   }),
   checkin: contact => ({
     subject: 'Your check-in QR code',
@@ -146,7 +146,7 @@ const CONTENT: Record<EmailKind, (contact: string, attached: Attached) => Conten
     status: 'Confirmed',
     intro: ['Here\'s your QR code for check-in on December 19.'],
     outro: [`Questions? Reply to this email or write to ${contact} with your reference code.`],
-    signoff: ['Waves for Water Philippines', contact],
+    signoff: ['Waves For Water Philippines', contact],
   }),
 }
 

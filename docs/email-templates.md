@@ -142,7 +142,7 @@ Notes: [NOTES]
 
 Please contact us at w4wph.movies4water@gmail.com with your reference code so we can help.
 
-Waves for Water Philippines
+Waves For Water Philippines
 w4wph.movies4water@gmail.com
 ```
 
@@ -186,7 +186,7 @@ Our updates sometimes land in spam. Please check your spam or junk folder, and m
 
 Questions? Reply to this email or write to w4wph.movies4water@gmail.com with your reference code.
 
-Waves for Water Philippines
+Waves For Water Philippines
 w4wph.movies4water@gmail.com
 ```
 
@@ -215,6 +215,6 @@ Show this at the cinema entrance. Can't open it? Just tell our staff your refere
 
 Questions? Reply to this email or write to w4wph.movies4water@gmail.com with your reference code.
 
-Waves for Water Philippines
+Waves For Water Philippines
 w4wph.movies4water@gmail.com
 ```
