@@ -620,6 +620,13 @@ gold border is its non-color cue.
       the card was left never pulls it back up (a check-in is still saved).
     - **Undo:** "Undo check-in" on an already-checked-in booking asks first
       ("Undo check-in for … ? They'll show as not arrived.").
+    - **Calm mode (card opened from Check-in history):** so browsing can't
+      check anyone in by accident. Under the name: "Opened from history.
+      Nothing changes until you confirm." The main button is the outline
+      style (`.btn-ghost`) and reads "Check in [N] guests…"; it asks first,
+      inline like Undo: "Check in [name]'s [N] seats now?" with "Yes, check
+      in" / "Keep as is" (changes nothing). Seat chips and Undo as usual.
+      From a scan or the "No QR code?" search: one big button, one tap.
     - Check-in is one database step (`check_in_seats`, migration 007) that
       only marks seats not yet checked in, so two phones can't check the
       same seat in twice. Every check-in and undo is logged.

@@ -286,7 +286,7 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
     </div>
   </section>
 
-  if (screen.kind === 'result') return <ResultCard key={screen.booking.bookingId + (screen.notice ?? '')} booking={screen.booking} notice={screen.notice} back={back} headingRef={heading} onConfirm={confirm} onUndo={undo} onNext={scan} />
+  if (screen.kind === 'result') return <ResultCard key={screen.booking.bookingId + (screen.notice ?? '')} booking={screen.booking} notice={screen.notice} back={back} calm={cameFrom.current === 'history'} headingRef={heading} onConfirm={confirm} onUndo={undo} onNext={scan} />
 
   if (screen.kind === 'done') {
     const left = screen.booking.seats.filter(s => !s.checkedInAt).map(s => s.seatId)
@@ -357,6 +357,9 @@ type ResultProps = {
   notice?: string
   // "‹ History" or "‹ Check-in", at the top-left
   back: ReactNode
+  // Opened from Check-in history: an outline "Check in N guests…" that asks first, so browsing
+  // can't check anyone in by accident. From a scan or search: one big button, one tap.
+  calm: boolean
   headingRef: RefObject<HTMLHeadingElement | null>
   onConfirm: (booking: CheckInBooking, seats: string[]) => Promise<void>
   onUndo: (booking: CheckInBooking, seats: string[]) => Promise<void>
@@ -364,12 +367,13 @@ type ResultProps = {
 }
 
 // A scanned or searched booking: the seats still to arrive start selected; tap one to leave it for later
-function ResultCard({ booking, notice, back, headingRef, onConfirm, onUndo, onNext }: ResultProps) {
+function ResultCard({ booking, notice, back, calm, headingRef, onConfirm, onUndo, onNext }: ResultProps) {
   const open = sortSeats(booking.seats.filter(s => !s.checkedInAt).map(s => s.seatId))
   const done = sortSeats(booking.seats.filter(s => s.checkedInAt).map(s => s.seatId))
   const [selected, setSelected] = useState<string[]>(open)
   const [busy, setBusy] = useState(false)
   const [askUndo, setAskUndo] = useState(false)
+  const [askCheckIn, setAskCheckIn] = useState(false)
   const confirmed = booking.status === 'approved'
   const toggle = (id: string) => setSelected(current => current.includes(id) ? current.filter(s => s !== id) : sortSeats([...current, id]))
   const run = async (action: () => Promise<void>) => { setBusy(true); await action(); setBusy(false) }
@@ -379,6 +383,7 @@ function ResultCard({ booking, notice, back, headingRef, onConfirm, onUndo, onNe
     {notice && <p className="admin-notice" role="status">{notice}</p>}
     <span className="admin-ref">{booking.referenceCode}</span>
     <h2 className="admin-checkin-heading" id="checkin-heading" ref={headingRef} tabIndex={-1}>{booking.fullName}</h2>
+    {calm && <p className="admin-card-text">Opened from history. Nothing changes until you confirm.</p>}
 
     {!confirmed ? <>
       <p className="admin-warning" role="alert"><AlertTriangle size={18} aria-hidden /> Not confirmed yet, check with the team lead.</p>
@@ -408,10 +413,20 @@ function ResultCard({ booking, notice, back, headingRef, onConfirm, onUndo, onNe
     </>}
 
     <div className="admin-checkin-buttons">
-      {confirmed && open.length > 0 && <button className="btn-primary admin-checkin-main" type="button" disabled={busy || !selected.length} onClick={() => run(() => onConfirm(booking, selected))}>
+      {confirmed && open.length > 0 && !calm && <button className="btn-primary admin-checkin-main" type="button" disabled={busy || !selected.length} onClick={() => run(() => onConfirm(booking, selected))}>
         <Check size={20} aria-hidden />{busy ? 'Checking in…' : `Check in ${guests(selected.length)}`}
       </button>}
-      {confirmed && done.length > 0 && !askUndo && <button className="btn-ghost" type="button" disabled={busy} onClick={() => setAskUndo(true)}><Undo2 size={18} aria-hidden />Undo check-in</button>}
+      {confirmed && open.length > 0 && calm && !askCheckIn && <button className="btn-ghost admin-checkin-main" type="button" disabled={busy || !selected.length} onClick={() => { setAskUndo(false); setAskCheckIn(true) }}>
+        <Check size={20} aria-hidden />Check in {guests(selected.length)}…
+      </button>}
+      {askCheckIn && <div className="admin-checkin-undo" role="group" aria-label="Check in">
+        <p>Check in {booking.fullName}’s {selected.length} seat{selected.length === 1 ? '' : 's'} now?</p>
+        <div className="admin-checkin-buttons">
+          <button className="btn-primary" type="button" disabled={busy || !selected.length} onClick={() => run(() => onConfirm(booking, selected))}>{busy ? 'Checking in…' : 'Yes, check in'}</button>
+          <button className="btn-ghost" type="button" disabled={busy} onClick={() => setAskCheckIn(false)}>Keep as is</button>
+        </div>
+      </div>}
+      {confirmed && done.length > 0 && !askUndo && <button className="btn-ghost" type="button" disabled={busy} onClick={() => { setAskCheckIn(false); setAskUndo(true) }}><Undo2 size={18} aria-hidden />Undo check-in</button>}
       {askUndo && <div className="admin-checkin-undo" role="group" aria-label="Undo check-in">
         <p>Undo check-in for {seatLines(done)}? They’ll show as not arrived.</p>
         <div className="admin-checkin-buttons">
