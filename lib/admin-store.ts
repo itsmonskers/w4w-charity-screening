@@ -274,6 +274,30 @@ async function changeCheckIn(fn: 'check_in_seats' | 'undo_check_in', bookingId: 
 export const checkInSeats = (bookingId: string, seatIds: string[]) => changeCheckIn('check_in_seats', bookingId, seatIds)
 export const undoCheckIn = (bookingId: string, seatIds: string[]) => changeCheckIn('undo_check_in', bookingId, seatIds)
 
+// Check-in history (migration 008, checkin_history): every check-in and undo, newest first.
+// adminName: the admin's label, or their login email when it's empty. No allergies or contact details.
+export type CheckInHistoryEntry = { id: number; at: string; action: 'check_in' | 'undo'; bookingId: string; referenceCode: string; fullName: string; seatIds: string[]; adminName: string }
+// error not_set_up: migration 008 hasn't been run
+export type CheckInHistory = { ok: true; entries: CheckInHistoryEntry[] } | { ok: false; error: CheckInError }
+
+type CheckInHistoryRow = { id: number; created_at: string; action: 'check_in' | 'undo'; booking_id: string; reference_code: string; full_name: string; seat_ids: string[]; admin_name: string }
+
+export async function getCheckInHistory(): Promise<CheckInHistory> {
+  try {
+    const { data, error } = await client().rpc('checkin_history')
+    if (error) return { ok: false, error: checkInError(error) }
+    return {
+      ok: true,
+      entries: (data as CheckInHistoryRow[]).map(row => ({
+        id: row.id, at: row.created_at, action: row.action, bookingId: row.booking_id,
+        referenceCode: row.reference_code, fullName: row.full_name, seatIds: row.seat_ids, adminName: row.admin_name,
+      })),
+    }
+  } catch {
+    return { ok: false, error: 'unknown' }
+  }
+}
+
 // One-time "Send check-in QR codes": confirmed bookings whose QR email hasn't gone out yet
 // (bookings.checkin_email_at is empty). Throws 'not_set_up' before migration 007.
 export type QrEmailBooking = { id: string; referenceCode: string; fullName: string; email: string; seatIds: string[] }

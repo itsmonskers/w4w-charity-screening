@@ -2,7 +2,7 @@
 // Same functions and types as lib/admin-store.ts. Everything lives in memory: nothing
 // is saved, no email is sent, and this file never imports the Supabase client.
 // Names, emails, phone numbers, payment refs and screenshots are all invented.
-import type { AdminBooking, CheckInBooking, CheckInError, CheckInLookup, CheckInResult, CheckInState, QrEmailBooking, QrEmailResult, ReviewResult, SeatCounts, SignInResult } from './admin-store'
+import type { AdminBooking, CheckInBooking, CheckInError, CheckInHistory, CheckInHistoryEntry, CheckInLookup, CheckInResult, CheckInState, QrEmailBooking, QrEmailResult, ReviewResult, SeatCounts, SignInResult } from './admin-store'
 
 export const ADMIN_AVAILABLE = true
 
@@ -189,6 +189,10 @@ export const rejectBooking = (bookingId: string, note: string) => review('reject
 //   check-in or undo fails with an unknown error (like a lost connection); nothing changes.
 // - `window.dispatchEvent(new Event('admin-mock:not-set-up'))`: check-in acts as if
 //   migration 007 hasn't been run (until reload).
+// - `window.dispatchEvent(new Event('admin-mock:history-not-set-up'))`: only the check-in
+//   history acts as if migration 008 hasn't been run (until reload).
+// Fake history: Grace's 3 seats checked in by "Simon", then P-3 undone by "Jenna"; Marco checked
+// in by an admin with no label (shown as their login email). Every fake check-in and undo adds to it.
 // ---------------------------------------------------------------------------
 
 const OTHER_STAFF = 'Jenna (fake)'
@@ -200,20 +204,45 @@ function addTickets(booking: AdminBooking) {
 }
 bookings.filter(b => b.status === 'approved').forEach(addTickets)
 
+// Like check_in_log: one entry per check-in or undo that changed something
+const history: CheckInHistoryEntry[] = []
+function logCheckIn(action: CheckInHistoryEntry['action'], bookingId: string, seatIds: string[], adminName: string, at = new Date().toISOString()) {
+  const booking = bookings.find(b => b.id === bookingId)
+  if (!booking || !seatIds.length) return
+  history.push({ id: history.length + 1, at, action, bookingId, referenceCode: booking.referenceCode, fullName: booking.fullName, seatIds: [...seatIds], adminName })
+}
+// Seed the fake history, and set the same seats as checked in so the counter matches
+function seedCheckIn(bookingId: string, seatIds: string[], adminName: string, minutesAgo: number) {
+  const at = ago(minutesAgo)
+  for (const t of tickets.get(bookingId) ?? []) if (seatIds.includes(t.seatId)) Object.assign(t, { checkedInAt: at, checkedInBy: adminName })
+  logCheckIn('check_in', bookingId, seatIds, adminName, at)
+}
+function seedUndo(bookingId: string, seatIds: string[], adminName: string, minutesAgo: number) {
+  for (const t of tickets.get(bookingId) ?? []) if (seatIds.includes(t.seatId)) Object.assign(t, { checkedInAt: null, checkedInBy: null })
+  logCheckIn('undo', bookingId, seatIds, adminName, ago(minutesAgo))
+}
+seedCheckIn('mock-grace', ['P-1', 'P-2', 'P-3'], 'Simon', 42)
+seedUndo('mock-grace', ['P-3'], 'Jenna', 38)
+seedCheckIn('mock-marco', ['A-11'], 'patrick@example.com', 25) // admin with no label: login email shown
+
 let failNextCheckIn = false
 let notSetUp = false
+let historyNotSetUp = false
 let checkInHooks = false
 function listenForCheckInHooks() {
   if (checkInHooks || typeof window === 'undefined') return
   checkInHooks = true
   window.addEventListener('admin-mock:fail-next-checkin', () => { failNextCheckIn = true })
   window.addEventListener('admin-mock:not-set-up', () => { notSetUp = true })
+  window.addEventListener('admin-mock:history-not-set-up', () => { historyNotSetUp = true })
   window.addEventListener('admin-mock:checked-in-elsewhere', event => {
     const { bookingId, seatIds } = (event as CustomEvent<{ bookingId: string; seatIds?: string[] }>).detail
     const now = new Date().toISOString()
+    const changed: string[] = []
     for (const t of tickets.get(bookingId) ?? []) {
-      if (!t.checkedInAt && (!seatIds || seatIds.includes(t.seatId))) Object.assign(t, { checkedInAt: now, checkedInBy: OTHER_STAFF })
+      if (!t.checkedInAt && (!seatIds || seatIds.includes(t.seatId))) { Object.assign(t, { checkedInAt: now, checkedInBy: OTHER_STAFF }); changed.push(t.seatId) }
     }
+    logCheckIn('check_in', bookingId, changed, OTHER_STAFF, now)
   })
 }
 
@@ -279,11 +308,23 @@ async function fakeChange(fn: 'check_in_seats' | 'undo_check_in', bookingId: str
     if (fn === 'check_in_seats' && !t.checkedInAt) { Object.assign(t, { checkedInAt: now, checkedInBy: signedInEmail ?? 'you' }); changed.push(t.seatId) }
     if (fn === 'undo_check_in' && t.checkedInAt) { Object.assign(t, { checkedInAt: null, checkedInBy: null }); changed.push(t.seatId) }
   }
+  // The signed-in fake admin has no label, so the history shows their email (like the real fallback)
+  logCheckIn(fn === 'check_in_seats' ? 'check_in' : 'undo', bookingId, changed, signedInEmail ?? 'you', now)
   return { ok: true, changed, booking: details(booking) }
 }
 
 export const checkInSeats = (bookingId: string, seatIds: string[]) => fakeChange('check_in_seats', bookingId, seatIds)
 export const undoCheckIn = (bookingId: string, seatIds: string[]) => fakeChange('undo_check_in', bookingId, seatIds)
+
+// Same as checkin_history (migration 008): newest first, no allergies or contact details
+export async function getCheckInHistory(): Promise<CheckInHistory> {
+  console.info('[admin mock] checkin_history')
+  await delay(300)
+  if (historyNotSetUp) return { ok: false, error: 'not_set_up' }
+  const trouble = checkInTrouble()
+  if (trouble) return { ok: false, error: trouble }
+  return { ok: true, entries: [...history].sort((a, b) => b.at.localeCompare(a.at) || b.id - a.id).map(e => ({ ...e, seatIds: [...e.seatIds] })) }
+}
 
 // One-time "Send check-in QR codes" (fake: nothing is sent). The confirmed fakes start without
 // it, like the 2 live bookings confirmed before the QR existed. Marco's first send "fails"

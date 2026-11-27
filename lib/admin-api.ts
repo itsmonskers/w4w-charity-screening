@@ -7,7 +7,7 @@ import * as real from './admin-store'
 import * as mock from './admin-store.mock'
 import { supabase } from './supabase'
 
-export type { AdminBooking, BookingStatus, CheckInBooking, CheckInError, CheckInLookup, CheckInResult, CheckInSeat, CheckInState, QrEmailBooking, QrEmailResult, ReviewError, ReviewResult, SeatCounts, SignInResult } from './admin-store'
+export type { AdminBooking, BookingStatus, CheckInBooking, CheckInError, CheckInHistory, CheckInHistoryEntry, CheckInLookup, CheckInResult, CheckInSeat, CheckInState, QrEmailBooking, QrEmailResult, ReviewError, ReviewResult, SeatCounts, SignInResult } from './admin-store'
 
 // Inlined at build time, so a normal build always takes the real path.
 export const MOCK_REQUESTED = process.env.NEXT_PUBLIC_ADMIN_MOCK === 'true'
@@ -49,6 +49,7 @@ export const lookupCheckIn: typeof real.lookupCheckIn = (...args) => store().loo
 export const getCheckInBooking: typeof real.getCheckInBooking = (...args) => store().getCheckInBooking(...args)
 export const checkInSeats: typeof real.checkInSeats = (...args) => store().checkInSeats(...args)
 export const undoCheckIn: typeof real.undoCheckIn = (...args) => store().undoCheckIn(...args)
+export const getCheckInHistory: typeof real.getCheckInHistory = () => store().getCheckInHistory()
 // One-time "Send check-in QR codes", and "Download QR code" for hand-sent emails
 export const getQrEmailsToSend: typeof real.getQrEmailsToSend = () => store().getQrEmailsToSend()
 export const sendCheckInQrEmail: typeof real.sendCheckInQrEmail = (...args) => store().sendCheckInQrEmail(...args)
