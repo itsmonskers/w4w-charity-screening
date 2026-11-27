@@ -128,7 +128,7 @@ gold border is its non-color cue.
      - `h1` "Movies4Water - Avengers: Doomsday Block Screening" in Cinzel 700 uppercase at
        `clamp(24px, 3vw, 40px)`, `--ev-text` (like JCI's title line). The
        old "Claim a seat. Bring clean water." headline is removed.
-     - ONE line of facts in `--ev-muted`: "Sat, Dec 19, 2026 · Doors 3:45 PM
+     - ONE line of facts in `--ev-muted`: "Sat, Dec 19, 2026 · Doors 3:30 PM
        · Movie 4:00 PM · Cinema 7, Power Plant Mall, Makati · ₱[price] per
        seat · Snacks and refreshments" (the price comes from
        `event_settings`; each fact stays unbroken; wrapping happens only
@@ -223,7 +223,7 @@ gold border is its non-color cue.
          transparent)` fill, `--blue-light` text). Headline "You're in." in
          Oswald 700 uppercase, ~32px.
        - **Event:** "Movies4Water - Avengers: Doomsday Block Screening",
-         "Sat, Dec 19, 2026", "Doors 3:45 PM · Movie 4:00 PM", "Cinema 7,
+         "Sat, Dec 19, 2026", "Doors 3:30 PM · Movie 4:00 PM", "Cinema 7,
          Power Plant Mall, Makati".
        - **Seats:** grouped by row and sorted ascending, e.g. "Row L ·
          Seats 7, 8, 9" (one line per row), then "3 seats · Total
