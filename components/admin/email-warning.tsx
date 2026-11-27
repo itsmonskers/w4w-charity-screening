@@ -31,7 +31,7 @@ export function EmailWarnings({ warnings, onDismiss, onAllDismissed }: { warning
         const what = kind === 'rejected' ? 'not approved' : 'confirmed'
         const name = kind === 'approved' ? 'Booking confirmed' : kind === 'rejected' ? 'Booking not approved' : 'Your check-in QR code'
         return <li key={key} className="admin-email-warning">
-          <p>The ‘{name}’ email to <strong>{booking.fullName}</strong> (<strong>{booking.email}</strong>) did not send. The booking is still {what}. Please send it yourself from {EMAIL_CONTACT}{kind === 'rejected' ? '' : ', with the downloaded QR code attached'}.</p>
+          <p>The ‘{name}’ email to <strong>{booking.fullName}</strong> (<strong>{booking.email}</strong>) did not send. The booking is still {what}. Please send it yourself from {EMAIL_CONTACT}{email.cc && <>, with <strong>{email.cc}</strong> in Cc</>}{kind === 'rejected' ? '' : ' and the downloaded QR code attached'}.</p>
           <div className="admin-email-actions">
             <CopyButton text={email.text} label={`email text for ${booking.fullName}`}>Copy email text</CopyButton>
             <CopyButton text={email.subject} label={`email subject for ${booking.fullName}`}>Copy subject</CopyButton>

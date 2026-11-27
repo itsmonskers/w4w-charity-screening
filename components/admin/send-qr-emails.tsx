@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Check, RefreshCw, Send } from 'lucide-react'
 import { getQrEmailsToSend, sendCheckInQrEmail, type AdminBooking, type QrEmailBooking, type QrEmailResult } from '@/lib/admin-api'
 import { decisionEmail } from '@/lib/admin-email-copy'
+import { EMAIL_CC } from '@/lib/email-templates'
 import { CopyButton } from './copy-button'
 import { seatsByRow } from './format'
 import { QrDownloadButton } from './qr-download'
@@ -99,7 +100,7 @@ export function SendQrEmails({ bookings }: { bookings: AdminBooking[] | null }) 
         {step === 'sending' && <p className="admin-notice" role="status">Sending {Math.max(1, sending + 1)} of {list.length}…</p>}
         {step === 'finished' && <>
           <p className={`admin-notice${counts('failed') ? ' is-error' : ''}`} role="status">
-            {[`${emails(counts('sent'))} sent`, counts('already_sent') && `${counts('already_sent')} already sent by someone else`, counts('failed') && `${counts('failed')} didn’t send: press Retry, or send it yourself (copy the text and attach the downloaded QR code)`].filter(Boolean).join(' · ')}
+            {[`${emails(counts('sent'))} sent`, counts('already_sent') && `${counts('already_sent')} already sent by someone else`, counts('failed') && `${counts('failed')} didn’t send: press Retry, or send it yourself (copy the text, put ${EMAIL_CC} in Cc and attach the downloaded QR code)`].filter(Boolean).join(' · ')}
           </p>
           <button className="btn-ghost" type="button" onClick={load}><RefreshCw size={16} aria-hidden />Check the list again</button>
         </>}

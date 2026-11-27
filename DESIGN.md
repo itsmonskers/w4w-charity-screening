@@ -578,7 +578,10 @@ gold border is its non-color cue.
     (`NEXT_PUBLIC_ADMIN_MOCK`), the UnionBank payment QR, the Privacy Policy
     PDF, the link preview, and automatic confirmation emails (Task 9: booking
     received, confirmed, not approved) sent via Gmail SMTP from
-    w4wph.movies4water@gmail.com through `app/api/booking-email`. If an
+    w4wph.movies4water@gmail.com through `app/api/booking-email`. Jenna
+    (`EMAIL_CC` in `lib/email-templates.ts`, the only place it's set) is in
+    Cc on the confirmed, not-approved and "Your check-in QR code" emails,
+    never on "received" (it carries food allergies). If an
     automatic email fails, /admin shows a warning (kept until dismissed) with
     "Copy email text" and "Copy subject", which copy the exact automatic
     email to send by hand; `docs/email-templates.md` is the backup.

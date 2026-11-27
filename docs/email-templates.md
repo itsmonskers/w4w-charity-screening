@@ -17,7 +17,10 @@ Use these templates only as a fallback: when /admin says an email
 spam first). Send them by hand from **w4wph.movies4water@gmail.com**.
 Copy a template, replace every
 `[BRACKETED]` field with the details from the booking in /admin, and
-send it to the guest's email address shown there.
+send it to the guest's email address shown there. For the confirmed, not
+approved and check-in QR emails (templates 1, 2 and 4), put
+**jenna@wavesforwater.org** in **Cc**, like the automatic emails. Not for the
+booking received email (template 3): it contains food allergies.
 
 The templates below are the same text as the automatic emails
 (`lib/email-templates.ts`). When filling one in:

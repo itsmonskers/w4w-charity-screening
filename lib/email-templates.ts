@@ -27,6 +27,12 @@ export type EmailBooking = {
   foodAllergies?: string | null
 }
 
+// Jenna (W4W) gets a copy (Cc) of the confirmed, not-approved and "Your check-in QR code"
+// emails. Not the "received" email: it carries food allergies. The only place this address is set;
+// kept here, not in mailer.ts, because /admin builds the same emails in the browser.
+export const EMAIL_CC = 'jenna@wavesforwater.org'
+const CC_KINDS: EmailKind[] = ['approved', 'rejected', 'checkin']
+
 const EVENT_NAME = `Movies4Water - ${EVENT.film} Block Screening`
 const WHEN = `${EVENT.date} · ${EVENT.time}`
 const WHERE = `Cinema 7, ${EVENT.venue}`
@@ -184,5 +190,5 @@ export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: stri
     '</body></html>',
   ].join('\n')
 
-  return { to: booking.email, subject, html, text }
+  return { to: booking.email, ...(CC_KINDS.includes(kind) ? { cc: EMAIL_CC } : {}), subject, html, text }
 }

@@ -31,5 +31,5 @@ export function decisionEmail(kind: DecisionEmail, booking: AdminBooking) {
     payerName: booking.payerName,
     // The confirmed / not-approved emails don't show food allergies (same as the server)
   }, EMAIL_CONTACT, { checkInQr: kind === 'approved' })
-  return { to: email.to, subject: email.subject, text: email.text }
+  return { to: email.to, cc: email.cc, subject: email.subject, text: email.text }
 }
