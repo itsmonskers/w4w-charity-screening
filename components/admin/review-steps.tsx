@@ -9,7 +9,8 @@ import { usePauseRefresh } from './refresh-pause'
 
 export type StepKind = 'approve' | 'reject'
 // What happened, for the screen that opened the step to decide what comes next
-export type StepOutcome = { kind: 'done'; action: StepKind; emailSent: boolean } | { kind: 'handled' } | { kind: 'missing' }
+// withoutQr: the confirmed email went, but without the check-in QR image
+export type StepOutcome = { kind: 'done'; action: StepKind; emailSent: boolean; withoutQr?: boolean } | { kind: 'handled' } | { kind: 'missing' }
 
 export const REASONS = ['I can’t find the payment', 'The amount is different', 'The receipt looks wrong', 'Something else'] as const
 const MAX_NOTE = 500 // same limit as before
@@ -66,7 +67,7 @@ export function ReviewStep({ kind, booking, onBack, onSkip, onDone, onNoAccess }
     setBusy(true)
     setError('')
     const result = approving ? await approveBooking(booking.id, '') : await rejectBooking(booking.id, reviewNote(reason, note))
-    if (result.ok) return onDone({ kind: 'done', action: kind, emailSent: result.emailSent })
+    if (result.ok) return onDone({ kind: 'done', action: kind, emailSent: result.emailSent, withoutQr: result.withoutQr })
     if (result.error === 'booking_not_pending') return onDone({ kind: 'handled' })
     if (result.error === 'booking_not_found') return onDone({ kind: 'missing' })
     if (result.error === 'not_admin') return onNoAccess()

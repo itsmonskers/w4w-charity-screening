@@ -9,7 +9,7 @@ import { CheckIn } from './admin/check-in'
 import { QrScanner } from './admin/qr-scanner'
 import { SendQrEmails } from './admin/send-qr-emails'
 import { CopyButton } from './admin/copy-button'
-import { EmailWarnings, type EmailWarningItem } from './admin/email-warning'
+import { EmailWarnings, NoQrNotes, type EmailWarningItem } from './admin/email-warning'
 import { GuidedCheck } from './admin/guided-check'
 import { AdminHome } from './admin/home'
 import { RefreshPauseContext } from './admin/refresh-pause'
@@ -107,6 +107,8 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   const [notice, setNotice] = useState<Notice | null>(null)
   // Emails that didn't send: kept (across pages) until each one is dismissed
   const [warnings, setWarnings] = useState<EmailWarningItem[]>([])
+  // Confirmed emails sent without the QR image: kept (across pages) until dismissed
+  const [noQr, setNoQr] = useState<AdminBooking[]>([])
   // The guided check is on its All done screen: title "Payment check", and the calm
   // "someone else already handled" message is cleared
   const [checkDone, setCheckDone] = useState(false)
@@ -203,6 +205,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     if (outcome.kind === 'done' && !outcome.emailSent) {
       setWarnings(current => [...current, { key: `${booking.id}-${Date.now()}`, kind: outcome.action === 'approve' ? 'approved' : 'rejected', booking }])
     }
+    if (outcome.kind === 'done' && outcome.withoutQr) setNoQr(current => [...current.filter(b => b.id !== booking.id), booking])
     refresh()
   }
 
@@ -232,6 +235,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
 
     {loadError && <p className="admin-notice is-error" role="alert">{loadError}</p>}
     <EmailWarnings warnings={warnings} onDismiss={key => setWarnings(current => current.filter(w => w.key !== key))} onAllDismissed={() => title.current?.focus()} />
+    <NoQrNotes bookings={noQr} onDismiss={id => { setNoQr(current => current.filter(b => b.id !== id)); title.current?.focus() }} />
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />

@@ -10,6 +10,18 @@ import { QrDownloadButton } from './qr-download'
 // receipt: an Acknowledgment Receipt was picked when confirming (the copied text says it's attached)
 export type EmailWarningItem = { key: string; kind: DecisionEmail; booking: AdminBooking; receipt?: boolean }
 
+// Confirmed emails that went WITHOUT the check-in QR image (the booking stays on "Send check-in QR
+// codes"). Gold, and stays on screen (every page) until dismissed, so the next confirm can't hide it.
+export function NoQrNotes({ bookings, onDismiss }: { bookings: AdminBooking[]; onDismiss: (id: string) => void }) {
+  if (!bookings.length) return null
+  return <ul className="admin-noqr-notes" aria-label="Confirmed emails sent without the QR code">
+    {bookings.map(booking => <li key={booking.id} className="admin-warning">
+      <p><strong>{booking.fullName}</strong> ({booking.referenceCode}): Sent without the QR code. Send it from <a href="#qr-emails">Send check-in QR codes</a>.</p>
+      <button className="btn-ghost admin-btn-small" type="button" onClick={() => onDismiss(booking.id)} aria-label={`Got it: ${booking.fullName}’s QR code`}><Check size={16} aria-hidden />Got it</button>
+    </li>)}
+  </ul>
+}
+
 // Emails that didn't send. Stays on screen (every page) until each one is dismissed.
 export function EmailWarnings({ warnings, onDismiss, onAllDismissed }: { warnings: EmailWarningItem[]; onDismiss: (key: string) => void; onAllDismissed: () => void }) {
   const list = useRef<HTMLUListElement>(null)

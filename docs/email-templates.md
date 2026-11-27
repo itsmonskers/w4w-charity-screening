@@ -41,7 +41,9 @@ Rules for every email:
 - **Check-in QR code:** the confirmed email (template 1) and template 4 carry the
   guest's check-in QR code as an image. A hand-sent email can't make it: in
   /admin, use **Download QR code** on the warning and attach the image to your
-  email. Never make a QR code yourself or send someone else's.
+  email. Never make a QR code yourself or send someone else's. The automatic
+  emails also have an "Open your QR code" link; hand-sent emails don't (the
+  templates below leave it out on purpose).
 - **Acknowledgment Receipt (AR):** if you have the guest's AR, attach it to the
   confirmed email and use the "QR code and Acknowledgment Receipt" sentence in
   template 1; without an AR, use the "QR code" sentence.
@@ -68,7 +70,7 @@ Thank you for purchasing a ticket to Movies4Water! Your payment has been confirm
  QR code only: Attached to this email is your entry QR code. Kindly save your QR code and present it upon entry to the cinema for your block screening.]
 
 YOUR CHECK-IN QR CODE
-(QR code image attached to this email)
+(QR code attached)
 Reference code: [REFERENCE CODE]
 Seats: [SEATS, as /admin shows them, e.g. Row L · Seats 7, 8, 9]
 Show this at the cinema entrance. Can't open it? Just tell our staff your reference code.
@@ -203,7 +205,7 @@ Hi [GUEST NAME],
 Here's your QR code for check-in on December 19.
 
 YOUR CHECK-IN QR CODE
-(QR code image attached to this email)
+(QR code attached)
 Reference code: [REFERENCE CODE]
 Seats: [SEATS, as /admin shows them, e.g. Row L · Seats 7, 8, 9]
 Show this at the cinema entrance. Can't open it? Just tell our staff your reference code.

@@ -412,12 +412,29 @@ gold border is its non-color cue.
     communities!", "See you at the screening!", "Waves For Water
     Philippines" (capital F, as Jenna wrote it). The email carries the guest's
     **check-in QR code** in a box titled "Your check-in QR code": the QR
-    (an inline image), the reference code in large text, the seats, and
+    (an inline image), an "Open your QR code" button (a bold link with a 2px
+    border and no fill colour; emails use no hex) with, under it in bold
+    ~16px, "Open your QR code, then press and hold it to save it, or take a
+    screenshot. Save it to your phone before the event, in case the mall's
+    signal is weak.", the reference code in large text, the seats, and
     "Show this at the cinema entrance. Can't open it? Just tell our staff
-    your reference code." One QR per booking; it is a check-in code, not an
-    e-ticket. Guests confirmed before the QR existed get it once in a
-    separate email, "Your check-in QR code · [reference] · Movies4Water"
-    ("Here's your QR code for check-in on December 19." and the same box).
+    your reference code." The same QR is also attached as a normal file,
+    "Movies4Water-QR-[reference].png". The button opens `/api/qr/[token]`
+    (built from the address of the admin's request, so preview emails link
+    to the preview): the QR as a PNG shown in the browser, from the token
+    alone (exactly 64 characters 0–9/a–f; no database lookup; cached a
+    year; `noindex`; never logged); anything else gets the plain text "Show
+    your reference code at the entrance." If the image can't be made but
+    the token was read, the confirmed email still has the box with the
+    link (no image, no "Attached…" sentence), /admin shows a gold note
+    "[name] ([reference]): Sent without the QR code. Send it from Send
+    check-in QR codes." (kept until dismissed), and the booking stays on
+    that list. The plain-text version shows the full link and "(QR code
+    attached)"; the copied text has no link. One QR per booking; it is a
+    check-in code, not an e-ticket. Guests confirmed before the QR existed
+    get it once in a separate email, "Your check-in QR code · [reference] ·
+    Movies4Water" ("Here's your QR code for check-in on December 19." and
+    the same box, link and file).
     Staff check guests in at the door in /admin (see "Event-day check-in").
   - **Not approved** (after rejection, email): says we could not verify the
     payment, that the seats are no longer held, and asks the guest to

@@ -2,9 +2,10 @@
 // and nothing else. SMTP_USER / SMTP_APP_PASSWORD must never be NEXT_PUBLIC_.
 import nodemailer from 'nodemailer'
 
-// Inline image (the check-in QR): the HTML shows it with <img src="cid:[cid]">, which Gmail
-// displays (it blocks data: images). Passed to nodemailer as-is by sendEmail.
-export type EmailAttachment = { filename: string; content: Buffer; cid: string; contentType: string }
+// Attachments, passed to nodemailer as-is by sendEmail. With a cid it's an inline image (the
+// check-in QR): the HTML shows it with <img src="cid:[cid]">, which Gmail displays (it blocks
+// data: images). Without a cid it's a normal file (the QR to save, the Acknowledgment Receipt).
+export type EmailAttachment = { filename: string; content: Buffer; cid?: string; contentType: string }
 // cc: set by buildEmail (EMAIL_CC in lib/email-templates.ts) for the emails Jenna gets a copy of
 export type Email = { to: string; cc?: string; subject: string; html: string; text: string; attachments?: EmailAttachment[] }
 

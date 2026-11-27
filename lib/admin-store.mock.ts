@@ -13,6 +13,7 @@ const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOSt
 
 // Booking ids that act out special cases
 const EMAIL_FAILS = ['mock-liza', 'mock-jose'] // approve/reject works, but the guest email "fails"
+const QR_FAILS = ['mock-carla'] // the confirmed email "sends", but without the QR image
 const HANDLED_ELSEWHERE = 'mock-rafael' // "another admin" handles it first
 
 type Fake = Partial<AdminBooking> & Pick<AdminBooking, 'id' | 'referenceCode' | 'fullName' | 'seatIds'> & { minutesAgo: number }
@@ -163,6 +164,8 @@ async function review(fn: 'approve_booking' | 'reject_booking', bookingId: strin
   // Like approve_booking: one ticket per seat, ready for check-in
   if (fn === 'approve_booking') addTickets(booking)
   const emailSent = !EMAIL_FAILS.includes(bookingId)
+  // Like the server: sent without the QR image, so it isn't the QR email (stays on Send check-in QR codes)
+  if (fn === 'approve_booking' && emailSent && QR_FAILS.includes(bookingId)) return { ok: true, emailSent, withoutQr: true }
   // The "Booking confirmed" email carries the check-in QR, so it counts as the QR email
   if (fn === 'approve_booking' && emailSent) qrEmailed.add(bookingId)
   return { ok: true, emailSent }

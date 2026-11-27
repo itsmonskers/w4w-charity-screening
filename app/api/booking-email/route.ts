@@ -4,12 +4,13 @@
 //   guest who just booked); claim_received_email allows it once per booking.
 // - approved / rejected: admins only (their login token, checked with is_admin),
 //   and only when the booking really has that status. "approved" carries the check-in
-//   QR (migration 007); without 007 it goes out exactly as before, without the QR.
+//   QR (migration 007): inline, as a file, and a link to /api/qr/[token]; without 007 it goes
+//   out without the QR, and the reply says so (qr: false).
 // - checkin: admins only, confirmed bookings only, once per booking (claim_checkin_email):
 //   the separate "Your check-in QR code" email for bookings confirmed before the QR existed.
 // Uses the anon key only; never the service_role key.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { checkinQrAttachment } from '@/lib/checkin-qr'
+import { checkinQrAttachments } from '@/lib/checkin-qr'
 import { buildEmail, type EmailBooking } from '@/lib/email-templates'
 import { SMTP_USER, sendEmail } from '@/lib/mailer'
 
@@ -18,8 +19,11 @@ export const runtime = 'nodejs'
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// already_sent: the check-in QR email was sent before (or is being sent right now)
-const reply = (sent: boolean, status = 200, reason?: 'already_sent') => Response.json(reason ? { sent, reason } : { sent }, { status })
+// reason already_sent: the check-in QR email was sent before (or is being sent right now).
+// qr (confirmed email only): whether the QR image went with it; false = /admin shows
+// "Sent without the QR code" (the booking stays on Send check-in QR codes).
+type ReplyExtra = { reason?: 'already_sent'; qr?: boolean }
+const reply = (sent: boolean, status = 200, extra: ReplyExtra = {}) => Response.json({ sent, ...extra }, { status })
 const isText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length > 0 && value.length <= max
 
 // A fresh client per request, acting as the visitor (anon) or as the signed-in admin.
@@ -96,25 +100,30 @@ export async function POST(request: Request) {
     const booking = toEmailBooking(row.reference_code, row)
     if (kind === 'rejected') return reply(await sendEmail(buildEmail(kind, booking, SMTP_USER)))
 
-    // approved / checkin: with the check-in QR when the booking has a token (migration 007)
+    // approved / checkin: with the check-in QR when the booking has a token (migration 007): inline,
+    // as a file to save, and the "Open your QR code" link. The link uses this request's address,
+    // so an email sent from a preview links to that preview. Never log the link or the token.
     const checkinToken = await readCheckinToken(client, bookingId)
-    const qr = checkinToken ? await checkinQrAttachment(checkinToken).catch(qrError => {
+    const qrLink = checkinToken ? `${new URL(request.url).origin}/api/qr/${checkinToken}` : undefined
+    const qr = checkinToken ? await checkinQrAttachments(checkinToken, booking.referenceCode).catch(qrError => {
       console.error('[email] check-in QR image failed', qrError instanceof Error ? qrError.message : qrError)
       return null
     }) : null
-    if (kind === 'approved' && !qr) return reply(await sendEmail(buildEmail(kind, booking, SMTP_USER)))
+    // No image: the confirmed email still goes (with the link if the token was read), and isn't
+    // marked as the QR email, so the booking stays on "Send check-in QR codes".
+    if (kind === 'approved' && !qr) return reply(await sendEmail(buildEmail(kind, booking, SMTP_USER, { qrLink })), 200, { qr: false })
     if (!qr) return reply(false, 500)
     // Marks the QR email as sent in one step, so the one-time send can't send it twice.
     // For "approved" a false here doesn't stop the email: the guest must get their confirmation.
     const claim = await client.rpc('claim_checkin_email', { p_booking_id: bookingId })
     if (kind === 'checkin' && (claim.error || claim.data !== true)) {
       if (claim.error) console.error('[email] checkin: claim failed', claim.error.message)
-      return claim.error ? reply(false, 500) : reply(false, 409, 'already_sent')
+      return claim.error ? reply(false, 500) : reply(false, 409, { reason: 'already_sent' })
     }
-    const sent = await sendEmail({ ...buildEmail(kind, booking, SMTP_USER, { checkInQr: true }), attachments: [qr] })
+    const sent = await sendEmail({ ...buildEmail(kind, booking, SMTP_USER, { checkInQr: true, qrLink }), attachments: qr })
     // Not sent: release the mark so it shows again in "Send check-in QR codes" for a retry
     if (!sent && claim.data === true) await client.rpc('release_checkin_email', { p_booking_id: bookingId })
-    return reply(sent)
+    return reply(sent, 200, kind === 'approved' ? { qr: true } : {})
   }
 
   return reply(false, 400)

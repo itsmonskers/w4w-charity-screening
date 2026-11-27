@@ -2440,6 +2440,32 @@ footer {
   gap: 8px;
 }
 
+/* Confirmed emails sent without the QR code: gold notes (.admin-warning), kept until dismissed */
+.admin-noqr-notes {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-noqr-notes li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-noqr-notes p {
+  margin: 0;
+}
+
+.admin-noqr-notes a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 /* Guided check: All done */
 .admin-done-title {
   font-family: var(--font-body), Arial, sans-serif;

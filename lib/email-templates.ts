@@ -148,27 +148,40 @@ const CONTENT: Record<EmailKind, (contact: string, attached: Attached) => Conten
   }),
 }
 
-// "Your check-in QR code" box: the QR (attached image), the reference code in large text,
-// the seats, and what to do at the door. Wording approved by Simon.
+// "Your check-in QR code" box: the QR (attached image), the "Open your QR code" link with how to
+// save it, the reference code in large text, the seats, and what to do at the door.
+// Wording approved by Simon. image: the QR is attached; link: /api/qr/[token] (either can be
+// missing: no link in the copied text, no image when making it failed but the token was read).
 const QR_TITLE = 'Your check-in QR code'
 const QR_NOTE = 'Show this at the cinema entrance. Can\'t open it? Just tell our staff your reference code.'
+const QR_BUTTON = 'Open your QR code'
+const QR_SAVE = 'Open your QR code, then press and hold it to save it, or take a screenshot. Save it to your phone before the event, in case the mall\'s signal is weak.'
+type QrBox = { image: boolean; link?: string }
 
-function qrBoxText(booking: EmailBooking) {
+function qrBoxText(booking: EmailBooking, { image, link }: QrBox) {
   return [
     QR_TITLE.toUpperCase(),
-    '(QR code image attached to this email)',
+    ...(image ? ['(QR code attached)'] : []),
+    ...(link ? [`${QR_BUTTON}: ${link}`, QR_SAVE] : []),
     `Reference code: ${booking.referenceCode}`,
     ...seatsByRow(booking.seatIds).map((line, i) => i ? `    ${line}` : `Seats: ${line}`),
     QR_NOTE,
   ]
 }
 
-// Table layout and inline styles only, so it holds together in Gmail and Outlook
-function qrBoxHtml(booking: EmailBooking) {
+// Table layout and inline styles only, so it holds together in Gmail and Outlook. The button is
+// a bordered link with no fill colour (emails can't use the site's colour tokens, and no hex).
+function qrBoxHtml(booking: EmailBooking, { image, link }: QrBox) {
   return [
     '<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 16px 0; border: 2px solid; border-radius: 12px;"><tr><td style="padding: 16px 20px; text-align: center;">',
     `<p style="margin: 0 0 12px; font-size: 18px; font-weight: bold;">${escapeHtml(QR_TITLE)}</p>`,
-    `<img src="cid:${CHECKIN_QR_CID}" width="220" height="220" alt="${escapeHtml(`Check-in QR code for ${booking.referenceCode}`)}" style="display: block; margin: 0 auto; border: 0;">`,
+    ...(image ? [`<img src="cid:${CHECKIN_QR_CID}" width="220" height="220" alt="${escapeHtml(`Check-in QR code for ${booking.referenceCode}`)}" style="display: block; margin: 0 auto; border: 0;">`] : []),
+    ...(link ? [
+      '<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin: 16px auto 8px;"><tr>',
+      `<td style="border: 2px solid; border-radius: 999px;"><a href="${escapeHtml(link)}" style="display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: bold;">${escapeHtml(QR_BUTTON)}</a></td>`,
+      '</tr></table>',
+      `<p style="margin: 0 0 4px; font-size: 16px; font-weight: bold;">${escapeHtml(QR_SAVE)}</p>`,
+    ] : []),
     `<p style="margin: 12px 0 4px; font-size: 28px; font-weight: bold; letter-spacing: 2px;">${escapeHtml(booking.referenceCode)}</p>`,
     `<p style="margin: 0 0 12px;">${seatsByRow(booking.seatIds).map(escapeHtml).join('<br>')}</p>`,
     `<p style="margin: 0;">${escapeHtml(QR_NOTE)}</p>`,
@@ -176,13 +189,17 @@ function qrBoxHtml(booking: EmailBooking) {
   ].join('\n')
 }
 
-// checkInQr: add the QR box to the "Booking confirmed" email (the route attaches the image).
+// checkInQr: the "Booking confirmed" email carries the QR image (the route attaches it).
+// qrLink: the "Open your QR code" link (/api/qr/[token]); the confirmed email shows the QR box
+// with the link even when the image couldn't be made. Never in the copied text.
 // receipt: the confirmed email also carries the Acknowledgment Receipt (only changes the
 // "Attached…" sentence; the route attaches the file). The "Your check-in QR code" email
-// always has the QR box, and no booking details table.
-export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: string, options: { checkInQr?: boolean; receipt?: boolean } = {}): Email {
-  const withQr = kind === 'checkin' || (kind === 'approved' && options.checkInQr === true)
-  const content = CONTENT[kind](contact, { qr: withQr, receipt: options.receipt === true })
+// always has the QR box (with the image), and no booking details table.
+export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: string, options: { checkInQr?: boolean; qrLink?: string; receipt?: boolean } = {}): Email {
+  const qrImage = kind === 'checkin' || (kind === 'approved' && options.checkInQr === true)
+  const qrBox: QrBox = { image: qrImage, link: kind === 'checkin' || kind === 'approved' ? options.qrLink : undefined }
+  const withQr = qrBox.image || !!qrBox.link
+  const content = CONTENT[kind](contact, { qr: qrImage, receipt: options.receipt === true })
   const details = kind === 'checkin' ? [] : bookingDetails(booking)
   const subject = `${content.subject} · ${booking.referenceCode} · Movies4Water`
   const greeting = `Hi ${booking.fullName}${content.greeting}`
@@ -196,7 +213,7 @@ export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: stri
     ...content.intro,
     '',
     ...(content.attached?.length ? [...content.attached, ''] : []),
-    ...(withQr ? [...qrBoxText(booking), ''] : []),
+    ...(withQr ? [...qrBoxText(booking, qrBox), ''] : []),
     ...(details.length ? [...details.map(([label, lines]) => `${label}: ${lines.join('\n    ')}`), ''] : []),
     ...content.outro.flatMap(entry => [...paragraph(entry), '']),
     ...content.signoff,
@@ -209,7 +226,7 @@ export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: stri
     ...(status ? [`<p><strong>${escapeHtml(status)}</strong></p>`] : []),
     ...content.intro.map(p),
     ...(content.attached ?? []).map(p),
-    ...(withQr ? [qrBoxHtml(booking)] : []),
+    ...(withQr ? [qrBoxHtml(booking, qrBox)] : []),
     ...(details.length ? [
       '<table cellpadding="4" cellspacing="0">',
       ...details.map(([label, lines]) => `<tr><td valign="top"><strong>${escapeHtml(label)}</strong></td><td>${lines.map(escapeHtml).join('<br>')}</td></tr>`),
