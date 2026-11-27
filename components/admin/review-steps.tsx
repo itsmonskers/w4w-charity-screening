@@ -1,16 +1,18 @@
 'use client'
 
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { ArrowLeft, FileText, Upload } from 'lucide-react'
 import { approveBooking, rejectBooking, type AdminBooking } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
+import { RECEIPT_ACCEPT, formatFileSize, receiptProblem } from '@/lib/receipt-file'
 import { seatLabel, seatsByRow } from './format'
 import { usePauseRefresh } from './refresh-pause'
 
 export type StepKind = 'approve' | 'reject'
 // What happened, for the screen that opened the step to decide what comes next
 // withoutQr: the confirmed email went, but without the check-in QR image
-export type StepOutcome = { kind: 'done'; action: StepKind; emailSent: boolean; withoutQr?: boolean } | { kind: 'handled' } | { kind: 'missing' }
+// receipt: an Acknowledgment Receipt was attached (so a hand-sent email needs it too)
+export type StepOutcome = { kind: 'done'; action: StepKind; emailSent: boolean; withoutQr?: boolean; receipt?: boolean } | { kind: 'handled' } | { kind: 'missing' }
 
 export const REASONS = ['I can’t find the payment', 'The amount is different', 'The receipt looks wrong', 'Something else'] as const
 const MAX_NOTE = 500 // same limit as before
@@ -53,21 +55,41 @@ export function ReviewStep({ kind, booking, onBack, onSkip, onDone, onNoAccess }
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  // Optional Acknowledgment Receipt (confirm step only): attached to the email, never stored.
+  // receiptOk: the admin ticked "Is this [name]'s receipt?" (required when a file is picked).
+  const [receipt, setReceipt] = useState<File | null>(null)
+  const [receiptOk, setReceiptOk] = useState(false)
+  const [receiptError, setReceiptError] = useState('')
   const saving = useRef(false) // blocks a second tap before the screen re-renders
   const title = useRef<HTMLHeadingElement>(null)
   usePauseRefresh(true) // no auto-refresh while a step is open
 
   useEffect(() => { title.current?.focus() }, [])
 
+  // Checked straight away (size, and PDF / JPG / PNG from the file's contents); the server checks again
+  async function pickReceipt(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null
+    event.target.value = '' // picking the same file again still triggers a check
+    setReceiptOk(false)
+    setReceipt(null)
+    setReceiptError('')
+    if (!file) return
+    const problem = await receiptProblem(file).catch(() => 'wrong_type' as const)
+    if (problem === 'too_big') return setReceiptError(`This file is ${formatFileSize(file.size)}. The limit is 3 MB. Choose a smaller file, or confirm without it and email the AR yourself.`)
+    if (problem === 'wrong_type') return setReceiptError('This isn’t a PDF, JPG or PNG file. Choose another file.')
+    setReceipt(file)
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (saving.current) return
     if (!approving && !reason) { setError('Choose what’s wrong with the payment.'); return }
+    if (approving && receipt && !receiptOk) { setError(`Tick the box if this is ${booking.fullName}’s receipt, or remove the file.`); return }
     saving.current = true
     setBusy(true)
     setError('')
-    const result = approving ? await approveBooking(booking.id, '') : await rejectBooking(booking.id, reviewNote(reason, note))
-    if (result.ok) return onDone({ kind: 'done', action: kind, emailSent: result.emailSent, withoutQr: result.withoutQr })
+    const result = approving ? await approveBooking(booking.id, '', receipt ?? undefined) : await rejectBooking(booking.id, reviewNote(reason, note))
+    if (result.ok) return onDone({ kind: 'done', action: kind, emailSent: result.emailSent, withoutQr: result.withoutQr, ...(approving && receipt ? { receipt: true } : {}) })
     if (result.error === 'booking_not_pending') return onDone({ kind: 'handled' })
     if (result.error === 'booking_not_found') return onDone({ kind: 'missing' })
     if (result.error === 'not_admin') return onNoAccess()
@@ -81,7 +103,7 @@ export function ReviewStep({ kind, booking, onBack, onSkip, onDone, onNoAccess }
     <div><dt>Reference</dt><dd className="admin-find-ref">{booking.paymentRef ?? '–'}</dd></div>
     <div><dt>Seats</dt><dd>{seatsByRow(booking.seatIds).map(line => <span key={line}>{line}</span>)}</dd></div>
   </dl>
-  const status = busy && <p className="admin-step-saving" role="status">Saving… don’t close this page</p>
+  const status = busy && <p className="admin-step-saving" role="status">{approving && receipt ? 'Sending email with receipt… don’t close this page' : 'Saving… don’t close this page'}</p>
   const failed = error && <p className="field-error admin-step-error" role="alert" id="step-error">{error}</p>
 
   return <form className="admin-step" onSubmit={submit} aria-labelledby="step-title" noValidate>
@@ -92,6 +114,25 @@ export function ReviewStep({ kind, booking, onBack, onSkip, onDone, onNoAccess }
         <h2 className="admin-step-title" id="step-title" ref={title} tabIndex={-1}>Great! Confirm {booking.fullName}’s {seats}?</h2>
         <p className="admin-step-text">{name} will get a ‘Booking confirmed’ email right away.</p>
         {summary}
+        <div className="field admin-receipt">
+          <span className="field-label" id="step-receipt-label">Acknowledgment Receipt (optional)</span>
+          {!receipt
+            ? <label className="upload">
+              <Upload aria-hidden />
+              <span>Attach {name}’s AR</span>
+              <small>PDF, JPG or PNG · 3 MB max · sent with the email, not saved</small>
+              <input id="step-receipt" className="sr-only" type="file" accept={RECEIPT_ACCEPT} aria-labelledby="step-receipt-label" aria-invalid={!!receiptError} aria-describedby={receiptError ? 'step-receipt-error' : undefined} onChange={pickReceipt} disabled={busy} />
+            </label>
+            : <div className="admin-receipt-chosen">
+              <p className="admin-receipt-file"><strong>{booking.fullName}</strong><span><FileText size={18} aria-hidden />{receipt.name} ({formatFileSize(receipt.size)})</span></p>
+              <label className="admin-reason">
+                <input type="checkbox" checked={receiptOk} onChange={e => { setReceiptOk(e.target.checked); setError('') }} disabled={busy} />
+                <span>Is this {booking.fullName}’s receipt? Yes, it is.</span>
+              </label>
+              <button className="admin-text-link" type="button" onClick={() => { setReceipt(null); setReceiptOk(false); setError('') }} disabled={busy}>Remove file</button>
+            </div>}
+          {receiptError && <p className="field-error" id="step-receipt-error" role="alert">{receiptError}</p>}
+        </div>
         <p className="admin-warning">This can’t be undone from here.</p>
       </>
       : <>

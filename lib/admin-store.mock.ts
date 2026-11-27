@@ -149,9 +149,12 @@ export async function getScreenshotUrl(path: string, download = false): Promise<
 }
 
 // Logged so tests can check exactly which "database" call the screen made.
-async function review(fn: 'approve_booking' | 'reject_booking', bookingId: string, note: string): Promise<ReviewResult> {
+// receipt: the AR picked in the confirm step. Nothing is sent; logged (name, size, type) so tests
+// can check it arrived, and "sending" takes a little longer, like a real upload.
+async function review(fn: 'approve_booking' | 'reject_booking', bookingId: string, note: string, receipt?: File): Promise<ReviewResult> {
   console.info(`[admin mock] ${fn}`, JSON.stringify({ p_booking_id: bookingId, p_note: note.trim() || null }))
-  await delay(600)
+  if (receipt) console.info('[admin mock] confirmed email with AR', JSON.stringify({ name: receipt.name, size: receipt.size, type: receipt.type }))
+  await delay(receipt ? 1500 : 600)
   if (failNextReview) { failNextReview = false; return { ok: false, error: 'unknown' } }
   const booking = bookings.find(b => b.id === bookingId)
   if (!booking) return { ok: false, error: 'booking_not_found' }
@@ -171,7 +174,7 @@ async function review(fn: 'approve_booking' | 'reject_booking', bookingId: strin
   return { ok: true, emailSent }
 }
 
-export const approveBooking = (bookingId: string, note: string) => review('approve_booking', bookingId, note)
+export const approveBooking = (bookingId: string, note: string, receipt?: File) => review('approve_booking', bookingId, note, receipt)
 export const rejectBooking = (bookingId: string, note: string) => review('reject_booking', bookingId, note)
 
 // ---------------------------------------------------------------------------

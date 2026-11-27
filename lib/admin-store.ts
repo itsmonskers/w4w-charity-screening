@@ -132,17 +132,31 @@ export async function getScreenshotUrl(path: string, download = false): Promise<
   return data.signedUrl
 }
 
+// With an Acknowledgment Receipt, stop waiting after this long (slow mobile data): the booking is
+// already confirmed, so the admin gets the "did not send" warning and sends it by hand.
+const RECEIPT_EMAIL_TIMEOUT_MS = 60_000
+
 // Asks the server to email the guest about the decision. Never throws.
 // withoutQr: the server said the confirmed email went without the QR image (qr: false).
-async function sendDecisionEmail(kind: 'approved' | 'rejected', bookingId: string): Promise<{ emailSent: boolean; withoutQr?: boolean }> {
+// receipt: the AR to attach to the confirmed email, sent as form data (never stored).
+async function sendDecisionEmail(kind: 'approved' | 'rejected', bookingId: string, receipt?: File): Promise<{ emailSent: boolean; withoutQr?: boolean }> {
   try {
     const { data } = await client().auth.getSession()
     const token = data.session?.access_token
     if (!token) return { emailSent: false }
+    let body: string | FormData = JSON.stringify({ kind, bookingId })
+    if (receipt) {
+      body = new FormData()
+      body.append('kind', kind)
+      body.append('bookingId', bookingId)
+      body.append('receipt', receipt)
+    }
     const response = await fetch('/api/booking-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ kind, bookingId }),
+      // Form data sets its own Content-Type (with the boundary)
+      headers: receipt ? { Authorization: `Bearer ${token}` } : { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body,
+      ...(receipt ? { signal: AbortSignal.timeout(RECEIPT_EMAIL_TIMEOUT_MS) } : {}),
     })
     const result = await response.json() as { sent?: boolean; qr?: boolean }
     const emailSent = result.sent === true
@@ -152,17 +166,18 @@ async function sendDecisionEmail(kind: 'approved' | 'rejected', bookingId: strin
   }
 }
 
-async function review(fn: 'approve_booking' | 'reject_booking', bookingId: string, note: string): Promise<ReviewResult> {
+async function review(fn: 'approve_booking' | 'reject_booking', bookingId: string, note: string, receipt?: File): Promise<ReviewResult> {
   try {
     const { error } = await client().rpc(fn, { p_booking_id: bookingId, p_note: note.trim() || null })
-    if (!error) return { ok: true, ...await sendDecisionEmail(fn === 'approve_booking' ? 'approved' : 'rejected', bookingId) }
+    if (!error) return { ok: true, ...await sendDecisionEmail(fn === 'approve_booking' ? 'approved' : 'rejected', bookingId, receipt) }
     return { ok: false, error: REVIEW_ERRORS.find(known => known === error.message) ?? 'unknown' }
   } catch {
     return { ok: false, error: 'unknown' }
   }
 }
 
-export const approveBooking = (bookingId: string, note: string) => review('approve_booking', bookingId, note)
+// receipt: optional Acknowledgment Receipt for the confirmed email (checked by the caller and the server)
+export const approveBooking = (bookingId: string, note: string, receipt?: File) => review('approve_booking', bookingId, note, receipt)
 export const rejectBooking = (bookingId: string, note: string) => review('reject_booking', bookingId, note)
 
 // ---------------------------------------------------------------------------

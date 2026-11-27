@@ -93,9 +93,11 @@ type Content = { subject: string; greeting: string; status?: string; intro: stri
 // What the "Booking confirmed" email really carries, so its "Attached…" sentence is true
 type Attached = { qr: boolean; receipt: boolean }
 
-// "Attached…" sentence of the confirmed email (Jenna's wording). No QR: no sentence at all.
+// "Attached…" sentence of the confirmed email (Jenna's wording; "AR only" by Simon). No QR and
+// no AR: no sentence at all. AR without the QR (image failed): the QR follows separately, from
+// Send check-in QR codes.
 function attachedSentence({ qr, receipt }: Attached): string[] {
-  if (!qr) return []
+  if (!qr) return receipt ? ['Attached to this email is your Acknowledgment Receipt. Your entry QR code will follow in a separate email.'] : []
   return [receipt
     ? 'Attached to this email are your entry QR code and Acknowledgment Receipt. Kindly save your QR code and present it upon entry to the cinema for your block screening.'
     : 'Attached to this email is your entry QR code. Kindly save your QR code and present it upon entry to the cinema for your block screening.']

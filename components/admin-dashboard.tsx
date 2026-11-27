@@ -203,7 +203,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   function handleOutcome(outcome: StepOutcome, booking: AdminBooking) {
     setNotice(outcomeNotice(outcome, booking))
     if (outcome.kind === 'done' && !outcome.emailSent) {
-      setWarnings(current => [...current, { key: `${booking.id}-${Date.now()}`, kind: outcome.action === 'approve' ? 'approved' : 'rejected', booking }])
+      setWarnings(current => [...current, { key: `${booking.id}-${Date.now()}`, kind: outcome.action === 'approve' ? 'approved' : 'rejected', booking, receipt: outcome.receipt }])
     }
     if (outcome.kind === 'done' && outcome.withoutQr) setNoQr(current => [...current.filter(b => b.id !== booking.id), booking])
     refresh()

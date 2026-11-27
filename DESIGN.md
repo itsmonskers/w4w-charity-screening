@@ -404,8 +404,10 @@ gold border is its non-color cue.
     and Acknowledgment Receipt ("Attached to this email are your entry QR
     code and Acknowledgment Receipt. Kindly save your QR code and present it
     upon entry to the cinema for your block screening."), QR code only
-    ("Attached to this email is your entry QR code. Kindly save …"), or
-    left out when the QR failed. After the QR box and booking details:
+    ("Attached to this email is your entry QR code. Kindly save …"), AR
+    only, when the QR failed ("Attached to this email is your
+    Acknowledgment Receipt. Your entry QR code will follow in a separate
+    email.", Simon's wording), or left out when neither is attached. After the QR box and booking details:
     "Should you have any questions or concerns, feel free to contact:",
     Jenna Escueta / 📞 +63 993 502 1347 / ✉️ jenna@wavesforwater.org,
     "Thank you for supporting Movies4Water and helping bring clean water to
@@ -529,7 +531,18 @@ gold border is its non-color cue.
     collapsed "More details". After each decision it moves to the next
     booking; at the end, an "All done!" summary.
   - **Confirm and not-approved steps.** Confirm: "Great! Confirm [name]'s
-    [N] seats?" with the amount, reference and seats. Not approved: one
+    [N] seats?" with the amount, reference and seats, then an optional
+    "Acknowledgment Receipt" picker (the guest page's `.upload` box: PDF,
+    JPG or PNG, 3 MB max, checked from the file's contents in the browser
+    and again on the server; `lib/receipt-file.ts`). A picked file shows
+    the guest's name next to the file name and "Is this [name]'s receipt?
+    Yes, it is." (must be ticked), plus "Remove file". The AR is sent with
+    the confirmed email as form data to `app/api/booking-email` (not a
+    Server Action), attached as "Movies4Water-AR-[reference].[ext]" and
+    never stored. While sending: "Sending email with receipt… don't close
+    this page"; the browser stops waiting after 60 seconds. If it doesn't
+    send, the usual warning adds "Attach the AR and QR yourself". Without a
+    file, confirming works exactly as before. Not approved: one
     required reason (I can't find the payment / The amount is different /
     The receipt looks wrong / Something else) and an optional team note
     the guest never sees, saved as "Reason: …. Note: …" (500 characters

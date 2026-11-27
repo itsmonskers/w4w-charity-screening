@@ -46,7 +46,10 @@ Rules for every email:
   templates below leave it out on purpose).
 - **Acknowledgment Receipt (AR):** if you have the guest's AR, attach it to the
   confirmed email and use the "QR code and Acknowledgment Receipt" sentence in
-  template 1; without an AR, use the "QR code" sentence.
+  template 1; without an AR, use the "QR code" sentence. /admin never keeps the
+  AR file: if you picked one when confirming and the email didn't send, attach
+  that same file from your phone or computer. (Hand-sent emails always have the
+  QR attached, so the automatic email's "AR only" sentence isn't needed here.)
 - Don't promise e-tickets. They aren't decided.
 - Don't add any `[... TBD]` text yourself. Only keep it where the automatic
   email already shows it (for example `Amount: [PRICE TBD]`).

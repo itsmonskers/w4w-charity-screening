@@ -3193,6 +3193,35 @@ footer {
   font-size: 15px;
 }
 
+/* Confirm step: optional Acknowledgment Receipt (the picker reuses the guest page's .upload box) */
+.admin-receipt-chosen {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.admin-receipt-chosen .admin-reason {
+  width: 100%;
+}
+
+.admin-receipt-file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  color: var(--ev-text);
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.admin-receipt-file span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ev-muted);
+}
+
 /* Animations */
 @keyframes projector-drift {
   from {
