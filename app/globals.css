@@ -2304,6 +2304,11 @@ footer {
   padding: 12px 16px;
 }
 
+/* Check-in history (#checkin-history): undone entries are greyed out; the word "Undone" says it */
+.admin-row.is-undone .admin-row-button {
+  color: var(--ev-muted);
+}
+
 /* Camera scanner: square live view with a gold aiming frame */
 .admin-scanner {
   display: flex;

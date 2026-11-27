@@ -510,7 +510,7 @@ gold border is its non-color cue.
   never change shared guest-page rules.
   - **Layout.** From 1024px: a left sidebar with "MOVIES4WATER"
     (`.eyebrow-caps`, `--ev-gold`) and "ADMIN"; Home; EVENT DAY: Check-in
-    (with "arrived/total", e.g. 12/315); PAYMENTS: Waiting for review,
+    (with "arrived/total", e.g. 12/315), Check-in history; PAYMENTS: Waiting for review,
     Confirmed, Not approved (with counts); TOOLS: Download guest list (the
     approved CSV), Send check-in QR codes; at the bottom: View the booking
     page, "Signed in as …", Sign out. The current page is highlighted in
@@ -518,8 +518,8 @@ gold border is its non-color cue.
     Below 1024px: a top bar with a "Menu" button that opens the same menu
     as a full-screen modal `<dialog>` with a close (×) button (focus stays
     inside, Esc closes, focus returns). Pages are URL hashes (`#home`,
-    `#checkin`, `#check`, `#waiting`, `#confirmed`, `#not-approved`,
-    `#qr-emails`) so the phone's Back button works.
+    `#checkin`, `#checkin-history`, `#check`, `#waiting`, `#confirmed`,
+    `#not-approved`, `#qr-emails`) so the phone's Back button works.
   - **Home cards.** One large card with a gold border: badge NEEDS
     ATTENTION, the number waiting, "The oldest has been waiting …" and
     "Start checking"; or ALL CLEAR when nothing is waiting. Two small
@@ -606,6 +606,22 @@ gold border is its non-color cue.
     - Check-in is one database step (`check_in_seats`, migration 007) that
       only marks seats not yet checked in, so two phones can't check the
       same seat in twice. Every check-in and undo is logged.
+    - The Start card also has a text link "See who's checked in" under
+      "Scan QR code"; nothing else on the scanning screens changes.
+  - **Check-in history (`#checkin-history`, Event day).** Read-only, its own
+    page so the door screen stays simple. Top: the same count as Check-in,
+    "[X] of [Y] seats checked in now" (Y = seats of confirmed bookings) and
+    the gold progress bar. Then "History: every check-in and undo, newest
+    first", a "Search name or reference" box, and one row per action
+    (`.admin-row`): "4:02 PM · Ana Reyes" over "W4W-DD-TAN2 · Row L · Seats
+    7, 8 · by Jenna"; undos start with the word "Undone" and are greyed out
+    (`--ev-muted`), never colour alone. Another day's entries show the date
+    ("Nov 27, 4:02 PM"). Tapping a row opens that booking's Check-in card,
+    where Undo already is. Refreshes every 10 seconds (not while the tab is
+    hidden). Admin names: `admins.label`, else the login email. No food
+    allergies or contact details. Data from `checkin_history()` (migration
+    008); before 008 is run it shows "Check-in history isn't set up yet.
+    Please tell the team lead."
   - **Send check-in QR codes (`#qr-emails`, Tools).** One-time: lists
     confirmed guests who haven't had their check-in QR email, asks before
     sending ("Send 'Your check-in QR code' to these [N] guests now? Each

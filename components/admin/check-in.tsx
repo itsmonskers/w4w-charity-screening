@@ -53,9 +53,12 @@ type Props = {
   onNoAccess: () => void
   // The camera (or anything that turns a QR into text); rendered on the Scan screen
   scanner: (onCode: (text: string) => void) => ReactNode
+  // A booking to open straight away (tapped in Check-in history); onOpened clears it
+  openBookingId?: string | null
+  onOpened?: () => void
 }
 
-export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner }: Props) {
+export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner, openBookingId, onOpened }: Props) {
   const [screen, setScreen] = useState<Screen>({ kind: 'start' })
   const [query, setQuery] = useState('')
   const heading = useRef<HTMLHeadingElement>(null)
@@ -93,6 +96,13 @@ export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner }: Pro
     if (!result.ok) return fail(result.error, () => open(bookingId))
     setScreen(result.booking ? { kind: 'result', booking: result.booking } : { kind: 'error', error: 'booking_not_found', retry: () => open(bookingId) })
   }, [fail])
+
+  // Opened from Check-in history: show that booking's card (Undo is there)
+  useEffect(() => {
+    if (!openBookingId) return
+    openBooking(openBookingId)
+    onOpened?.()
+  }, [openBookingId, openBooking, onOpened])
 
   const onCode = useCallback(async function scanned(text: string) {
     const token = tokenFromQr(text)
@@ -197,6 +207,7 @@ export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner }: Pro
       <p className="admin-card-number" id="checkin-count" aria-live="polite">{state ? arrived : '–'} <span>of {state ? total : '–'} guests arrived</span></p>
       <div className="admin-progress" aria-hidden="true"><span style={{ width: `${total ? Math.round(arrived / total * 100) : 0}%` }} /></div>
       <button className="btn-primary admin-checkin-main" type="button" onClick={scan}><QrCode size={22} aria-hidden />Scan QR code</button>
+      <a className="admin-text-link" href="#checkin-history">See who’s checked in</a>
     </section>
 
     <section className="admin-checkin-search" aria-labelledby="checkin-search-title">

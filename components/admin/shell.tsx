@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Download, ExternalLink, LogOut, Menu, X } from 'lucide-react'
 import { usePauseRefresh } from './refresh-pause'
 
-export type AdminRoute = 'home' | 'checkin' | 'check' | 'waiting' | 'confirmed' | 'not-approved' | 'qr-emails'
+export type AdminRoute = 'home' | 'checkin' | 'checkin-history' | 'check' | 'waiting' | 'confirmed' | 'not-approved' | 'qr-emails'
 // checkIn: "arrived/total" guests, e.g. "12/315" (missing until the counter loads)
 export type NavCounts = { pending: number; approved: number; rejected: number; checkIn?: string } | null
 
@@ -73,6 +73,7 @@ function AdminNav({ route, counts, email, onNavigate, onExport, onSignOut }: { r
 
     <p className="admin-nav-label">Event day</p>
     {link('checkin', 'Check-in', counts?.checkIn, false, counts?.checkIn && `${counts.checkIn.replace('/', ' of ')} guests arrived`)}
+    {link('checkin-history', 'Check-in history')}
 
     <p className="admin-nav-label">Payments</p>
     {link('check', 'Waiting for review', counts?.pending, true)}
