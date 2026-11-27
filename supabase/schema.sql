@@ -55,7 +55,8 @@ create table public.bookings (
 create index bookings_status_idx on public.bookings (status, created_at);
 
 -- One ticket per seat, created when a booking is approved.
--- The token goes into the e-ticket QR; check-in marks checked_in_at.
+-- Check-in marks checked_in_at / checked_in_by (migration 007).
+-- token is NOT used: the check-in QR carries bookings.checkin_token (one per booking, 007).
 create table public.tickets (
   id             uuid primary key default gen_random_uuid(),
   booking_id     uuid not null references public.bookings (id) on delete cascade,

@@ -1,4 +1,4 @@
-# Waves for Water Philippines — Design System
+# Waves For Water Philippines — Design System
 
 > Project copy: Doomsday Charity Screening seat reservation microsite.
 
@@ -18,7 +18,7 @@ for W4W brand direction (signed off by Carlo Delantar).
 **Precedence:** Section 0 wins over everything below it. Everything else is the
 shared W4W standard and applies unless Section 0 says otherwise.
 
-Last updated: 2026-11-24. Sources: Pilipinas4Water design standard, FlappyBoard
+Last updated: 2026-11-26 (event-day check-in). Sources: Pilipinas4Water design standard, FlappyBoard
 microsite.
 
 ---
@@ -122,7 +122,7 @@ gold border is its non-color cue.
      - **W4W logo**, top-left: `/w4w-logo.png` (trimmed transparent PNG,
        542×480), shown at 88px tall on desktop and 64px on mobile (the
        stacked logo's "PHILIPPINES" line is unreadable smaller than that).
-       `alt="Waves for Water Philippines"`, no box or card behind it.
+       `alt="Waves For Water Philippines"`, no box or card behind it.
        20px gap between the logo and the eyebrow (16px on mobile).
      - `.eyebrow-caps` "Now booking" in `--ev-gold`.
      - `h1` "Movies4Water - Avengers: Doomsday Block Screening" in Cinzel 700 uppercase at
@@ -130,25 +130,45 @@ gold border is its non-color cue.
        old "Claim a seat. Bring clean water." headline is removed.
      - ONE line of facts in `--ev-muted`: "Sat, Dec 19, 2026 · Doors 3:30 PM
        · Movie 4:00 PM · Cinema 7, Power Plant Mall, Makati · ₱[price] per
-       seat · Includes food and refreshments" (the price comes from
+       seat · Snacks and refreshments" (the price comes from
        `event_settings`; each fact stays unbroken; wrapping happens only
        between facts). **How the ₱1,000 is split:** Simon approved
        (2026-11-25) using W4W's Movies4Water deck figures, and only these:
        ₱500 of every ticket goes to clean water; a filter + bucket costs
        about ₱3,500, is shared by about 25 people and gives 5–10 years of
-       clean water. Don't state the rest of the split (ticket, food), and
-       never add a per-ticket "people helped" claim.
-     - **Cause line** (our version of JCI's gold tagline slot): "Your seat
-       helps bring clean water to Filipino communities." in Cinzel, small
-       caps style, `--ev-gold`, `letter-spacing: .2em`, ~12px. This is now
-       the only place the page says what the money is for; keep it.
-     - **Impact line** right under it, Hanken 13px `--ev-muted`: "One
-       ₱3,500 water filter gives 25 people clean water for 5 to 10 years."
-       Source: senior lead of field operations (filter + bucket ₱3,450,
-       rounded to ₱3,500 per Carlo; delivery and training excluded; one
-       filter serves 5 households / 25 people for 5–10 years). Don't claim
-       "1 seat = 1 Filipino for 5 years" until it's confirmed that at least
-       ₱140 of each seat reaches the water program.
+       clean water. Simon also approved (2026-11-26, from the same deck)
+       one per-seat claim: "Every seat helps bring clean water to 4
+       Filipinos", and its multiples (N seats → N × 4 Filipinos) in the
+       "What's included" box. Don't state the rest of the split (ticket,
+       food), and don't add any other per-ticket "people helped" claim.
+     - **Cause line** (our version of JCI's gold tagline slot): "Every seat
+       helps bring clean water to 4 Filipinos." in Cinzel, small caps
+       style, `--ev-gold`, `letter-spacing: .2em`, ~12px. This is now the
+       only place the title block says what the money is for; keep it.
+     - **Prize strip** right under it (replaces the earlier gold raffle
+       box and its "See the prizes" pill; the old ₱3,500 filter line is
+       no longer on the home page). The raffle stays visible but lighter
+       than "Pick your seats", which stays the only main button in the
+       title block: no gold box, no gold circle, no outlined button.
+       - Three round photos (44px, `#fff` background, 2px `--ev-bg`
+         border, overlapping by 14px) from the 96×96 thumbnails in
+         `public/prizes/` (`*-thumb.jpg`, listed in
+         `components/raffle-prizes.ts`). Decorative: empty alt.
+       - Next to them, Hanken: bold `--ev-text` "Get a chance to win
+         prizes" (14px), "Prizes worth ₱500 to ₱10,000 each" in
+         `--ev-text` (15px, 600; larger so it reads at a glance, still
+         plain text: no box, no gold), and a gold text link "See the prizes ›"
+         (`--ev-gold`, 14px, 600; no box, no outline; underlined on
+         hover).
+       - The whole strip is ONE button that opens the prizes panel
+         (deviation 22); focus returns to it on close.
+       - Laptop (from 700px): a slim pill that hugs its content, 1px
+         `--ev-line` border, fill
+         `color-mix(in srgb, var(--ev-bg) 85%, transparent)` (reads
+         slightly darker against the light shafts); photos, text and link
+         in one row (title and value stacked, link beside them).
+       - Phone (below 700px): full width, no fill, a 1px `--ev-line`
+         line above and below, the link on its own line under the text.
      - Status row: a pill badge "[n] seats available" (number in
        `--ev-accent`) · LIVE indicator · "[n] days to go"
      - Compact steps line: "01 Pick seats · 02 Pay via QR & upload proof ·
@@ -166,7 +186,7 @@ gold border is its non-color cue.
        with a close button (focus trapped, Esc closes, returns focus).
      - No separate "How it works" or "Finish your booking" sections.
   5. **Footer: one slim line**, no mission quote or core belief:
-     "© 2026 Waves for Water Philippines · Questions?
+     "© 2026 Waves For Water Philippines · Questions?
      w4wph.movies4water@gmail.com · Privacy Policy" (a `mailto:` link and
      the Privacy Policy PDF, links in
      `--ev-accent`) in
@@ -301,7 +321,8 @@ gold border is its non-color cue.
   21. **Event exclusives popup (cinema-ticket card).** Shown only while the
       Corporate Bundle is on (`group_size` and `group_price_per_seat` set in
       `event_settings`), about 2 seconds after the page loads, once per
-      visitor (browser storage, in try/catch), never on top of the open
+      visit (`sessionStorage`, in try/catch: it shows again in a new visit
+      but not on reloads or when coming back from GCash), never on top of the open
       booking sheet, never on /admin. Native modal `<dialog>`: closes with
       ×, "Pick your seats", Esc and tapping outside; focus stays inside and
       returns on close. Below 700px it is a bottom sheet (slides up,
@@ -323,24 +344,104 @@ gold border is its non-color cue.
         and a gold "Save ₱500" badge (all from `event_settings`); raffle
         row (gift icon): "**1 ticket = 1 raffle entry.** Win prizes from
         Columbia, The Coffee Bean & Tea Leaf, Nono’s and RAF Forwarding.";
-        food row (bottle icon) "Chips and bottled water included", hidden
-        (`SHOW_FOOD_LINE = false`) until the venue confirms; impact box
+        food row (bottle icon) "Snacks and refreshments included", shown
+        (`SHOW_FOOD_LINE = true`; the same switch controls the snacks row
+        in the "What's included" box); impact box
         (water-drop icon) "₱500 of every ticket goes straight to clean
         water" with three stats: "~₱3,500" 1 filter + bucket, "~25
         people" share each filter, "5–10 years" of clean water; one
         full-width `.btn-primary` "Pick your seats" (closes the popup). No
         other buttons.
+  22. **Prizes panel ("See the prizes").** Opened only by the prize
+      strip; never on /admin. Native modal `<dialog>` with the same box,
+      entrance and phone bottom sheet as the popup (deviation 21): below
+      700px a bottom sheet (rounded top corners, grab handle, page visible
+      above); from 700px a centred card about 460px wide. Scrolls inside
+      itself when taller than the screen. Closes with ×, "Pick your
+      seats", Esc and tapping outside; focus stays inside and returns to
+      the prize strip. The popup and the panel never open on
+      top of each other (the popup waits while the panel is open). Works
+      from 320px. Tokens only; no prices, no sponsor logos.
+      - **Card:** `--ev-panel`, 1px `--ev-line` border, 16px radius. Top:
+        title "Raffle prizes" (Cinzel, uppercase), line "1 ticket = 1
+        raffle entry. Book 10, get 10 entries." in `--ev-muted`, × close
+        button (44px) in the top-right corner.
+      - **Prizes by sponsor:** a small gold uppercase sponsor heading
+        (Hanken, like the Corporate Bundle label), then a rounded list
+        (1px `--ev-line` border, 12px radius, `--ev-line` dividers). Each
+        row: item name in `--ev-text` and a gold quantity badge ("×1",
+        "×275"; `--ev-gold` fill, `--ev-bg` text). The list lives in ONE
+        content file, `components/raffle-prizes.ts` (items, quantities,
+        photos); change prizes only there.
+      - **Rows with a photo** (photos in `public/prizes/`): a small image
+        icon before the name and a chevron after the badge (both
+        `--ev-muted`); the whole row is a button that opens the photo
+        viewer. **Rows without a photo** (vouchers, tumblers, popcorn
+        maker) are plain text: not tappable, no icons, names aligned with
+        the photo rows.
+      - **Photo viewer:** a nested modal `<dialog>` over the panel, full
+        screen, `color-mix(in srgb, var(--ev-bg) 94%, transparent)`. The
+        photo (unedited file, on a `#fff` card, 12px radius, scaled to
+        fit) with the item name as a caption and a 44px × button. Closes
+        with ×, Esc or tapping outside; focus returns to the row. Alt text
+        is the sponsor + item, e.g. "Columbia Women’s Puffect Jacket".
+        Photos are loaded only when their row is tapped, never on page
+        load. No animation of its own.
+      - Bottom: one full-width `.btn-primary` "Pick your seats" (closes
+        the panel). No other buttons.
 - **Booking status wording (one code, three statuses).** Every booking has
   ONE reference code (e.g. `W4W-DD-7K2Q`), created at submission and never
   changed. Wherever a guest sees the code, the status is shown right next to
-  it, with exactly these words:
+  it, with exactly these words (exceptions: the "Booking confirmed" email
+  uses Jenna's text below, and the "Your check-in QR code" email uses the
+  same style; neither has a status line):
   - **Pending verification** (after submitting): "We'll email you at
     [guest's email] once your payment is verified. Keep your reference
     code." Showing the email lets guests spot a typo before they leave.
-  - **Confirmed** (after approval, confirmation email): "Your payment is
-    verified and your seats are confirmed." Day-of instructions depend on
-    the check-in process ([CHECK-IN PROCESS TBD]); don't promise QR
-    e-tickets until it's decided.
+  - **Confirmed** (after approval, confirmation email; Jenna's text,
+    approved 2026-11-27): "Hi [full name]!", "Thank you for purchasing a
+    ticket to Movies4Water! Your payment has been confirmed. 🎬💙", then the
+    "Attached…" sentence, which must match what is really attached: QR code
+    and Acknowledgment Receipt ("Attached to this email are your entry QR
+    code and Acknowledgment Receipt. Kindly save your QR code and present it
+    upon entry to the cinema for your block screening."), QR code only
+    ("Attached to this email is your entry QR code. Kindly save …"), AR
+    only, when the QR failed ("Attached to this email is your
+    Acknowledgment Receipt. Your entry QR code will follow in a separate
+    email.", Simon's wording), or left out when neither is attached. After the QR box and booking details:
+    "Should you have any questions or concerns, feel free to contact:",
+    Jenna Escueta / 📞 +63 993 502 1347 / ✉️ jenna@wavesforwater.org,
+    "Thank you for supporting Movies4Water and helping bring clean water to
+    communities!", "See you at the screening!", "Waves For Water
+    Philippines". The email carries the guest's
+    **check-in QR code** in a box titled "Your check-in QR code": the QR
+    (an inline image), an "Open your QR code" button (a bold link with a 2px
+    border and no fill colour; emails use no hex) with, under it in bold
+    ~16px, "Open your QR code, then press and hold it to save it, or take a
+    screenshot. Save it to your phone before the event, in case the mall's
+    signal is weak.", the reference code in large text, the seats, and
+    "Show this at the cinema entrance. Can't open it? Just tell our staff
+    your reference code." The same QR is also attached as a normal file,
+    "Movies4Water-QR-[reference].png". The button opens `/api/qr/[token]`
+    (built from the address of the admin's request, so preview emails link
+    to the preview): the QR as a PNG shown in the browser, from the token
+    alone (exactly 64 characters 0–9/a–f; no database lookup; cached a
+    year; `noindex`; never logged); anything else gets the plain text "Show
+    your reference code at the entrance." If the image can't be made but
+    the token was read, the confirmed email still has the box with the
+    link (no image, no "Attached…" sentence), /admin shows a gold note
+    "[name] ([reference]): Sent without the QR code. Send it from Send
+    check-in QR codes." (kept until dismissed), and the booking stays on
+    that list. The plain-text version shows the full link and "(QR code
+    attached)"; the copied text has no link. One QR per booking; it is a
+    check-in code, not an e-ticket. Guests confirmed before the QR existed
+    get it once in a separate email, "Your check-in QR code · [reference] ·
+    Movies4Water" ("Hi [full name],", "Here's your QR code for check-in on
+    December 19.", the same box, link and file, then the confirmed email's
+    ending: Jenna's contact block, "Thank you for supporting Movies4Water and
+    helping bring clean water to communities!", "See you at the
+    screening!", "Waves For Water Philippines"; no status line).
+    Staff check guests in at the door in /admin (see "Event-day check-in").
   - **Not approved** (after rejection, email): says we could not verify the
     payment, that the seats are no longer held, and asks the guest to
     contact w4wph.movies4water@gmail.com with their reference code. The
@@ -359,7 +460,7 @@ gold border is its non-color cue.
      due, then attach the screenshot below.", the UnionBank InstaPay QR
      (`/payment-qr.png`, a static QR Ph code with no amount inside; account
      name "WAVES FOR WATER ORGANIZAT" as encoded) on a white `#fff` card
-     with the caption "Account name: Waves for Water Organization, Inc. ·
+     with the caption "Account name: Waves For Water Organization, Inc. ·
      UnionBank via InstaPay", `.btn-ghost` "Save QR code" (downloads the
      image), the paying-from-this-phone instructions, and "Before you pay,
      check that your app shows the account name WAVES FOR WATER
@@ -367,11 +468,21 @@ gold border is its non-color cue.
   4. Payment screenshot* upload (JPG/PNG/HEIC/WEBP, 10 MB).
   5. Notes (optional, textarea).
   6. Consent (inline checkbox): "I have read the Privacy Policy of Waves
-     for Water Philippines and agree to W4W processing my details for this
+     For Water Philippines and agree to W4W processing my details for this
      booking under the Data Privacy Act of 2012." "Privacy Policy" links to
      `public/policies/privacy-policy.pdf`, opening in a new tab, in
-     `--ev-accent`. Then full-width
-     `.btn-primary` "Reserve seats".
+     `--ev-accent`. Then the **"What's included" box** (only while at
+     least 1 seat is picked; same spot in the phone sheet and the laptop
+     panel): 1px `--ev-gold` border, `--ev-panel` fill, 14px radius, gold
+     label "What's included" with a ticket icon, then three rows with the
+     popup's inline stroke icons (gift and bottle in `--ev-gold`, water
+     drop in `--ev-accent` like the popup), numbers updating live:
+     gift "**[N] raffle entries** (1 per seat) for prizes worth ₱500 to
+     ₱10,000 each" ("1 raffle entry" for one seat); bottle "**Snacks and
+     refreshments**" (same `SHOW_FOOD_LINE` switch as the popup); water
+     drop "Your [N] seats help bring clean water to **[N × 4] Filipinos**"
+     (one seat: "Your seat helps bring clean water to **4 Filipinos**").
+     Then full-width `.btn-primary` "Reserve seats".
   7. On success, the panel content is replaced by the e-ticket card
      (deviation 8) with "Reserve more seats".
   Validation: inline errors under each field on submit (required fields,
@@ -398,15 +509,26 @@ gold border is its non-color cue.
   turns it off). Styles live in the admin section of `app/globals.css` and
   never change shared guest-page rules.
   - **Layout.** From 1024px: a left sidebar with "MOVIES4WATER"
-    (`.eyebrow-caps`, `--ev-gold`) and "ADMIN"; Home; PAYMENTS: Waiting for
-    review, Confirmed, Not approved (with counts); TOOLS: Download guest
-    list (the approved CSV); at the bottom: View the booking page, "Signed
-    in as …", Sign out. The current page is highlighted in `--ev-gold`.
+    (`.eyebrow-caps`, `--ev-gold`) and "ADMIN"; Home; EVENT DAY: Check-in
+    (with "arrived/total", e.g. 12/315), Check-in history; PAYMENTS: Waiting for review,
+    Confirmed, Not approved (with counts); TOOLS: Download guest list (the
+    approved CSV), Send check-in QR codes; at the bottom: View the booking
+    page, "Signed in as …", Sign out. The current page is highlighted in
+    `--ev-gold`.
     Below 1024px: a top bar with a "Menu" button that opens the same menu
     as a full-screen modal `<dialog>` with a close (×) button (focus stays
     inside, Esc closes, focus returns). Pages are URL hashes (`#home`,
-    `#check`, `#waiting`, `#confirmed`, `#not-approved`) so the phone's
-    Back button works.
+    `#checkin`, `#checkin-history`, `#check`, `#waiting`, `#confirmed`,
+    `#not-approved`, `#qr-emails`) so the phone's Back button works.
+    Check-in has one address per step: `#checkin` (start), `#checkin-scan`
+    (camera) and `#checkin-guest` (a guest's card and its results). Leaving
+    the start adds a step; camera ↔ card replaces it, so Back (phone gesture
+    or browser arrow) always goes to the start, or to Check-in history when
+    the card was opened there, never back into the camera or to a used
+    "Check in" button. Reloading on `#checkin-scan` or `#checkin-guest` goes
+    to the start (the camera never starts by itself). Address names must not
+    match an element id on the page (the browser would jump to it) and never
+    `#top`.
   - **Home cards.** One large card with a gold border: badge NEEDS
     ATTENTION, the number waiting, "The oldest has been waiting …" and
     "Start checking"; or ALL CLEAR when nothing is waiting. Two small
@@ -422,7 +544,18 @@ gold border is its non-color cue.
     collapsed "More details". After each decision it moves to the next
     booking; at the end, an "All done!" summary.
   - **Confirm and not-approved steps.** Confirm: "Great! Confirm [name]'s
-    [N] seats?" with the amount, reference and seats. Not approved: one
+    [N] seats?" with the amount, reference and seats, then an optional
+    "Acknowledgment Receipt" picker (the guest page's `.upload` box: PDF,
+    JPG or PNG, 3 MB max, checked from the file's contents in the browser
+    and again on the server; `lib/receipt-file.ts`). A picked file shows
+    the guest's name next to the file name and "Is this [name]'s receipt?
+    Yes, it is." (must be ticked), plus "Remove file". The AR is sent with
+    the confirmed email as form data to `app/api/booking-email` (not a
+    Server Action), attached as "Movies4Water-AR-[reference].[ext]" and
+    never stored. While sending: "Sending email with receipt… don't close
+    this page"; the browser stops waiting after 60 seconds. If it doesn't
+    send, the usual warning adds "Attach the AR and QR yourself". Without a
+    file, confirming works exactly as before. Not approved: one
     required reason (I can't find the payment / The amount is different /
     The receipt looks wrong / Something else) and an optional team note
     the guest never sees, saved as "Reason: …. Note: …" (500 characters
@@ -446,6 +579,100 @@ gold border is its non-color cue.
     16px.
   - **Focus.** An admin-only 2px `--ev-accent` focus ring
     (`:focus-visible`) so keyboard focus shows on the dark panels.
+  - **Event-day check-in (`#checkin`).** Phone-first, one screen at a time,
+    for trusted W4W staff with their normal admin login (no separate door
+    role). Each new screen moves focus to its heading. While the page is
+    open it asks to keep the phone screen on (Wake Lock, where supported).
+    - **Start:** a card with the live counter "[X] of [Y] guests arrived"
+      (Y = seats of confirmed bookings; refreshes every 10 seconds on this
+      page) and a gold progress bar, one big (56px) `.btn-primary` "Scan
+      QR code", then "No QR code?" and a "Search name or reference" box.
+      Search lists matching bookings: confirmed ones with "Check in" (or
+      "Arrived [time]" / "[n] of [N] arrived"); waiting ones with a gold
+      "Not confirmed yet" badge and no button. Not-approved bookings are
+      not listed.
+    - **Scan:** the back camera in a square live view with a gold aiming
+      frame, "Point the camera at the guest's QR code.", "Search instead"
+      and "Back to check-in". The camera only starts on this screen and is
+      switched off when it closes, after a read, and while the tab is
+      hidden. Camera blocked or missing: a short message in
+      `--error-on-dark` with "Try the camera again" and Search instead.
+      The QR holds "W4W1:" + the booking's secret token; any other QR shows
+      "Not a valid ticket".
+    - **Result:** reference code, the guest's name (large), the seats as
+      chips, all selected in `--ev-gold` (tap a seat to leave it for later,
+      for groups arriving separately; unselected chips are dashed), a gold
+      **Food allergies** box when the guest gave any, and "Check in [N]
+      guests". Seats already checked in show in a dashed gold warning
+      ("Already checked in" with the time and the admin's name); a booking
+      that isn't confirmed shows "Not confirmed yet, check with the team
+      lead." and can't be checked in.
+    - **Checked in:** blue CHECKED IN badge, "[N] guests checked in: Row P ·
+      Seats 1, 2", seats still to arrive, seats someone else checked in
+      first, then "Scan next guest" (big), "Undo this check-in" and a text
+      link "Search next guest" (to the search box, for guests without a QR).
+    - **Back link:** every guest screen (card, Checked in, Not a valid
+      ticket, Something went wrong) has `.admin-back` at its top-left:
+      "‹ History" when the card was opened from Check-in history, else
+      "‹ Check-in". It lands exactly where the phone's Back does (it uses the
+      browser's Back when that's the step before). "Looking up…" shows it
+      after 10 seconds (weak signal); a lookup or check-in that finishes after
+      the card was left never pulls it back up (a check-in is still saved).
+    - **Undo:** "Undo check-in" on an already-checked-in booking asks first
+      ("Undo check-in for … ? They'll show as not arrived.").
+    - **Calm mode (card opened from Check-in history):** so browsing can't
+      check anyone in by accident. Under the name: "Opened from history.
+      Nothing changes until you confirm." The main button is the outline
+      style (`.btn-ghost`) and reads "Check in [N] guests…"; it asks first,
+      inline like Undo: "Check in [name]'s [N] seats now?" with "Yes, check
+      in" / "Keep as is" (changes nothing). Seat chips and Undo as usual.
+      From a scan or the "No QR code?" search: one big button, one tap.
+    - Check-in is one database step (`check_in_seats`, migration 007) that
+      only marks seats not yet checked in, so two phones can't check the
+      same seat in twice. Every check-in and undo is logged.
+    - The Start card also has a text link "See who's checked in" under
+      "Scan QR code"; nothing else on the scanning screens changes.
+  - **Check-in history (`#checkin-history`, Event day).** Read-only, its own
+    page so the door screen stays simple. Top: the same count as Check-in,
+    "[X] of [Y] seats checked in now" (Y = seats of confirmed bookings) and
+    the gold progress bar. Under it three tabs (`.admin-tabs` /
+    `.admin-tab`: pills at least 44px tall, one row down to 320px, the
+    selected one gold like the sidebar's current page; arrow keys move
+    between them): **Not arrived yet · Arrived · History**, opening on Not
+    arrived yet (who the door is still waiting for). No counts in the
+    labels (they'd wrap on small phones); the line under the tabs says it
+    instead: "2 bookings still to arrive", "3 bookings fully arrived", or on
+    History "History: every check-in and undo, newest first". Then a "Search
+    name or reference" box that filters the open tab (name and reference
+    only). Tapping any row opens that booking's card in calm mode with "‹
+    History"; the tab and the search are still there when you come back
+    (they reset when you leave Event day's pages).
+    - **Not arrived yet / Arrived:** confirmed bookings only, one row each
+      (`.admin-row`): the name over "W4W-DD-TAN2 · Row L · Seats 7, 8".
+      Not arrived yet: every booking not fully checked in, A–Z; a partly
+      arrived booking has a gold "2 of 3 arrived" badge. Arrived means every
+      seat is checked in, latest arrival first, with "Arrived 4:02 PM". Built from
+      the bookings and the per-booking arrived counts the page already
+      loads, so it doesn't need migration 008.
+    - **History:** one row per action
+    (`.admin-row`): "4:02 PM · Ana Reyes" over "W4W-DD-TAN2 · Row L · Seats
+    7, 8 · by Jenna"; undos start with the word "Undone" and are greyed out
+    (`--ev-muted`), never colour alone. Another day's entries show the date
+    ("Nov 27, 4:02 PM"). Tapping a row opens that booking's Check-in card,
+    where Undo already is. Refreshes every 10 seconds (not while the tab is
+    hidden). Admin names: `admins.label`, else the login email. No food
+    allergies or contact details. Data from `checkin_history()` (migration
+    008); before 008 is run the History tab shows "Check-in history isn't
+    set up yet. Please tell the team lead."
+  - **Send check-in QR codes (`#qr-emails`, Tools).** One-time: lists
+    confirmed guests who haven't had their check-in QR email, asks before
+    sending ("Send 'Your check-in QR code' to these [N] guests now? Each
+    guest gets it once."), sends one at a time with a badge per guest (Sent
+    / Already sent / Didn't send) and offers Retry, Copy email text, Copy
+    subject and **Download QR code** for any that didn't send. The server
+    marks each email as sent in the same step, so nobody gets it twice.
+    "Email did not send" warnings for confirmed emails also offer Download
+    QR code (the copied text can't carry the image).
 - **Build status:**
   - **Built:** Supabase backend (`supabase/schema.sql` plus
     `supabase/migrations/`) behind `lib/booking-store.ts`, live seat updates,
@@ -456,12 +683,16 @@ gold border is its non-color cue.
     (`NEXT_PUBLIC_ADMIN_MOCK`), the UnionBank payment QR, the Privacy Policy
     PDF, the link preview, and automatic confirmation emails (Task 9: booking
     received, confirmed, not approved) sent via Gmail SMTP from
-    w4wph.movies4water@gmail.com through `app/api/booking-email`. If an
+    w4wph.movies4water@gmail.com through `app/api/booking-email`. Jenna
+    (`EMAIL_CC` in `lib/email-templates.ts`, the only place it's set) is in
+    Cc on the confirmed, not-approved and "Your check-in QR code" emails,
+    never on "received" (it carries food allergies). If an
     automatic email fails, /admin shows a warning (kept until dismissed) with
     "Copy email text" and "Copy subject", which copy the exact automatic
     email to send by hand; `docs/email-templates.md` is the backup.
-  - **Not built yet:** check-in at the door is undecided
-    ([CHECK-IN PROCESS TBD]).
+    Event-day check-in (migration 007): the check-in QR in the confirmed
+    email, the one-time "Send check-in QR codes" tool, and the `#checkin`
+    scanner page.
 - **Link preview (Open Graph):** `app/opengraph-image.tsx` generates a
   1200×630 image at build time: the W4W Philippines logo centered on
   `--char`, then "Movies4Water", "Avengers: Doomsday Block Screening" and the
@@ -635,7 +866,9 @@ on a solid background. It's the only divider style.
 - **Never invent facts:** no prices, stats, partner names, dates,
   testimonials or claims. Use a visible placeholder like `[PRICE TBD]` or
   `[CONTACT EMAIL TBD]` until the real value is confirmed.
-- **Organization name:** "Waves for Water Philippines" in full on first use;
+- **Organization name:** "Waves For Water Philippines" (capital F; confirmed
+  as the official name by W4W's communications officer, 2026-11-27) in full
+  on first use;
   "W4W" is fine afterwards.
 - **Mission, when quoted, exactly:** "To get clean water to every single
   person who needs it."
@@ -780,7 +1013,7 @@ with this file attached or in the repo:
 
 ```
 Read DESIGN.md before doing anything. Section 0 has this project's overrides
-and wins over the rest; the rest is the Waves for Water Philippines design
+and wins over the rest; the rest is the Waves For Water Philippines design
 standard. Follow its tokens, fonts, buttons, section rhythm and copy rules.
 Never hardcode hex, never invent facts (use [PLACEHOLDER TBD] instead), and
 never add a color, font or divider style that isn't in the file. If a task

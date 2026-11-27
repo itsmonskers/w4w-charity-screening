@@ -2,7 +2,12 @@
 // and nothing else. SMTP_USER / SMTP_APP_PASSWORD must never be NEXT_PUBLIC_.
 import nodemailer from 'nodemailer'
 
-export type Email = { to: string; subject: string; html: string; text: string }
+// Attachments, passed to nodemailer as-is by sendEmail. With a cid it's an inline image (the
+// check-in QR): the HTML shows it with <img src="cid:[cid]">, which Gmail displays (it blocks
+// data: images). Without a cid it's a normal file (the QR to save, the Acknowledgment Receipt).
+export type EmailAttachment = { filename: string; content: Buffer; cid?: string; contentType: string }
+// cc: set by buildEmail (EMAIL_CC in lib/email-templates.ts) for the emails Jenna gets a copy of
+export type Email = { to: string; cc?: string; subject: string; html: string; text: string; attachments?: EmailAttachment[] }
 
 // The Gmail address emails are sent from; also the contact address in every email.
 export const SMTP_USER = process.env.SMTP_USER ?? ''
@@ -21,7 +26,7 @@ export async function sendEmail(email: Email): Promise<boolean> {
     return false
   }
   try {
-    await transport.sendMail({ from: { name: 'Waves for Water PH', address: SMTP_USER }, replyTo: SMTP_USER, ...email })
+    await transport.sendMail({ from: { name: 'Waves For Water PH', address: SMTP_USER }, replyTo: SMTP_USER, ...email })
     return true
   } catch (error) {
     console.error(`[email] not sent: "${email.subject}"`, error instanceof Error ? error.message : error)

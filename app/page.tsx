@@ -4,6 +4,8 @@ import { Fragment, useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { CinemaAtmosphere } from '@/components/cinema-atmosphere'
 import { EventExclusives } from '@/components/event-exclusives'
+import { PrizesPanel } from '@/components/prizes-panel'
+import { RAFFLE_THUMBS } from '@/components/raffle-prizes'
 import { BookingPanel, EVENT_DATE_SHORT, EVENT_PLACE, EVENT_TITLE, POLICIES } from '@/components/booking-panel'
 import { SeatMap } from '@/components/seat-map'
 import { StripeWave } from '@/components/stripe-wave'
@@ -29,10 +31,11 @@ export default function Page() {
   const [submitting, setSubmitting] = useState(false)
   const [booked, setBooked] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [prizesOpen, setPrizesOpen] = useState(false)
   const [settings, setSettings] = useState<Settings | null>(null)
   const price = settings?.pricePerSeat ?? null
   const due = quote(settings, selected.length)
-  const facts = [EVENT_DATE_SHORT, ...EVENT.time.split(' · '), EVENT_PLACE, `${formatPrice(price)} per seat`, 'Includes food and refreshments']
+  const facts = [EVENT_DATE_SHORT, ...EVENT.time.split(' · '), EVENT_PLACE, `${formatPrice(price)} per seat`, 'Snacks and refreshments']
 
   useEffect(() => {
     getSeats().then(seats => { setAvailableSeats(seats); setLive(true) }, () => {})
@@ -69,8 +72,15 @@ export default function Page() {
         <p className="eyebrow-caps">Now booking</p>
         <h1>{EVENT_TITLE}</h1>
         <p className="facts-line">{facts.map((fact, i) => <Fragment key={fact}>{i > 0 && ' '}<span>{fact}{i < facts.length - 1 && ' ·'}</span></Fragment>)}</p>
-        <p className="cause-line">Your seat helps bring clean water to Filipino communities.</p>
-        <p className="impact-line">One ₱3,500 water filter gives 25 people clean water for 5 to 10 years.</p>
+        <p className="cause-line">Every seat helps bring clean water to 4 Filipinos.</p>
+        <PrizesPanel onOpenChange={setPrizesOpen}>
+          <span className="prizes-thumbs">{RAFFLE_THUMBS.map(src => <img key={src} src={src} alt="" width={44} height={44} decoding="async" />)}</span>
+          <span className="prizes-strip-text">
+            <strong>Get a chance to win prizes</strong>
+            <span className="prizes-strip-value">Prizes worth ₱500 to ₱10,000 each</span>
+            <span className="prizes-strip-link">See the prizes <span aria-hidden="true">›</span></span>
+          </span>
+        </PrizesPanel>
         <div className="status-row">
           <span className="status-pill"><b>{animatedSeatsLeft}</b> seats available</span>
           {live ? <span className="live eyebrow-caps"><i aria-hidden="true" />Live</span> : <span className="live">Connecting…</span>}
@@ -92,7 +102,7 @@ export default function Page() {
         <BookingPanel settings={settings} selected={selected} onSelectedChange={setSelected} onSubmittingChange={setSubmitting} onBookedChange={setBooked} onReserveMore={() => { setSheetOpen(false); scrollToMap() }} sheetOpen={sheetOpen} onSheetOpenChange={setSheetOpen} />
       </div>
     </section>
-    <EventExclusives settings={settings} blocked={sheetOpen} />
-    <footer><div className="container container-wide footer-inner"><p>© 2026 Waves for Water Philippines · Questions? <a href="mailto:w4wph.movies4water@gmail.com">w4wph.movies4water@gmail.com</a>{POLICIES.map(({ href, label }) => <Fragment key={href}> · <a href={href} target="_blank" rel="noopener noreferrer">{label}</a></Fragment>)}</p></div></footer>
+    <EventExclusives settings={settings} blocked={sheetOpen || prizesOpen} />
+    <footer><div className="container container-wide footer-inner"><p>© 2026 Waves For Water Philippines · Questions? <a href="mailto:w4wph.movies4water@gmail.com">w4wph.movies4water@gmail.com</a>{POLICIES.map(({ href, label }) => <Fragment key={href}> · <a href={href} target="_blank" rel="noopener noreferrer">{label}</a></Fragment>)}</p></div></footer>
   </main>
 }

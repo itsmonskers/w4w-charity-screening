@@ -290,12 +290,78 @@ button:disabled:not(.seat) {
   text-transform: uppercase;
 }
 
-/* Impact explainer under the cause line: Hanken, since Cinzel may lack ₱ */
-.impact-line {
-  margin: 4px 0 0;
+/* Prize strip under the cause line: one button that opens the prizes panel. Laptop: a slim
+   pill that hugs its content, all in one row; phone (≤700px): full width, link on its own line.
+   Lighter than "Pick your seats", which stays the main button here. Hanken, since Cinzel may lack ₱ */
+.prizes-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 6px 22px 6px 6px;
+  border: 1px solid var(--ev-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ev-bg) 85%, transparent);
   color: var(--ev-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Three round thumbnails, overlapping; decorative (empty alt) */
+.prizes-thumbs {
+  display: flex;
+  flex: none;
+}
+
+.prizes-thumbs img {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--ev-bg);
+  border-radius: 999px;
+  background: #fff;
+  object-fit: cover;
+}
+
+.prizes-thumbs img + img {
+  margin-left: -14px;
+}
+
+/* Title and value stacked; the link sits beside them on laptop */
+.prizes-strip-text {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 20px;
+  row-gap: 2px;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.4;
+}
+
+.prizes-strip-text strong {
+  color: var(--ev-text);
+  font-size: 14px;
+}
+
+/* "Prizes worth ₱500 to ₱10,000 each": larger and white so it reads at a glance */
+.prizes-strip-value {
+  color: var(--ev-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.prizes-strip-link {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--ev-gold);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prizes-strip:hover .prizes-strip-link {
+  text-decoration: underline;
 }
 
 .status-row {
@@ -811,6 +877,58 @@ button:disabled:not(.seat) {
   line-height: 1.4;
 }
 
+/* "What's included" box above "Reserve seats" (shown once a seat is picked) */
+.included {
+  padding: 16px;
+  border: 1px solid var(--ev-gold);
+  border-radius: 14px;
+  background: var(--ev-panel);
+}
+
+.included-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: var(--ev-gold);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.included-label svg {
+  width: 16px;
+  height: 16px;
+}
+
+.included ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.included li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--ev-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.included strong {
+  color: var(--ev-text);
+}
+
+/* Water drop in blue, like the popup's impact box; gift and bottle stay gold */
+.included .included-drop {
+  color: var(--ev-accent);
+}
+
 /* Dark inputs */
 .field {
   display: flex;
@@ -1129,12 +1247,15 @@ textarea.input {
   color: var(--ev-text);
 }
 
-/* Event exclusives popup: a cinema ticket (modal <dialog>); a bottom sheet below 700px */
-html:has(.exclusives[open]) {
+/* Event exclusives popup: a cinema ticket (modal <dialog>); a bottom sheet below 700px.
+   The prizes panel shares the same dialog box, entrance and sheet rules. */
+html:has(.exclusives[open]),
+html:has(.prizes[open]) {
   overflow: hidden;
 }
 
-.exclusives {
+.exclusives,
+.prizes {
   width: min(460px, 100% - 32px);
   max-width: none;
   max-height: calc(100% - 32px);
@@ -1147,11 +1268,13 @@ html:has(.exclusives[open]) {
   overscroll-behavior: contain;
 }
 
-.exclusives[open] {
+.exclusives[open],
+.prizes[open] {
   animation: ticket-in .4s ease-out;
 }
 
-.exclusives::backdrop {
+.exclusives::backdrop,
+.prizes::backdrop {
   background: color-mix(in srgb, var(--ev-bg) 72%, transparent);
 }
 
@@ -1351,6 +1474,160 @@ html:has(.exclusives[open]) {
   color: var(--ev-accent);
   font-size: clamp(14px, 4.4vw, 18px);
   font-weight: 700;
+}
+
+/* Prizes panel ("See the prizes"): same dialog box as the popup, one card, prizes by sponsor */
+.prizes-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: var(--ev-panel);
+  border: 1px solid var(--ev-line);
+  border-radius: 16px;
+}
+
+.prizes-top {
+  position: relative;
+  padding-right: 52px;
+}
+
+.prizes-title {
+  margin: 0 0 6px;
+  font-size: clamp(20px, 6vw, 24px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.prizes-lead {
+  margin: 0;
+  color: var(--ev-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.prizes-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prizes-sponsor {
+  margin: 0;
+  color: var(--ev-gold);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.prizes-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.prizes-list li + li {
+  border-top: 1px solid var(--ev-line);
+}
+
+/* Columns: photo icon · name · quantity · chevron (icon slots stay empty on rows without a photo) */
+.prizes-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ev-text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+button.prizes-row {
+  cursor: pointer;
+}
+
+button.prizes-row:hover {
+  background: color-mix(in srgb, var(--ev-accent) 8%, transparent);
+}
+
+.prizes-row-icon {
+  display: inline-flex;
+  color: var(--ev-muted);
+}
+
+.prizes-row-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.prizes-qty {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--ev-gold);
+  color: var(--ev-bg);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Photo viewer: a nested modal <dialog> over the panel; × / Esc / tapping outside close it */
+.prizes-viewer {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 64px 16px 24px;
+  border: 0;
+  background: color-mix(in srgb, var(--ev-bg) 94%, transparent);
+  color: var(--ev-text);
+}
+
+.prizes-viewer[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prizes-viewer::backdrop {
+  background: transparent;
+}
+
+.prizes-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: min(100%, 720px);
+  margin: 0;
+}
+
+.prizes-photo img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 160px);
+  border-radius: 12px;
+  background: #fff;
+  object-fit: contain;
+}
+
+.prizes-photo figcaption {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
 }
 
 /* Footer */
@@ -1562,12 +1839,14 @@ footer {
   cursor: pointer;
 }
 
-.admin-nav-link:hover {
+.admin-nav-link:hover,
+.admin-tab:hover {
   background: color-mix(in srgb, var(--ev-accent) 8%, transparent);
 }
 
-/* Current page: gold */
-.admin-nav-link[aria-current="page"] {
+/* Current page (and Check-in history's selected tab): gold */
+.admin-nav-link[aria-current="page"],
+.admin-tab[aria-selected="true"] {
   background: color-mix(in srgb, var(--ev-gold) 10%, transparent);
   border-color: color-mix(in srgb, var(--ev-gold) 60%, transparent);
   color: var(--ev-gold);
@@ -1836,6 +2115,312 @@ footer {
   text-align: center;
 }
 
+/* Event-day check-in (#checkin): phone-first, one screen at a time, big tap targets */
+.admin-checkin {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-checkin-panel {
+  align-items: stretch;
+  margin-top: 16px;
+}
+
+.admin-checkin-panel.is-error {
+  border-color: #d64545;
+}
+
+.admin-checkin-panel.is-done {
+  border-color: var(--ev-accent);
+}
+
+.admin-checkin-panel > .admin-badge,
+.admin-checkin-panel > .admin-ref,
+.admin-checkin-panel > .admin-back {
+  align-self: flex-start;
+}
+
+.admin-checkin-heading {
+  margin: 0;
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* Gets focus on every new screen; not interactive, so no ring */
+.admin-checkin-heading:focus {
+  outline: none;
+}
+
+.admin-checkin-subheading {
+  margin: 0;
+  color: var(--ev-muted);
+  font-family: var(--font-body), Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-checkin-search {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* In this column the toolbar's 240px flex-basis would become a height */
+.admin-checkin-search .admin-search {
+  flex: none;
+}
+
+.admin-checkin-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-checkin-buttons > .btn-primary,
+.admin-checkin-buttons > .btn-ghost {
+  flex: 1 1 160px;
+}
+
+.admin-checkin-buttons > .admin-checkin-main {
+  flex-basis: 100%;
+}
+
+/* The one big button per screen (Scan QR code, Check in N guests, Scan next guest) */
+.admin .admin-checkin-main {
+  min-height: 56px;
+  font-size: 18px;
+}
+
+.admin-checkin-panel .admin-warning svg {
+  vertical-align: -3px;
+}
+
+.admin-checkin-warning-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.admin-warning ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  font-weight: 500;
+}
+
+/* Seats: selected = checking in now (gold, like the guest page); dashed = left for later */
+.admin-seat-chips {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-seat-chips legend {
+  padding: 0;
+  color: var(--ev-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-seat-chips legend span {
+  color: var(--ev-muted);
+  font-weight: 400;
+}
+
+.admin-seat-chips div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.admin-seat-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 76px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px dashed var(--ev-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ev-muted);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-seat-chip[aria-pressed="true"] {
+  border: 1px solid var(--ev-gold);
+  background: var(--ev-gold);
+  color: var(--ev-bg);
+}
+
+.admin-allergies {
+  padding: 12px 14px;
+  border: 1px solid var(--ev-gold);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ev-gold) 10%, var(--ev-panel));
+}
+
+.admin-allergies p {
+  margin: 0;
+  color: var(--ev-text);
+  font-size: 16px;
+  white-space: pre-line;
+}
+
+.admin-allergies .admin-allergies-title {
+  margin-bottom: 4px;
+  color: var(--ev-gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.admin-checkin-undo {
+  flex-basis: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--ev-line);
+  border-radius: 10px;
+}
+
+.admin-checkin-undo p {
+  margin: 0 0 10px;
+  color: var(--ev-text);
+  font-size: 15px;
+}
+
+.admin-checkin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 16px;
+}
+
+/* Check-in history tabs (Not arrived yet · Arrived · History): pills on one row down to 320px;
+   the selected one is gold like the sidebar's current page. No counts in the labels. */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-tab {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--ev-line);
+  border-radius: 999px;
+  color: var(--ev-muted);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Check-in history (#checkin-history): undone entries are greyed out; the word "Undone" says it */
+.admin-row.is-undone .admin-row-button {
+  color: var(--ev-muted);
+}
+
+/* Camera scanner: square live view with a gold aiming frame */
+.admin-scanner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-scanner-view {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--ev-input);
+  border: 1px solid var(--ev-line);
+  border-radius: 14px;
+}
+
+.admin-scanner-view.is-off {
+  display: none;
+}
+
+.admin-scanner-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-scanner-frame {
+  position: absolute;
+  inset: 16%;
+  border: 3px solid var(--ev-gold);
+  border-radius: 16px;
+  box-shadow: 0 0 0 999px color-mix(in srgb, var(--ev-bg) 35%, transparent);
+  pointer-events: none;
+}
+
+.admin-scanner-note {
+  margin: 0;
+  color: var(--ev-muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+.admin-scanner-note.is-error {
+  color: var(--error-on-dark);
+  text-align: left;
+}
+
+/* Tools → Send check-in QR codes (#qr-emails) */
+.admin-qr-emails {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.admin-qr-emails .admin-rows {
+  margin: 0;
+}
+
+.admin-qr-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 16px;
+}
+
+.admin-qr-row-actions {
+  flex-basis: 100%;
+}
+
+.admin-qr-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.admin-qr-failed {
+  color: var(--error-on-dark);
+  font-size: 13px;
+}
+
 /* Emails that did not send: stays on every page until each is dismissed */
 .admin-email-warnings {
   margin-top: 12px;
@@ -1883,6 +2468,32 @@ footer {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* Confirmed emails sent without the QR code: gold notes (.admin-warning), kept until dismissed */
+.admin-noqr-notes {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-noqr-notes li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-noqr-notes p {
+  margin: 0;
+}
+
+.admin-noqr-notes a {
+  color: inherit;
+  text-decoration: underline;
 }
 
 /* Guided check: All done */
@@ -2612,6 +3223,35 @@ footer {
   font-size: 15px;
 }
 
+/* Confirm step: optional Acknowledgment Receipt (the picker reuses the guest page's .upload box) */
+.admin-receipt-chosen {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.admin-receipt-chosen .admin-reason {
+  width: 100%;
+}
+
+.admin-receipt-file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  color: var(--ev-text);
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.admin-receipt-file span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ev-muted);
+}
+
 /* Animations */
 @keyframes projector-drift {
   from {
@@ -2871,6 +3511,27 @@ footer {
     margin-top: 14px;
   }
 
+  /* Prize strip: full width between thin lines; the link goes on its own line under the text */
+  .prizes-strip {
+    display: flex;
+    width: 100%;
+    padding: 12px 0;
+    border-width: 1px 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .prizes-strip-text {
+    grid-template-columns: auto;
+    justify-content: start;
+  }
+
+  .prizes-strip-link {
+    grid-column: 1;
+    grid-row: auto;
+    margin-top: 2px;
+  }
+
   .seat-scroll-hint {
     display: block;
   }
@@ -2915,15 +3576,23 @@ footer {
     padding: 14px 16px;
   }
 
-  /* Event exclusives: a bottom sheet with a grab handle; the page stays visible above it */
-  .exclusives {
+  /* Event exclusives and prizes panel: a bottom sheet with a grab handle; the page stays visible above it */
+  .exclusives,
+  .prizes {
     width: 100%;
     max-height: calc(100% - 48px);
     margin: auto 0 0;
   }
 
-  .exclusives[open] {
+  .exclusives[open],
+  .prizes[open] {
     animation: sheet-up .35s ease-out;
+  }
+
+  .prizes-card {
+    padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
   }
 
   .exclusives-top {

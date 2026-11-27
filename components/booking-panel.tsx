@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, type Dispatch, type FormEvent, type ReactNode, type RefObject, type SetStateAction } from 'react'
-import { Check, Copy, Download, Upload, X } from 'lucide-react'
+import { Check, Copy, Download, Droplet, Gift, Ticket as TicketIcon, Upload, X } from 'lucide-react'
+import { BottleIcon, SHOW_FOOD_LINE } from '@/components/event-exclusives'
 import { reserveSeats, type ReserveError, type ReserveInput, type Settings } from '@/lib/booking-store'
 import { EVENT, formatPrice } from '@/lib/event-config'
 import { bundleOffer, quote } from '@/lib/pricing'
@@ -227,8 +228,8 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
           <p>Scan with GCash, Maya or your bank app, enter the exact amount due, then attach the screenshot below.</p>
           {/* Static UnionBank QR Ph code (no amount inside): the guest types the amount */}
           <figure className="qr-card">
-            <img src="/payment-qr.png" width={360} height={360} alt="InstaPay QR code for the Waves for Water Organization, Inc. UnionBank account" />
-            <figcaption>Account name: <strong>Waves for Water Organization, Inc.</strong> · UnionBank via InstaPay</figcaption>
+            <img src="/payment-qr.png" width={360} height={360} alt="InstaPay QR code for the Waves For Water Organization, Inc. UnionBank account" />
+            <figcaption>Account name: <strong>Waves For Water Organization, Inc.</strong> · UnionBank via InstaPay</figcaption>
           </figure>
           <a className="btn-ghost" href="/payment-qr.png" download="W4W-UnionBank-QR.png"><Download /> Save QR code</a>
           <p>Before you pay, check that your app shows the account name <strong>WAVES FOR WATER ORGANIZAT…</strong></p>
@@ -257,10 +258,11 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
         </Field>
 
         <div className="field">
-          <label className="consent"><input id="bk-consent" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} {...invalid('consent')} aria-describedby={describedBy(shown.consent && 'bk-consent-error')} /><span>I have read the <PolicyLink {...PRIVACY} /> of Waves for Water Philippines and agree to W4W processing my details for this booking under the Data Privacy Act of 2012.</span></label>
+          <label className="consent"><input id="bk-consent" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} {...invalid('consent')} aria-describedby={describedBy(shown.consent && 'bk-consent-error')} /><span>I have read the <PolicyLink {...PRIVACY} /> of Waves For Water Philippines and agree to W4W processing my details for this booking under the Data Privacy Act of 2012.</span></label>
           {shown.consent && <p className="field-error" id="bk-consent-error">{shown.consent}</p>}
         </div>
 
+        {selected.length > 0 && <Included count={selected.length} />}
         {settings?.bookingsOpen === false && <p className="info-notice" role="status">Bookings are closed</p>}
         <button type="submit" className="btn-primary full" disabled={loading || !settings?.bookingsOpen}>{loading ? 'Reserving…' : 'Reserve seats'} <Check /></button>
         {showErrors && errorCount > 0 && <p className="field-error" role="alert">Please check the {errorCount === 1 ? 'highlighted field' : `${errorCount} highlighted fields`} above.</p>}
@@ -268,6 +270,19 @@ export function BookingPanel({ settings, selected, onSelectedChange, onSubmittin
       </form>}
     </div>
   </aside>
+}
+
+// "What's included" box above "Reserve seats"; 4 Filipinos per seat (DESIGN.md Section 0)
+function Included({ count }: { count: number }) {
+  const one = count === 1
+  return <section className="included" aria-labelledby="bk-included-title">
+    <h2 id="bk-included-title" className="included-label"><TicketIcon aria-hidden="true" />What’s included</h2>
+    <ul>
+      <li><Gift className="exclusives-icon" aria-hidden="true" /><span><strong>{count} raffle {one ? 'entry' : 'entries'}</strong> (1 per seat) for prizes worth ₱500 to ₱10,000 each</span></li>
+      {SHOW_FOOD_LINE && <li><BottleIcon /><span><strong>Snacks and refreshments</strong></span></li>}
+      <li><Droplet className="exclusives-icon included-drop" aria-hidden="true" /><span>{one ? 'Your seat helps' : `Your ${count} seats help`} bring clean water to <strong>{count * 4} Filipinos</strong></span></li>
+    </ul>
+  </section>
 }
 
 function Ticket({ booking, headingRef, onReserveMore }: { booking: Booking; headingRef: RefObject<HTMLHeadingElement | null>; onReserveMore: () => void }) {

@@ -2,23 +2,29 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { RefreshCw, Search } from 'lucide-react'
-import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getSeatCounts, onAuthChange, signIn, signOut, type AdminBooking, type SeatCounts } from '@/lib/admin-api'
+import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getCheckInState, getSeatCounts, onAuthChange, signIn, signOut, type AdminBooking, type CheckInState, type SeatCounts } from '@/lib/admin-api'
 import { formatPrice } from '@/lib/event-config'
 import { BookingList } from './admin/booking-lists'
+import { CheckIn } from './admin/check-in'
+import { CheckInHistory, HISTORY_VIEW, type HistoryView } from './admin/check-in-history'
+import { QrScanner } from './admin/qr-scanner'
+import { SendQrEmails } from './admin/send-qr-emails'
 import { CopyButton } from './admin/copy-button'
-import { EmailWarnings, type EmailWarningItem } from './admin/email-warning'
+import { EmailWarnings, NoQrNotes, type EmailWarningItem } from './admin/email-warning'
 import { GuidedCheck } from './admin/guided-check'
 import { AdminHome } from './admin/home'
 import { RefreshPauseContext } from './admin/refresh-pause'
 import { ReviewStep, outcomeNotice, type StepKind, type StepOutcome } from './admin/review-steps'
 import { Screenshot } from './admin/screenshot'
-import { AdminShell, type AdminRoute } from './admin/shell'
+import { AdminShell, isCheckInPage, type AdminRoute } from './admin/shell'
 import { exportApproved, formatTime, manilaTime, matchesSearch, seatLabel, seatsByRow } from './admin/format'
 
 const REFRESH_MS = 30_000
+// Check-in and Check-in history: the arrived counter refreshes faster, since several phones scan at once
+const CHECKIN_REFRESH_MS = 10_000
 const NO_ACCESS = 'This account doesn’t have admin access.'
 // #check is the guided check; #waiting keeps the full cards; #confirmed and #not-approved are simple lists.
-const TITLES: Record<AdminRoute, string> = { home: 'Home', check: 'Waiting for review', waiting: 'All waiting bookings', confirmed: 'Confirmed', 'not-approved': 'Not approved' }
+const TITLES: Record<AdminRoute, string> = { home: 'Home', checkin: 'Check-in', 'checkin-scan': 'Check-in', 'checkin-guest': 'Check-in', 'checkin-history': 'Check-in history', check: 'Waiting for review', waiting: 'All waiting bookings', confirmed: 'Confirmed', 'not-approved': 'Not approved', 'qr-emails': 'Send check-in QR codes' }
 
 // Pages live in the URL hash (#home, #check, #confirmed, #not-approved) so the phone's Back button works.
 function readRoute(): AdminRoute {
@@ -90,6 +96,7 @@ type Notice = { message: string; error?: boolean; handled?: boolean }
 function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => void }) {
   const [bookings, setBookings] = useState<AdminBooking[] | null>(null)
   const [seats, setSeats] = useState<SeatCounts | null>(null)
+  const [checkIn, setCheckIn] = useState<CheckInState | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
@@ -101,6 +108,19 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   const [notice, setNotice] = useState<Notice | null>(null)
   // Emails that didn't send: kept (across pages) until each one is dismissed
   const [warnings, setWarnings] = useState<EmailWarningItem[]>([])
+  // Confirmed emails sent without the QR image: kept (across pages) until dismissed
+  const [noQr, setNoQr] = useState<AdminBooking[]>([])
+  // A booking tapped in Check-in history: the Check-in page opens its card (#checkin-guest, one
+  // step after the history, so Back returns there)
+  const [openCheckIn, setOpenCheckIn] = useState<string | null>(null)
+  const clearOpenCheckIn = useCallback(() => setOpenCheckIn(null), [])
+  // Check-in history's tab and search: kept while a card opened from it is shown (so "‹ History"
+  // comes back to the same list), reset on leaving Event day's pages
+  const [historyView, setHistoryView] = useState<HistoryView>(HISTORY_VIEW)
+  const openFromHistory = useCallback((bookingId: string) => {
+    setOpenCheckIn(bookingId)
+    window.location.hash = 'checkin-guest'
+  }, [])
   // The guided check is on its All done screen: title "Payment check", and the calm
   // "someone else already handled" message is cleared
   const [checkDone, setCheckDone] = useState(false)
@@ -129,9 +149,11 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       lastLoad.current = Date.now()
       inFlight.current = (async () => {
         try {
-          const [seatCounts, rows] = await Promise.all([getSeatCounts(), getBookings()])
+          // The check-in counter never blocks the payment data: if it fails, the last one stays
+          const [seatCounts, rows, arrivals] = await Promise.all([getSeatCounts(), getBookings(), getCheckInState().catch(() => null)])
           setSeats(seatCounts)
           setBookings(rows)
+          if (arrivals) setCheckIn(arrivals)
           setUpdatedAt(manilaTime.format(new Date()))
           setLoadError('')
         } catch {
@@ -145,15 +167,18 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     if (manual) setLoading(false)
   }, [])
 
-  // Every 30 seconds, but not while paused. After a pause, refresh straight away only if one is due.
+  // Every 30 seconds (10 on Check-in), but not while paused. After a pause, refresh straight
+  // away only if one is due.
   const paused = pauses > 0 || hidden
+  const checkInPage = isCheckInPage(route)
+  const every = checkInPage || route === 'checkin-history' ? CHECKIN_REFRESH_MS : REFRESH_MS
   useEffect(() => {
     if (paused) return
     let timer = 0
-    const tick = () => { refresh(); timer = window.setTimeout(tick, REFRESH_MS) }
-    timer = window.setTimeout(tick, Math.max(0, lastLoad.current + REFRESH_MS - Date.now()))
+    const tick = () => { refresh(); timer = window.setTimeout(tick, every) }
+    timer = window.setTimeout(tick, Math.max(0, lastLoad.current + every - Date.now()))
     return () => window.clearTimeout(timer)
-  }, [paused, refresh])
+  }, [paused, refresh, every])
 
   // Hidden browser tab: pause. Visible again: refresh once (unless a step, viewer or menu is open).
   useEffect(() => {
@@ -174,10 +199,16 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
 
   // On every page change (not the first load): clear the last result message and the search,
   // close any open step, back to the top, focus on the page title. Email warnings stay.
+  // Between Check-in's own steps only scroll to the top: Check-in stays open and focuses its card.
+  const lastRoute = useRef(route)
   useEffect(() => {
+    const previous = lastRoute.current
+    lastRoute.current = route
     if (firstRoute.current) { firstRoute.current = false; return }
+    if (isCheckInPage(previous) && isCheckInPage(route)) { window.scrollTo(0, 0); return }
     setNotice(null)
     setQuery('')
+    if (!isCheckInPage(route) && route !== 'checkin-history') setHistoryView(HISTORY_VIEW)
     setReview(null)
     window.scrollTo(0, 0)
     title.current?.focus()
@@ -185,14 +216,15 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
 
   const all = bookings ?? []
   const waiting = all.filter(b => b.status === 'pending' && matchesSearch(b, query)).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-  const navCounts = bookings && { pending: all.filter(b => b.status === 'pending').length, approved: all.filter(b => b.status === 'approved').length, rejected: all.filter(b => b.status === 'rejected').length }
+  const navCounts = bookings && { pending: all.filter(b => b.status === 'pending').length, approved: all.filter(b => b.status === 'approved').length, rejected: all.filter(b => b.status === 'rejected').length, checkIn: checkIn ? `${checkIn.arrived}/${checkIn.total}` : undefined }
 
   // Every confirm / not-approved result (guided check or list): message, email warning, reload
   function handleOutcome(outcome: StepOutcome, booking: AdminBooking) {
     setNotice(outcomeNotice(outcome, booking))
     if (outcome.kind === 'done' && !outcome.emailSent) {
-      setWarnings(current => [...current, { key: `${booking.id}-${Date.now()}`, kind: outcome.action === 'approve' ? 'approved' : 'rejected', booking }])
+      setWarnings(current => [...current, { key: `${booking.id}-${Date.now()}`, kind: outcome.action === 'approve' ? 'approved' : 'rejected', booking, receipt: outcome.receipt }])
     }
+    if (outcome.kind === 'done' && outcome.withoutQr) setNoQr(current => [...current.filter(b => b.id !== booking.id), booking])
     refresh()
   }
 
@@ -210,7 +242,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       {route === 'home' && <p className="admin-lede">Here’s what needs you today.</p>}
     </header>
 
-    {route !== 'home' && route !== 'check' && <div className="admin-toolbar">
+    {route !== 'home' && route !== 'check' && !checkInPage && route !== 'checkin-history' && route !== 'qr-emails' && <div className="admin-toolbar">
       <label className="admin-search">
         <Search size={16} aria-hidden />
         <span className="sr-only">Search bookings</span>
@@ -218,13 +250,17 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
       </label>
       <button className="btn-ghost admin-btn-small" type="button" onClick={() => refresh(true)} disabled={loading}><RefreshCw size={16} aria-hidden />{loading ? 'Refreshing…' : 'Refresh'}</button>
     </div>}
-    <p className="admin-updated">{updatedAt ? `Updated ${updatedAt} · refreshes every 30 seconds` : 'Loading…'}</p>
+    <p className="admin-updated">{updatedAt ? `Updated ${updatedAt} · refreshes every ${every / 1000} seconds` : 'Loading…'}</p>
 
     {loadError && <p className="admin-notice is-error" role="alert">{loadError}</p>}
     <EmailWarnings warnings={warnings} onDismiss={key => setWarnings(current => current.filter(w => w.key !== key))} onAllDismissed={() => title.current?.focus()} />
+    <NoQrNotes bookings={noQr} onDismiss={id => { setNoQr(current => current.filter(b => b.id !== id)); title.current?.focus() }} />
     {notice && <p className={`admin-notice${notice.error ? ' is-error' : ''}`} role="status">{notice.message}</p>}
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
+      : isCheckInPage(route) ? <CheckIn page={route} bookings={bookings} state={checkIn} onChanged={() => refresh()} onNoAccess={onNoAccess} scanner={onCode => <QrScanner onCode={onCode} />} openBookingId={openCheckIn} onOpened={clearOpenCheckIn} />
+      : route === 'checkin-history' ? <CheckInHistory bookings={bookings} state={checkIn} view={historyView} onView={setHistoryView} onOpen={openFromHistory} onNoAccess={onNoAccess} />
+      : route === 'qr-emails' ? <SendQrEmails bookings={bookings} />
       : route === 'check' ? <GuidedCheck bookings={bookings} onOutcome={handleOutcome} onClearNotice={() => setNotice(null)} onNoAccess={onNoAccess} onAllDone={onAllDone} openWarnings={warnings.map(w => w.booking.id)} />
       : route === 'confirmed' ? <BookingList bookings={bookings} status="approved" query={query} />
       : route === 'not-approved' ? <BookingList bookings={bookings} status="rejected" query={query} />

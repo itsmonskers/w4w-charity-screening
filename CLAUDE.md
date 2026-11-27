@@ -1,7 +1,7 @@
 # CLAUDE.md — W4W Doomsday Charity Screening microsite
 
 Read `DESIGN.md` before any UI change. Section 0 (project overrides) wins over
-the rest of that file; the rest is the Waves for Water Philippines design
+the rest of that file; the rest is the Waves For Water Philippines design
 standard.
 
 ## Project

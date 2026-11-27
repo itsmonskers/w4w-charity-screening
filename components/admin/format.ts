@@ -8,6 +8,14 @@ const manilaShortDay = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila
 // "Nov 21" (Manila time), for list rows
 export const manilaDay = (iso: string) => manilaShortDay.format(new Date(iso))
 export const formatTime = (iso: string) => `${manilaTime.format(new Date(iso))} (Manila)`
+const manilaClockFormat = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit' })
+// "4:02 PM" (Manila), for check-in times on the day
+export const manilaClock = (iso: string) => manilaClockFormat.format(new Date(iso))
+// Seat ids in row order, then seat number: L-7, L-8, M-2
+export const sortSeats = (seats: string[]) => [...seats].sort((a, b) => {
+  const [rowA, numA] = a.split('-'), [rowB, numB] = b.split('-')
+  return rowA.localeCompare(rowB) || Number(numA) - Number(numB)
+})
 export const seatLabel = (count: number) => `${count} seat${count === 1 ? '' : 's'}`
 
 // "Row L · Seats 7, 8, 9", one line per row, rows and seats ascending (same format as the e-ticket)
