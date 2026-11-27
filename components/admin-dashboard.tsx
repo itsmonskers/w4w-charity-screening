@@ -6,7 +6,7 @@ import { ADMIN_AVAILABLE, checkIsAdmin, getBookings, getCheckInState, getSeatCou
 import { formatPrice } from '@/lib/event-config'
 import { BookingList } from './admin/booking-lists'
 import { CheckIn } from './admin/check-in'
-import { CheckInHistory } from './admin/check-in-history'
+import { CheckInHistory, HISTORY_VIEW, type HistoryView } from './admin/check-in-history'
 import { QrScanner } from './admin/qr-scanner'
 import { SendQrEmails } from './admin/send-qr-emails'
 import { CopyButton } from './admin/copy-button'
@@ -114,6 +114,9 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
   // step after the history, so Back returns there)
   const [openCheckIn, setOpenCheckIn] = useState<string | null>(null)
   const clearOpenCheckIn = useCallback(() => setOpenCheckIn(null), [])
+  // Check-in history's tab and search: kept while a card opened from it is shown (so "‹ History"
+  // comes back to the same list), reset on leaving Event day's pages
+  const [historyView, setHistoryView] = useState<HistoryView>(HISTORY_VIEW)
   const openFromHistory = useCallback((bookingId: string) => {
     setOpenCheckIn(bookingId)
     window.location.hash = 'checkin-guest'
@@ -205,6 +208,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
     if (isCheckInPage(previous) && isCheckInPage(route)) { window.scrollTo(0, 0); return }
     setNotice(null)
     setQuery('')
+    if (!isCheckInPage(route) && route !== 'checkin-history') setHistoryView(HISTORY_VIEW)
     setReview(null)
     window.scrollTo(0, 0)
     title.current?.focus()
@@ -255,7 +259,7 @@ function Dashboard({ email, onNoAccess }: { email: string; onNoAccess: () => voi
 
     {route === 'home' ? <AdminHome bookings={bookings} seats={seats} />
       : isCheckInPage(route) ? <CheckIn page={route} bookings={bookings} state={checkIn} onChanged={() => refresh()} onNoAccess={onNoAccess} scanner={onCode => <QrScanner onCode={onCode} />} openBookingId={openCheckIn} onOpened={clearOpenCheckIn} />
-      : route === 'checkin-history' ? <CheckInHistory state={checkIn} onOpen={openFromHistory} onNoAccess={onNoAccess} />
+      : route === 'checkin-history' ? <CheckInHistory bookings={bookings} state={checkIn} view={historyView} onView={setHistoryView} onOpen={openFromHistory} onNoAccess={onNoAccess} />
       : route === 'qr-emails' ? <SendQrEmails bookings={bookings} />
       : route === 'check' ? <GuidedCheck bookings={bookings} onOutcome={handleOutcome} onClearNotice={() => setNotice(null)} onNoAccess={onNoAccess} onAllDone={onAllDone} openWarnings={warnings.map(w => w.booking.id)} />
       : route === 'confirmed' ? <BookingList bookings={bookings} status="approved" query={query} />

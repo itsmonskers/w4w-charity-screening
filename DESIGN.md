@@ -635,8 +635,26 @@ gold border is its non-color cue.
   - **Check-in history (`#checkin-history`, Event day).** Read-only, its own
     page so the door screen stays simple. Top: the same count as Check-in,
     "[X] of [Y] seats checked in now" (Y = seats of confirmed bookings) and
-    the gold progress bar. Then "History: every check-in and undo, newest
-    first", a "Search name or reference" box, and one row per action
+    the gold progress bar. Under it three tabs (`.admin-tabs` /
+    `.admin-tab`: pills at least 44px tall, one row down to 320px, the
+    selected one gold like the sidebar's current page; arrow keys move
+    between them): **Not arrived yet · Arrived · History**, opening on Not
+    arrived yet (who the door is still waiting for). No counts in the
+    labels (they'd wrap on small phones); the line under the tabs says it
+    instead: "2 bookings still to arrive", "3 bookings fully arrived", or on
+    History "History: every check-in and undo, newest first". Then a "Search
+    name or reference" box that filters the open tab (name and reference
+    only). Tapping any row opens that booking's card in calm mode with "‹
+    History"; the tab and the search are still there when you come back
+    (they reset when you leave Event day's pages).
+    - **Not arrived yet / Arrived:** confirmed bookings only, one row each
+      (`.admin-row`): the name over "W4W-DD-TAN2 · Row L · Seats 7, 8".
+      Not arrived yet: every booking not fully checked in, A–Z; a partly
+      arrived booking has a gold "2 of 3 arrived" badge. Arrived means every
+      seat is checked in, latest arrival first, with "Arrived 4:02 PM". Built from
+      the bookings and the per-booking arrived counts the page already
+      loads, so it doesn't need migration 008.
+    - **History:** one row per action
     (`.admin-row`): "4:02 PM · Ana Reyes" over "W4W-DD-TAN2 · Row L · Seats
     7, 8 · by Jenna"; undos start with the word "Undone" and are greyed out
     (`--ev-muted`), never colour alone. Another day's entries show the date
@@ -644,8 +662,8 @@ gold border is its non-color cue.
     where Undo already is. Refreshes every 10 seconds (not while the tab is
     hidden). Admin names: `admins.label`, else the login email. No food
     allergies or contact details. Data from `checkin_history()` (migration
-    008); before 008 is run it shows "Check-in history isn't set up yet.
-    Please tell the team lead."
+    008); before 008 is run the History tab shows "Check-in history isn't
+    set up yet. Please tell the team lead."
   - **Send check-in QR codes (`#qr-emails`, Tools).** One-time: lists
     confirmed guests who haven't had their check-in QR email, asks before
     sending ("Send 'Your check-in QR code' to these [N] guests now? Each
