@@ -155,8 +155,9 @@ gold border is its non-color cue.
          `public/prizes/` (`*-thumb.jpg`, listed in
          `components/raffle-prizes.ts`). Decorative: empty alt.
        - Next to them, Hanken: bold `--ev-text` "Get a chance to win
-         prizes" (14px), "₱9,000 to ₱10,000 worth of giveaways" in
-         `--ev-muted` (13px), and a gold text link "See the prizes ›"
+         prizes" (14px), "Prizes worth ₱500 to ₱10,000 each" in
+         `--ev-text` (15px, 600; larger so it reads at a glance, still
+         plain text: no box, no gold), and a gold text link "See the prizes ›"
          (`--ev-gold`, 14px, 600; no box, no outline; underlined on
          hover).
        - The whole strip is ONE button that opens the prizes panel
@@ -440,8 +441,8 @@ gold border is its non-color cue.
      label "What's included" with a ticket icon, then three rows with the
      popup's inline stroke icons (gift and bottle in `--ev-gold`, water
      drop in `--ev-accent` like the popup), numbers updating live:
-     gift "**[N] raffle entries** (1 per seat) for ₱9,000 to ₱10,000 worth
-     of giveaways" ("1 raffle entry" for one seat); bottle "**Snacks and
+     gift "**[N] raffle entries** (1 per seat) for prizes worth ₱500 to
+     ₱10,000 each" ("1 raffle entry" for one seat); bottle "**Snacks and
      refreshments**" (same `SHOW_FOOD_LINE` switch as the popup); water
      drop "Your [N] seats help bring clean water to **[N × 4] Filipinos**"
      (one seat: "Your seat helps bring clean water to **4 Filipinos**").

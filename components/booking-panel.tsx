@@ -278,7 +278,7 @@ function Included({ count }: { count: number }) {
   return <section className="included" aria-labelledby="bk-included-title">
     <h2 id="bk-included-title" className="included-label"><TicketIcon aria-hidden="true" />What’s included</h2>
     <ul>
-      <li><Gift className="exclusives-icon" aria-hidden="true" /><span><strong>{count} raffle {one ? 'entry' : 'entries'}</strong> (1 per seat) for ₱9,000 to ₱10,000 worth of giveaways</span></li>
+      <li><Gift className="exclusives-icon" aria-hidden="true" /><span><strong>{count} raffle {one ? 'entry' : 'entries'}</strong> (1 per seat) for prizes worth ₱500 to ₱10,000 each</span></li>
       {SHOW_FOOD_LINE && <li><BottleIcon /><span><strong>Snacks and refreshments</strong></span></li>}
       <li><Droplet className="exclusives-icon included-drop" aria-hidden="true" /><span>{one ? 'Your seat helps' : `Your ${count} seats help`} bring clean water to <strong>{count * 4} Filipinos</strong></span></li>
     </ul>

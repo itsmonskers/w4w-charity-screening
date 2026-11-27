@@ -77,7 +77,7 @@ export default function Page() {
           <span className="prizes-thumbs">{RAFFLE_THUMBS.map(src => <img key={src} src={src} alt="" width={44} height={44} decoding="async" />)}</span>
           <span className="prizes-strip-text">
             <strong>Get a chance to win prizes</strong>
-            <span>₱9,000 to ₱10,000 worth of giveaways</span>
+            <span className="prizes-strip-value">Prizes worth ₱500 to ₱10,000 each</span>
             <span className="prizes-strip-link">See the prizes <span aria-hidden="true">›</span></span>
           </span>
         </PrizesPanel>
