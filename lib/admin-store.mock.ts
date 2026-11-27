@@ -191,6 +191,8 @@ export const rejectBooking = (bookingId: string, note: string) => review('reject
 //   migration 007 hasn't been run (until reload).
 // - `window.dispatchEvent(new Event('admin-mock:history-not-set-up'))`: only the check-in
 //   history acts as if migration 008 hasn't been run (until reload).
+// - `window.dispatchEvent(new Event('admin-mock:slow-next-checkin'))`: the next lookup takes 15
+//   seconds (weak signal), to test "Looking up…" and leaving it.
 // Fake history: Grace's 3 seats checked in by "Simon", then P-3 undone by "Jenna"; Marco checked
 // in by an admin with no label (shown as their login email). Every fake check-in and undo adds to it.
 // ---------------------------------------------------------------------------
@@ -228,6 +230,7 @@ seedCheckIn('mock-marco', ['A-11'], 'patrick@example.com', 25) // admin with no 
 let failNextCheckIn = false
 let notSetUp = false
 let historyNotSetUp = false
+let slowNextLookup = false
 let checkInHooks = false
 function listenForCheckInHooks() {
   if (checkInHooks || typeof window === 'undefined') return
@@ -235,6 +238,7 @@ function listenForCheckInHooks() {
   window.addEventListener('admin-mock:fail-next-checkin', () => { failNextCheckIn = true })
   window.addEventListener('admin-mock:not-set-up', () => { notSetUp = true })
   window.addEventListener('admin-mock:history-not-set-up', () => { historyNotSetUp = true })
+  window.addEventListener('admin-mock:slow-next-checkin', () => { slowNextLookup = true })
   window.addEventListener('admin-mock:checked-in-elsewhere', event => {
     const { bookingId, seatIds } = (event as CustomEvent<{ bookingId: string; seatIds?: string[] }>).detail
     const now = new Date().toISOString()
@@ -280,7 +284,10 @@ export async function getCheckInState(): Promise<CheckInState> {
 
 async function fakeLookup(find: () => AdminBooking | undefined, log: string): Promise<CheckInLookup> {
   console.info(`[admin mock] ${log}`)
-  await delay(300)
+  listenForCheckInHooks()
+  const slow = slowNextLookup
+  slowNextLookup = false
+  await delay(slow ? 15_000 : 300)
   const trouble = checkInTrouble()
   if (trouble) return { ok: false, error: trouble }
   const booking = find()

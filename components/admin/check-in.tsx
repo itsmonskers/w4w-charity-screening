@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { AlertTriangle, Check, QrCode, Search, Undo2 } from 'lucide-react'
+import { AlertTriangle, Check, ChevronLeft, QrCode, Search, Undo2 } from 'lucide-react'
 import { MOCK_REQUESTED, checkInSeats, getAdminMode, getCheckInBooking, lookupCheckIn, undoCheckIn, type AdminBooking, type CheckInBooking, type CheckInError, type CheckInState } from '@/lib/admin-api'
 import { tokenFromQr } from '@/lib/checkin-code'
 import { manilaClock, matchesSearch, seatsByRow, sortSeats } from './format'
@@ -84,6 +84,10 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
   const shown = useRef<Screen>(screen)
   const lastGuest = useRef<Screen | null>(null) // reopened by the browser's Forward
   const focusSearch = useRef(false)
+  // Goes up whenever the guest's card is left (or the page closes): a slow lookup or check-in
+  // that finishes afterwards is ignored, so it can't pull the card back up
+  const visit = useRef(0)
+  useEffect(() => () => { visit.current++ }, [])
 
   useEffect(() => {
     shown.current = screen
@@ -95,9 +99,11 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
   const go = useCallback((next: Screen) => {
     const target = pageFor(next)
     const current = pageFor(shown.current)
+    if (target !== 'checkin-guest') visit.current++
     shown.current = next
     setScreen(next)
-    if (target === current) return
+    // Already at that address (e.g. a card opened from Check-in history): no step, keep where it came from
+    if (target === current || window.location.hash === `#${target}`) return
     if (current === 'checkin') {
       cameFrom.current = 'start'
       window.location.hash = target
@@ -110,16 +116,25 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
   const goStart = useCallback((thenSearch = false) => {
     focusSearch.current = thenSearch
     if (shown.current.kind === 'start') { if (thenSearch) search.current?.focus(); return }
+    visit.current++
     if (cameFrom.current === 'start' && window.location.hash !== '#checkin') return window.history.back()
     cameFrom.current = null
     setScreen({ kind: 'start' })
     replacePage('checkin')
   }, [])
 
+  // "‹ History": the browser's Back when the card was opened there, else straight to it
+  const goHistory = useCallback(() => {
+    visit.current++
+    if (cameFrom.current === 'history' && window.location.hash === '#checkin-guest') return window.history.back()
+    window.location.hash = 'checkin-history'
+  }, [])
+
   // The address changed from outside (Back, Forward, the menu, a reload): follow it
   useEffect(() => {
     if (page === pageFor(shown.current)) return
     if (page === 'checkin-guest' && openBookingId) return // opened from history: shown below
+    visit.current++
     if (page === 'checkin') { cameFrom.current = null; setScreen({ kind: 'start' }); return }
     if (page === 'checkin-guest' && lastGuest.current) { setScreen(lastGuest.current); return }
     // Loaded straight at the camera or a card (nothing in memory): go to the start instead,
@@ -158,7 +173,9 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
 
   const openBooking = useCallback(async function open(bookingId: string) {
     go({ kind: 'loading' })
+    const at = visit.current
     const result = await getCheckInBooking(bookingId)
+    if (visit.current !== at) return // the card was left while looking it up
     if (!result.ok) return fail(result.error, () => open(bookingId))
     go(result.booking ? { kind: 'result', booking: result.booking } : { kind: 'error', error: 'booking_not_found', retry: () => open(bookingId) })
   }, [fail, go])
@@ -175,7 +192,9 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
     const token = tokenFromQr(text)
     if (!token) return go({ kind: 'invalid' })
     go({ kind: 'loading' })
+    const at = visit.current
     const result = await lookupCheckIn(token)
+    if (visit.current !== at) return
     if (!result.ok) return fail(result.error, () => scanned(text))
     go(result.booking ? { kind: 'result', booking: result.booking } : { kind: 'invalid' })
   }, [fail, go])
@@ -192,8 +211,25 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
   const scan = () => go({ kind: 'scan' })
   const searchInstead = () => goStart(true)
 
+  // "Looking up…" taking long (weak signal): after 10 seconds also offer the way back
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    if (screen.kind !== 'loading') return
+    const timer = window.setTimeout(() => setSlow(true), 10_000)
+    return () => { window.clearTimeout(timer); setSlow(false) }
+  }, [screen])
+
+  // "‹ History" when the card was opened from Check-in history, else "‹ Check-in". Same place
+  // as the phone's Back (it uses the browser's Back when that's the step before).
+  const back = cameFrom.current === 'history'
+    ? <a className="admin-back" href="#checkin-history" aria-label="Back to Check-in history" onClick={event => { event.preventDefault(); goHistory() }}><ChevronLeft size={18} aria-hidden />History</a>
+    : <a className="admin-back" href="#checkin" aria-label="Back to Check-in" onClick={event => { event.preventDefault(); goStart() }}><ChevronLeft size={18} aria-hidden />Check-in</a>
+
+  // The check-in / undo is saved even if the card was left meanwhile; only the screen isn't changed
   async function confirm(booking: CheckInBooking, seats: string[]) {
+    const at = visit.current
     const result = await checkInSeats(booking.bookingId, seats)
+    if (visit.current !== at) return onChanged()
     if (!result.ok) {
       if (result.error === 'booking_not_confirmed') return go({ kind: 'result', booking: { ...booking, status: 'pending' } })
       return fail(result.error, () => go({ kind: 'result', booking }))
@@ -206,7 +242,9 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
   }
 
   async function undo(booking: CheckInBooking, seats: string[]) {
+    const at = visit.current
     const result = await undoCheckIn(booking.bookingId, seats)
+    if (visit.current !== at) return onChanged()
     if (!result.ok) return fail(result.error, () => go({ kind: 'result', booking }))
     onChanged()
     go({ kind: 'result', booking: result.booking, notice: result.changed.length ? `Check-in undone for ${seatLines(result.changed)}.` : 'Nothing to undo: those seats weren’t checked in.' })
@@ -222,11 +260,13 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
   </section>
 
   if (screen.kind === 'loading') return <section className="admin-card admin-checkin-panel" aria-busy="true">
+    {slow && back}
     <h2 className="admin-checkin-heading" id="checkin-heading" ref={heading} tabIndex={-1}>Looking up…</h2>
     <p className="admin-card-text" role="status">Finding the booking.</p>
   </section>
 
   if (screen.kind === 'invalid') return <section className="admin-card admin-checkin-panel is-error" aria-labelledby="checkin-heading">
+    {back}
     <h2 className="admin-checkin-heading" id="checkin-heading" ref={heading} tabIndex={-1}>Not a valid ticket</h2>
     <p className="admin-card-text" role="alert">This QR code isn’t a Movies4Water check-in code. Ask for the guest’s name or reference code.</p>
     <div className="admin-checkin-buttons">
@@ -236,6 +276,7 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
   </section>
 
   if (screen.kind === 'error') return <section className="admin-card admin-checkin-panel is-error" aria-labelledby="checkin-heading">
+    {back}
     <h2 className="admin-checkin-heading" id="checkin-heading" ref={heading} tabIndex={-1}>Something went wrong</h2>
     <p className="admin-card-text" role="alert">{ERRORS[screen.error]}</p>
     <div className="admin-checkin-buttons">
@@ -245,11 +286,12 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
     </div>
   </section>
 
-  if (screen.kind === 'result') return <ResultCard key={screen.booking.bookingId + (screen.notice ?? '')} booking={screen.booking} notice={screen.notice} headingRef={heading} onConfirm={confirm} onUndo={undo} onNext={scan} />
+  if (screen.kind === 'result') return <ResultCard key={screen.booking.bookingId + (screen.notice ?? '')} booking={screen.booking} notice={screen.notice} back={back} headingRef={heading} onConfirm={confirm} onUndo={undo} onNext={scan} />
 
   if (screen.kind === 'done') {
     const left = screen.booking.seats.filter(s => !s.checkedInAt).map(s => s.seatId)
     return <section className="admin-card admin-checkin-panel is-done" aria-labelledby="checkin-heading">
+      {back}
       <span className="admin-badge is-accent admin-badge-icon"><Check size={14} aria-hidden />Checked in</span>
       <h2 className="admin-checkin-heading" id="checkin-heading" ref={heading} tabIndex={-1}>{screen.booking.fullName}</h2>
       <p className="admin-card-text is-large" role="status">{guests(screen.changed.length)} checked in: {seatLines(screen.changed)}</p>
@@ -258,6 +300,7 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
       <div className="admin-checkin-buttons">
         <button className="btn-primary admin-checkin-main" type="button" onClick={scan}><QrCode size={20} aria-hidden />Scan next guest</button>
         <button className="btn-ghost" type="button" onClick={() => undo(screen.booking, screen.changed)}><Undo2 size={18} aria-hidden />Undo this check-in</button>
+        <button className="admin-text-link" type="button" onClick={searchInstead}><Search size={18} aria-hidden />Search next guest</button>
       </div>
     </section>
   }
@@ -312,6 +355,8 @@ export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner,
 type ResultProps = {
   booking: CheckInBooking
   notice?: string
+  // "‹ History" or "‹ Check-in", at the top-left
+  back: ReactNode
   headingRef: RefObject<HTMLHeadingElement | null>
   onConfirm: (booking: CheckInBooking, seats: string[]) => Promise<void>
   onUndo: (booking: CheckInBooking, seats: string[]) => Promise<void>
@@ -319,7 +364,7 @@ type ResultProps = {
 }
 
 // A scanned or searched booking: the seats still to arrive start selected; tap one to leave it for later
-function ResultCard({ booking, notice, headingRef, onConfirm, onUndo, onNext }: ResultProps) {
+function ResultCard({ booking, notice, back, headingRef, onConfirm, onUndo, onNext }: ResultProps) {
   const open = sortSeats(booking.seats.filter(s => !s.checkedInAt).map(s => s.seatId))
   const done = sortSeats(booking.seats.filter(s => s.checkedInAt).map(s => s.seatId))
   const [selected, setSelected] = useState<string[]>(open)
@@ -330,6 +375,7 @@ function ResultCard({ booking, notice, headingRef, onConfirm, onUndo, onNext }: 
   const run = async (action: () => Promise<void>) => { setBusy(true); await action(); setBusy(false) }
 
   return <section className={`admin-card admin-checkin-panel${confirmed ? '' : ' is-error'}`} aria-labelledby="checkin-heading" aria-busy={busy}>
+    {back}
     {notice && <p className="admin-notice" role="status">{notice}</p>}
     <span className="admin-ref">{booking.referenceCode}</span>
     <h2 className="admin-checkin-heading" id="checkin-heading" ref={headingRef} tabIndex={-1}>{booking.fullName}</h2>

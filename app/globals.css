@@ -2134,7 +2134,8 @@ footer {
 }
 
 .admin-checkin-panel > .admin-badge,
-.admin-checkin-panel > .admin-ref {
+.admin-checkin-panel > .admin-ref,
+.admin-checkin-panel > .admin-back {
   align-self: flex-start;
 }
 

@@ -609,7 +609,15 @@ gold border is its non-color cue.
       lead." and can't be checked in.
     - **Checked in:** blue CHECKED IN badge, "[N] guests checked in: Row P ·
       Seats 1, 2", seats still to arrive, seats someone else checked in
-      first, then "Scan next guest" (big) and "Undo this check-in".
+      first, then "Scan next guest" (big), "Undo this check-in" and a text
+      link "Search next guest" (to the search box, for guests without a QR).
+    - **Back link:** every guest screen (card, Checked in, Not a valid
+      ticket, Something went wrong) has `.admin-back` at its top-left:
+      "‹ History" when the card was opened from Check-in history, else
+      "‹ Check-in". It lands exactly where the phone's Back does (it uses the
+      browser's Back when that's the step before). "Looking up…" shows it
+      after 10 seconds (weak signal); a lookup or check-in that finishes after
+      the card was left never pulls it back up (a check-in is still saved).
     - **Undo:** "Undo check-in" on an already-checked-in booking asks first
       ("Undo check-in for … ? They'll show as not arrived.").
     - Check-in is one database step (`check_in_seats`, migration 007) that
