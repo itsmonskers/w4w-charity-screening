@@ -35,13 +35,17 @@ The templates below are the same text as the automatic emails
 Rules for every email:
 
 - Put the reference code and status together, exactly like this:
-  `W4W-DD-7K2Q · Confirmed`.
+  `W4W-DD-7K2Q · Confirmed` (templates 2–4; the confirmed email, template 1,
+  has no status line).
 - Copy the seats line exactly as /admin shows it, e.g. `Row L · Seats 7, 8, 9`.
 - **Check-in QR code:** the confirmed email (template 1) and template 4 carry the
   guest's check-in QR code as an image. A hand-sent email can't make it: in
   /admin, use **Download QR code** on the warning and attach the image to your
   email. Never make a QR code yourself or send someone else's.
-- Don't promise e-tickets or receipts. Neither is decided.
+- **Acknowledgment Receipt (AR):** if you have the guest's AR, attach it to the
+  confirmed email and use the "QR code and Acknowledgment Receipt" sentence in
+  template 1; without an AR, use the "QR code" sentence.
+- Don't promise e-tickets. They aren't decided.
 - Don't add any `[... TBD]` text yourself. Only keep it where the automatic
   email already shows it (for example `Amount: [PRICE TBD]`).
 
@@ -55,11 +59,13 @@ UnionBank account and pressed **Confirm and email [first name]** in /admin.
 **Subject:** Booking confirmed · [REFERENCE CODE] · Movies4Water
 
 ```
-Hi [GUEST NAME],
+Hi [GUEST NAME]!
 
-[REFERENCE CODE] · Confirmed
+Thank you for purchasing a ticket to Movies4Water! Your payment has been confirmed. 🎬💙
 
-Your payment is verified and your seats for Movies4Water - Avengers: Doomsday Block Screening are confirmed.
+[ONE OF THESE TWO SENTENCES:
+ With the AR attached: Attached to this email are your entry QR code and Acknowledgment Receipt. Kindly save your QR code and present it upon entry to the cinema for your block screening.
+ QR code only: Attached to this email is your entry QR code. Kindly save your QR code and present it upon entry to the cinema for your block screening.]
 
 YOUR CHECK-IN QR CODE
 (QR code image attached to this email)
@@ -83,12 +89,16 @@ Paid by: [PAID BY]
 Payment screenshot: received
 Notes: [NOTES]
 
-Please keep your reference code. Thank you for helping bring clean water to Filipino communities.
+Should you have any questions or concerns, feel free to contact:
 
-Questions? Reply to this email or write to w4wph.movies4water@gmail.com with your reference code.
+Jenna Escueta
+📞 +63 993 502 1347
+✉️ jenna@wavesforwater.org
 
-Waves for Water Philippines
-w4wph.movies4water@gmail.com
+Thank you for supporting Movies4Water and helping bring clean water to communities!
+
+See you at the screening!
+Waves For Water Philippines
 ```
 
 ---

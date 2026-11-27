@@ -392,12 +392,25 @@ gold border is its non-color cue.
 - **Booking status wording (one code, three statuses).** Every booking has
   ONE reference code (e.g. `W4W-DD-7K2Q`), created at submission and never
   changed. Wherever a guest sees the code, the status is shown right next to
-  it, with exactly these words:
+  it, with exactly these words (one exception: the "Booking confirmed" email
+  uses Jenna's text below and has no status line):
   - **Pending verification** (after submitting): "We'll email you at
     [guest's email] once your payment is verified. Keep your reference
     code." Showing the email lets guests spot a typo before they leave.
-  - **Confirmed** (after approval, confirmation email): "Your payment is
-    verified and your seats are confirmed." The email carries the guest's
+  - **Confirmed** (after approval, confirmation email; Jenna's text,
+    approved 2026-11-27): "Hi [full name]!", "Thank you for purchasing a
+    ticket to Movies4Water! Your payment has been confirmed. 🎬💙", then the
+    "Attached…" sentence, which must match what is really attached: QR code
+    and Acknowledgment Receipt ("Attached to this email are your entry QR
+    code and Acknowledgment Receipt. Kindly save your QR code and present it
+    upon entry to the cinema for your block screening."), QR code only
+    ("Attached to this email is your entry QR code. Kindly save …"), or
+    left out when the QR failed. After the QR box and booking details:
+    "Should you have any questions or concerns, feel free to contact:",
+    Jenna Escueta / 📞 +63 993 502 1347 / ✉️ jenna@wavesforwater.org,
+    "Thank you for supporting Movies4Water and helping bring clean water to
+    communities!", "See you at the screening!", "Waves For Water
+    Philippines" (capital F, as Jenna wrote it). The email carries the guest's
     **check-in QR code** in a box titled "Your check-in QR code": the QR
     (an inline image), the reference code in large text, the seats, and
     "Show this at the cinema entrance. Can't open it? Just tell our staff

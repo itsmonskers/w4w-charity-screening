@@ -13,7 +13,9 @@ export type DecisionEmail = 'approved' | 'rejected' | 'checkin'
 
 // The text can't carry the QR image: the confirmed and check-in texts include the QR box
 // wording, and the admin attaches the image from "Download QR code".
-export function decisionEmail(kind: DecisionEmail, booking: AdminBooking) {
+// receipt: the admin picked an Acknowledgment Receipt when confirming, so the copied
+// confirmed text says both are attached (the admin attaches the AR again by hand).
+export function decisionEmail(kind: DecisionEmail, booking: AdminBooking, { receipt = false }: { receipt?: boolean } = {}) {
   const email = buildEmail(kind, {
     referenceCode: booking.referenceCode,
     fullName: booking.fullName,
@@ -30,6 +32,6 @@ export function decisionEmail(kind: DecisionEmail, booking: AdminBooking) {
     paymentRef: booking.paymentRef,
     payerName: booking.payerName,
     // The confirmed / not-approved emails don't show food allergies (same as the server)
-  }, EMAIL_CONTACT, { checkInQr: kind === 'approved' })
+  }, EMAIL_CONTACT, { checkInQr: kind === 'approved', receipt: kind === 'approved' && receipt })
   return { to: email.to, cc: email.cc, subject: email.subject, text: email.text }
 }

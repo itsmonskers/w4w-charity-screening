@@ -27,10 +27,12 @@ export type EmailBooking = {
   foodAllergies?: string | null
 }
 
-// Jenna (W4W) gets a copy (Cc) of the confirmed, not-approved and "Your check-in QR code"
-// emails. Not the "received" email: it carries food allergies. The only place this address is set;
-// kept here, not in mailer.ts, because /admin builds the same emails in the browser.
-export const EMAIL_CC = 'jenna@wavesforwater.org'
+// Jenna (W4W): the contact person in the "Booking confirmed" email, and she gets a copy (Cc) of
+// the confirmed, not-approved and "Your check-in QR code" emails. Not the "received" email: it
+// carries food allergies. The only place her details are set; kept here, not in mailer.ts,
+// because /admin builds the same emails in the browser.
+const JENNA = { name: 'Jenna Escueta', phone: '+63 993 502 1347', email: 'jenna@wavesforwater.org' }
+export const EMAIL_CC = JENNA.email
 const CC_KINDS: EmailKind[] = ['approved', 'rejected', 'checkin']
 
 const EVENT_NAME = `Movies4Water - ${EVENT.film} Block Screening`
@@ -84,11 +86,25 @@ function bookingDetails(booking: EmailBooking): [string, string[]][] {
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 
-type Content = { subject: string; status: string; intro: string[]; outro: string[] }
+// What the email says. status: the "W4W-DD-7K2Q · Status" line under the greeting (left out
+// when absent). Each outro / signoff entry is one paragraph; a string[] is one paragraph of lines.
+// attached: the confirmed email's "Attached…" paragraph, after the intro.
+type Content = { subject: string; greeting: string; status?: string; intro: string[]; attached?: string[]; outro: (string | string[])[]; signoff: string[] }
+// What the "Booking confirmed" email really carries, so its "Attached…" sentence is true
+type Attached = { qr: boolean; receipt: boolean }
 
-const CONTENT: Record<EmailKind, (contact: string) => Content> = {
+// "Attached…" sentence of the confirmed email (Jenna's wording). No QR: no sentence at all.
+function attachedSentence({ qr, receipt }: Attached): string[] {
+  if (!qr) return []
+  return [receipt
+    ? 'Attached to this email are your entry QR code and Acknowledgment Receipt. Kindly save your QR code and present it upon entry to the cinema for your block screening.'
+    : 'Attached to this email is your entry QR code. Kindly save your QR code and present it upon entry to the cinema for your block screening.']
+}
+
+const CONTENT: Record<EmailKind, (contact: string, attached: Attached) => Content> = {
   received: contact => ({
     subject: 'Booking received – pending verification',
+    greeting: ',',
     status: 'Pending verification',
     intro: [`Thanks for booking! We received your reservation and payment screenshot for ${EVENT_NAME}.`],
     outro: [
@@ -96,30 +112,39 @@ const CONTENT: Record<EmailKind, (contact: string) => Content> = {
       'Our updates sometimes land in spam. Please check your spam or junk folder, and mark this address as not spam.',
       `Questions? Reply to this email or write to ${contact} with your reference code.`,
     ],
+    signoff: ['Waves for Water Philippines', contact],
   }),
-  approved: contact => ({
+  // Jenna's text (approved 2026-11-27): no status line; her contact details instead of the inbox
+  approved: (_contact, attached) => ({
     subject: 'Booking confirmed',
-    status: 'Confirmed',
-    intro: [`Your payment is verified and your seats for ${EVENT_NAME} are confirmed.`],
+    greeting: '!',
+    intro: ['Thank you for purchasing a ticket to Movies4Water! Your payment has been confirmed. 🎬💙'],
+    attached: attachedSentence(attached),
     outro: [
-      'Please keep your reference code. Thank you for helping bring clean water to Filipino communities.',
-      `Questions? Reply to this email or write to ${contact} with your reference code.`,
+      'Should you have any questions or concerns, feel free to contact:',
+      [JENNA.name, `📞 ${JENNA.phone}`, `✉️ ${JENNA.email}`],
+      'Thank you for supporting Movies4Water and helping bring clean water to communities!',
     ],
+    signoff: ['See you at the screening!', 'Waves For Water Philippines'],
   }),
   rejected: contact => ({
     subject: 'Booking not approved',
+    greeting: ',',
     status: 'Not approved',
     intro: [
       `We're sorry, but we could not verify the payment for your reservation for ${EVENT_NAME}.`,
       'The seats below are no longer held for you.',
     ],
     outro: [`Please contact us at ${contact} with your reference code so we can help.`],
+    signoff: ['Waves for Water Philippines', contact],
   }),
   checkin: contact => ({
     subject: 'Your check-in QR code',
+    greeting: ',',
     status: 'Confirmed',
     intro: ['Here\'s your QR code for check-in on December 19.'],
     outro: [`Questions? Reply to this email or write to ${contact} with your reference code.`],
+    signoff: ['Waves for Water Philippines', contact],
   }),
 }
 
@@ -152,33 +177,38 @@ function qrBoxHtml(booking: EmailBooking) {
 }
 
 // checkInQr: add the QR box to the "Booking confirmed" email (the route attaches the image).
-// The "Your check-in QR code" email always has it, and no booking details table.
-export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: string, options: { checkInQr?: boolean } = {}): Email {
-  const content = CONTENT[kind](contact)
+// receipt: the confirmed email also carries the Acknowledgment Receipt (only changes the
+// "Attached…" sentence; the route attaches the file). The "Your check-in QR code" email
+// always has the QR box, and no booking details table.
+export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: string, options: { checkInQr?: boolean; receipt?: boolean } = {}): Email {
   const withQr = kind === 'checkin' || (kind === 'approved' && options.checkInQr === true)
+  const content = CONTENT[kind](contact, { qr: withQr, receipt: options.receipt === true })
   const details = kind === 'checkin' ? [] : bookingDetails(booking)
   const subject = `${content.subject} · ${booking.referenceCode} · Movies4Water`
+  const greeting = `Hi ${booking.fullName}${content.greeting}`
+  const status = content.status && `${booking.referenceCode} · ${content.status}`
+  const paragraph = (entry: string | string[]) => typeof entry === 'string' ? [entry] : entry
 
   const text = [
-    `Hi ${booking.fullName},`,
+    greeting,
     '',
-    `${booking.referenceCode} · ${content.status}`,
-    '',
+    ...(status ? [status, ''] : []),
     ...content.intro,
     '',
+    ...(content.attached?.length ? [...content.attached, ''] : []),
     ...(withQr ? [...qrBoxText(booking), ''] : []),
     ...(details.length ? [...details.map(([label, lines]) => `${label}: ${lines.join('\n    ')}`), ''] : []),
-    ...content.outro.flatMap(line => [line, '']),
-    'Waves for Water Philippines',
-    contact,
+    ...content.outro.flatMap(entry => [...paragraph(entry), '']),
+    ...content.signoff,
   ].join('\n')
 
-  const p = (line: string) => `<p>${escapeHtml(line)}</p>`
+  const p = (entry: string | string[]) => `<p>${paragraph(entry).map(escapeHtml).join('<br>')}</p>`
   const html = [
     '<!doctype html><html><body style="font-family: Arial, sans-serif; line-height: 1.5;">',
-    p(`Hi ${booking.fullName},`),
-    `<p><strong>${escapeHtml(`${booking.referenceCode} · ${content.status}`)}</strong></p>`,
+    p(greeting),
+    ...(status ? [`<p><strong>${escapeHtml(status)}</strong></p>`] : []),
     ...content.intro.map(p),
+    ...(content.attached ?? []).map(p),
     ...(withQr ? [qrBoxHtml(booking)] : []),
     ...(details.length ? [
       '<table cellpadding="4" cellspacing="0">',
@@ -186,7 +216,7 @@ export function buildEmail(kind: EmailKind, booking: EmailBooking, contact: stri
       '</table>',
     ] : []),
     ...content.outro.map(p),
-    `<p>Waves for Water Philippines<br>${escapeHtml(contact)}</p>`,
+    p(content.signoff),
     '</body></html>',
   ].join('\n')
 
