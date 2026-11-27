@@ -520,6 +520,15 @@ gold border is its non-color cue.
     inside, Esc closes, focus returns). Pages are URL hashes (`#home`,
     `#checkin`, `#checkin-history`, `#check`, `#waiting`, `#confirmed`,
     `#not-approved`, `#qr-emails`) so the phone's Back button works.
+    Check-in has one address per step: `#checkin` (start), `#checkin-scan`
+    (camera) and `#checkin-guest` (a guest's card and its results). Leaving
+    the start adds a step; camera ↔ card replaces it, so Back (phone gesture
+    or browser arrow) always goes to the start, or to Check-in history when
+    the card was opened there, never back into the camera or to a used
+    "Check in" button. Reloading on `#checkin-scan` or `#checkin-guest` goes
+    to the start (the camera never starts by itself). Address names must not
+    match an element id on the page (the browser would jump to it) and never
+    `#top`.
   - **Home cards.** One large card with a gold border: badge NEEDS
     ATTENTION, the number waiting, "The oldest has been waiting …" and
     "Start checking"; or ALL CLEAR when nothing is waiting. Two small

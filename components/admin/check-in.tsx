@@ -5,6 +5,7 @@ import { AlertTriangle, Check, QrCode, Search, Undo2 } from 'lucide-react'
 import { MOCK_REQUESTED, checkInSeats, getAdminMode, getCheckInBooking, lookupCheckIn, undoCheckIn, type AdminBooking, type CheckInBooking, type CheckInError, type CheckInState } from '@/lib/admin-api'
 import { tokenFromQr } from '@/lib/checkin-code'
 import { manilaClock, matchesSearch, seatsByRow, sortSeats } from './format'
+import type { CheckInPage } from './shell'
 
 // Event-day check-in (#checkin). Phone-first: one thing on screen at a time.
 // Start (counter, Scan QR code, search) → Scan → Result (seats, allergies, Check in N guests)
@@ -45,7 +46,20 @@ function arrivedGroups(booking: CheckInBooking) {
     .map(g => `${seatLines(g.seats)} at ${manilaClock(g.at)}${g.by ? ` by ${g.by}` : ''}`)
 }
 
+// Which address each screen lives at (the phone's Back goes one step back between them)
+const pageFor = (screen: Screen): CheckInPage => screen.kind === 'start' ? 'checkin' : screen.kind === 'scan' ? 'checkin-scan' : 'checkin-guest'
+const isGuestScreen = (screen: Screen) => pageFor(screen) === 'checkin-guest'
+
+// Swap the current address without adding a step (no hashchange fires, so announce it)
+function replacePage(page: CheckInPage) {
+  if (window.location.hash === `#${page}`) return
+  window.history.replaceState(window.history.state, '', `#${page}`)
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
+}
+
 type Props = {
+  // The address the page is at (#checkin, #checkin-scan, #checkin-guest)
+  page: CheckInPage
   bookings: AdminBooking[] | null
   state: CheckInState | null
   // After every check-in or undo: reload the counter and the search list
@@ -58,12 +72,62 @@ type Props = {
   onOpened?: () => void
 }
 
-export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner, openBookingId, onOpened }: Props) {
+export function CheckIn({ page, bookings, state, onChanged, onNoAccess, scanner, openBookingId, onOpened }: Props) {
   const [screen, setScreen] = useState<Screen>({ kind: 'start' })
   const [query, setQuery] = useState('')
   const heading = useRef<HTMLHeadingElement>(null)
   const search = useRef<HTMLInputElement>(null)
   const first = useRef(true)
+  // One step back from the camera / a card: the start (this page added the step) or Check-in
+  // history (the card was opened there); null when the page was loaded straight here
+  const cameFrom = useRef<'start' | 'history' | null>(null)
+  const shown = useRef<Screen>(screen)
+  const lastGuest = useRef<Screen | null>(null) // reopened by the browser's Forward
+  const focusSearch = useRef(false)
+
+  useEffect(() => {
+    shown.current = screen
+    if (isGuestScreen(screen)) lastGuest.current = screen
+  }, [screen])
+
+  // Show a screen at its address. Leaving the start adds a step; camera ↔ card replaces it,
+  // so Back from anywhere goes to the start (or to the history the card came from).
+  const go = useCallback((next: Screen) => {
+    const target = pageFor(next)
+    const current = pageFor(shown.current)
+    shown.current = next
+    setScreen(next)
+    if (target === current) return
+    if (current === 'checkin') {
+      cameFrom.current = 'start'
+      window.location.hash = target
+    } else {
+      replacePage(target)
+    }
+  }, [])
+
+  // Back to the start: the browser's Back when the start is the step before (no duplicate step)
+  const goStart = useCallback((thenSearch = false) => {
+    focusSearch.current = thenSearch
+    if (shown.current.kind === 'start') { if (thenSearch) search.current?.focus(); return }
+    if (cameFrom.current === 'start' && window.location.hash !== '#checkin') return window.history.back()
+    cameFrom.current = null
+    setScreen({ kind: 'start' })
+    replacePage('checkin')
+  }, [])
+
+  // The address changed from outside (Back, Forward, the menu, a reload): follow it
+  useEffect(() => {
+    if (page === pageFor(shown.current)) return
+    if (page === 'checkin-guest' && openBookingId) return // opened from history: shown below
+    if (page === 'checkin') { cameFrom.current = null; setScreen({ kind: 'start' }); return }
+    if (page === 'checkin-guest' && lastGuest.current) { setScreen(lastGuest.current); return }
+    // Loaded straight at the camera or a card (nothing in memory): go to the start instead,
+    // never starting the camera by itself
+    cameFrom.current = null
+    setScreen({ kind: 'start' })
+    replacePage('checkin')
+  }, [page, openBookingId])
 
   // Keep the phone screen on while the Check-in page is open (Wake Lock: Android Chrome,
   // iPhone Safari 16.4+). Not supported or refused: nothing happens, the screen dims as usual.
@@ -79,39 +143,42 @@ export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner, openB
     return () => { closed = true; document.removeEventListener('visibilitychange', request); lock?.release() }
   }, [])
 
-  // Each new screen: focus its heading (not on the first load, so the page title keeps focus)
+  // Each new screen: focus its heading (not on the first load, so the page title keeps focus);
+  // the search box instead after "Search instead"
   useEffect(() => {
     if (first.current) { first.current = false; return }
+    if (screen.kind === 'start' && focusSearch.current) { focusSearch.current = false; search.current?.focus(); return }
     heading.current?.focus()
   }, [screen])
 
   const fail = useCallback((error: CheckInError, retry: () => void) => {
     if (error === 'not_admin') return onNoAccess()
-    setScreen({ kind: 'error', error, retry })
-  }, [onNoAccess])
+    go({ kind: 'error', error, retry })
+  }, [onNoAccess, go])
 
   const openBooking = useCallback(async function open(bookingId: string) {
-    setScreen({ kind: 'loading' })
+    go({ kind: 'loading' })
     const result = await getCheckInBooking(bookingId)
     if (!result.ok) return fail(result.error, () => open(bookingId))
-    setScreen(result.booking ? { kind: 'result', booking: result.booking } : { kind: 'error', error: 'booking_not_found', retry: () => open(bookingId) })
-  }, [fail])
+    go(result.booking ? { kind: 'result', booking: result.booking } : { kind: 'error', error: 'booking_not_found', retry: () => open(bookingId) })
+  }, [fail, go])
 
-  // Opened from Check-in history: show that booking's card (Undo is there)
+  // Opened from Check-in history (already at #checkin-guest): show that booking's card (Undo is there)
   useEffect(() => {
     if (!openBookingId) return
+    cameFrom.current = 'history'
     openBooking(openBookingId)
     onOpened?.()
   }, [openBookingId, openBooking, onOpened])
 
   const onCode = useCallback(async function scanned(text: string) {
     const token = tokenFromQr(text)
-    if (!token) return setScreen({ kind: 'invalid' })
-    setScreen({ kind: 'loading' })
+    if (!token) return go({ kind: 'invalid' })
+    go({ kind: 'loading' })
     const result = await lookupCheckIn(token)
     if (!result.ok) return fail(result.error, () => scanned(text))
-    setScreen(result.booking ? { kind: 'result', booking: result.booking } : { kind: 'invalid' })
-  }, [fail])
+    go(result.booking ? { kind: 'result', booking: result.booking } : { kind: 'invalid' })
+  }, [fail, go])
 
   // Test mode only: `window.dispatchEvent(new CustomEvent('admin-mock:scan', { detail: 'W4W1:…' }))`
   // acts as if the camera read that text (the real build never has this listener)
@@ -122,26 +189,27 @@ export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner, openB
     return () => window.removeEventListener('admin-mock:scan', onMockScan)
   }, [screen.kind, onCode])
 
-  const scan = () => setScreen({ kind: 'scan' })
-  const searchInstead = () => { setScreen({ kind: 'start' }); requestAnimationFrame(() => search.current?.focus()) }
+  const scan = () => go({ kind: 'scan' })
+  const searchInstead = () => goStart(true)
 
   async function confirm(booking: CheckInBooking, seats: string[]) {
     const result = await checkInSeats(booking.bookingId, seats)
     if (!result.ok) {
-      if (result.error === 'booking_not_confirmed') return setScreen({ kind: 'result', booking: { ...booking, status: 'pending' } })
-      return fail(result.error, () => setScreen({ kind: 'result', booking }))
+      if (result.error === 'booking_not_confirmed') return go({ kind: 'result', booking: { ...booking, status: 'pending' } })
+      return fail(result.error, () => go({ kind: 'result', booking }))
     }
     onChanged()
     // Nothing changed: someone else checked these seats in first
-    if (!result.changed.length) return setScreen({ kind: 'result', booking: result.booking })
-    setScreen({ kind: 'done', booking: result.booking, changed: result.changed, missed: seats.filter(id => !result.changed.includes(id)) })
+    if (!result.changed.length) return go({ kind: 'result', booking: result.booking })
+    // Same address as the card (no new step), so Back never shows the used "Check in" button
+    go({ kind: 'done', booking: result.booking, changed: result.changed, missed: seats.filter(id => !result.changed.includes(id)) })
   }
 
   async function undo(booking: CheckInBooking, seats: string[]) {
     const result = await undoCheckIn(booking.bookingId, seats)
-    if (!result.ok) return fail(result.error, () => setScreen({ kind: 'result', booking }))
+    if (!result.ok) return fail(result.error, () => go({ kind: 'result', booking }))
     onChanged()
-    setScreen({ kind: 'result', booking: result.booking, notice: result.changed.length ? `Check-in undone for ${seatLines(result.changed)}.` : 'Nothing to undo: those seats weren’t checked in.' })
+    go({ kind: 'result', booking: result.booking, notice: result.changed.length ? `Check-in undone for ${seatLines(result.changed)}.` : 'Nothing to undo: those seats weren’t checked in.' })
   }
 
   if (screen.kind === 'scan') return <section className="admin-card admin-checkin-panel" aria-labelledby="checkin-heading">
@@ -149,7 +217,7 @@ export function CheckIn({ bookings, state, onChanged, onNoAccess, scanner, openB
     {scanner(onCode)}
     <div className="admin-checkin-buttons">
       <button className="btn-ghost" type="button" onClick={searchInstead}><Search size={18} aria-hidden />Search instead</button>
-      <button className="admin-text-link" type="button" onClick={() => setScreen({ kind: 'start' })}>Back to check-in</button>
+      <button className="admin-text-link" type="button" onClick={() => goStart()}>Back to check-in</button>
     </div>
   </section>
 

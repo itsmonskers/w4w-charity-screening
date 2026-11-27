@@ -4,7 +4,11 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Download, ExternalLink, LogOut, Menu, X } from 'lucide-react'
 import { usePauseRefresh } from './refresh-pause'
 
-export type AdminRoute = 'home' | 'checkin' | 'checkin-history' | 'check' | 'waiting' | 'confirmed' | 'not-approved' | 'qr-emails'
+// Check-in has three addresses, one per step, so the phone's Back goes one step back:
+// #checkin (start), #checkin-scan (camera), #checkin-guest (a guest's card and its results)
+export type CheckInPage = 'checkin' | 'checkin-scan' | 'checkin-guest'
+export type AdminRoute = 'home' | CheckInPage | 'checkin-history' | 'check' | 'waiting' | 'confirmed' | 'not-approved' | 'qr-emails'
+export const isCheckInPage = (route: AdminRoute): route is CheckInPage => route === 'checkin' || route === 'checkin-scan' || route === 'checkin-guest'
 // checkIn: "arrived/total" guests, e.g. "12/315" (missing until the counter loads)
 export type NavCounts = { pending: number; approved: number; rejected: number; checkIn?: string } | null
 
@@ -58,8 +62,8 @@ function Brand() {
 }
 
 function AdminNav({ route, counts, email, onNavigate, onExport, onSignOut }: { route: AdminRoute; counts: NavCounts; email: string; onNavigate?: () => void; onExport: () => void; onSignOut: () => void }) {
-  // "Waiting for review" covers the guided check and the full waiting list
-  const current = (to: AdminRoute) => route === to || (to === 'check' && route === 'waiting')
+  // "Waiting for review" covers the guided check and the full waiting list; "Check-in" all its steps
+  const current = (to: AdminRoute) => route === to || (to === 'check' && route === 'waiting') || (to === 'checkin' && isCheckInPage(route))
   const link = (to: AdminRoute, label: string, count?: number | string, gold = false, countLabel?: string) =>
     <a className="admin-nav-link" href={`#${to}`} aria-current={current(to) ? 'page' : undefined} onClick={onNavigate}>
       <span>{label}</span>
