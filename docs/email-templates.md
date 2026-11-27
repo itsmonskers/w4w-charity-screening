@@ -35,8 +35,8 @@ The templates below are the same text as the automatic emails
 Rules for every email:
 
 - Put the reference code and status together, exactly like this:
-  `W4W-DD-7K2Q · Confirmed` (templates 2–4; the confirmed email, template 1,
-  has no status line).
+  `W4W-DD-7K2Q · Confirmed` (templates 2 and 3; the confirmed email, template
+  1, and the check-in QR email, template 4, have no status line).
 - Copy the seats line exactly as /admin shows it, e.g. `Row L · Seats 7, 8, 9`.
 - **Check-in QR code:** the confirmed email (template 1) and template 4 carry the
   guest's check-in QR code as an image. A hand-sent email can't make it: in
@@ -203,8 +203,6 @@ once, from **Tools → Send check-in QR codes** in /admin. Send it by hand only 
 ```
 Hi [GUEST NAME],
 
-[REFERENCE CODE] · Confirmed
-
 Here's your QR code for check-in on December 19.
 
 YOUR CHECK-IN QR CODE
@@ -213,8 +211,14 @@ Reference code: [REFERENCE CODE]
 Seats: [SEATS, as /admin shows them, e.g. Row L · Seats 7, 8, 9]
 Show this at the cinema entrance. Can't open it? Just tell our staff your reference code.
 
-Questions? Reply to this email or write to w4wph.movies4water@gmail.com with your reference code.
+Should you have any questions or concerns, feel free to contact:
 
+Jenna Escueta
+📞 +63 993 502 1347
+✉️ jenna@wavesforwater.org
+
+Thank you for supporting Movies4Water and helping bring clean water to communities!
+
+See you at the screening!
 Waves For Water Philippines
-w4wph.movies4water@gmail.com
 ```

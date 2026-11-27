@@ -392,8 +392,9 @@ gold border is its non-color cue.
 - **Booking status wording (one code, three statuses).** Every booking has
   ONE reference code (e.g. `W4W-DD-7K2Q`), created at submission and never
   changed. Wherever a guest sees the code, the status is shown right next to
-  it, with exactly these words (one exception: the "Booking confirmed" email
-  uses Jenna's text below and has no status line):
+  it, with exactly these words (exceptions: the "Booking confirmed" email
+  uses Jenna's text below, and the "Your check-in QR code" email uses the
+  same style; neither has a status line):
   - **Pending verification** (after submitting): "We'll email you at
     [guest's email] once your payment is verified. Keep your reference
     code." Showing the email lets guests spot a typo before they leave.
@@ -435,8 +436,11 @@ gold border is its non-color cue.
     attached)"; the copied text has no link. One QR per booking; it is a
     check-in code, not an e-ticket. Guests confirmed before the QR existed
     get it once in a separate email, "Your check-in QR code · [reference] ·
-    Movies4Water" ("Here's your QR code for check-in on December 19." and
-    the same box, link and file).
+    Movies4Water" ("Hi [full name],", "Here's your QR code for check-in on
+    December 19.", the same box, link and file, then the confirmed email's
+    ending: Jenna's contact block, "Thank you for supporting Movies4Water and
+    helping bring clean water to communities!", "See you at the
+    screening!", "Waves For Water Philippines"; no status line).
     Staff check guests in at the door in /admin (see "Event-day check-in").
   - **Not approved** (after rejection, email): says we could not verify the
     payment, that the seats are no longer held, and asks the guest to

@@ -103,6 +103,14 @@ function attachedSentence({ qr, receipt }: Attached): string[] {
     : 'Attached to this email is your entry QR code. Kindly save your QR code and present it upon entry to the cinema for your block screening.']
 }
 
+// Jenna's ending, shared by the "Booking confirmed" and "Your check-in QR code" emails
+const JENNA_OUTRO: Content['outro'] = [
+  'Should you have any questions or concerns, feel free to contact:',
+  [JENNA.name, `📞 ${JENNA.phone}`, `✉️ ${JENNA.email}`],
+  'Thank you for supporting Movies4Water and helping bring clean water to communities!',
+]
+const JENNA_SIGNOFF = ['See you at the screening!', 'Waves For Water Philippines']
+
 const CONTENT: Record<EmailKind, (contact: string, attached: Attached) => Content> = {
   received: contact => ({
     subject: 'Booking received – pending verification',
@@ -122,12 +130,8 @@ const CONTENT: Record<EmailKind, (contact: string, attached: Attached) => Conten
     greeting: '!',
     intro: ['Thank you for purchasing a ticket to Movies4Water! Your payment has been confirmed. 🎬💙'],
     attached: attachedSentence(attached),
-    outro: [
-      'Should you have any questions or concerns, feel free to contact:',
-      [JENNA.name, `📞 ${JENNA.phone}`, `✉️ ${JENNA.email}`],
-      'Thank you for supporting Movies4Water and helping bring clean water to communities!',
-    ],
-    signoff: ['See you at the screening!', 'Waves For Water Philippines'],
+    outro: JENNA_OUTRO,
+    signoff: JENNA_SIGNOFF,
   }),
   rejected: contact => ({
     subject: 'Booking not approved',
@@ -140,13 +144,13 @@ const CONTENT: Record<EmailKind, (contact: string, attached: Attached) => Conten
     outro: [`Please contact us at ${contact} with your reference code so we can help.`],
     signoff: ['Waves For Water Philippines', contact],
   }),
-  checkin: contact => ({
+  // Same style as the confirmed email (2026-11-27): no status line, Jenna's ending
+  checkin: () => ({
     subject: 'Your check-in QR code',
     greeting: ',',
-    status: 'Confirmed',
     intro: ['Here\'s your QR code for check-in on December 19.'],
-    outro: [`Questions? Reply to this email or write to ${contact} with your reference code.`],
-    signoff: ['Waves For Water Philippines', contact],
+    outro: JENNA_OUTRO,
+    signoff: JENNA_SIGNOFF,
   }),
 }
 
